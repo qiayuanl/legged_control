@@ -14,9 +14,6 @@
     <!-- depend: build, export, and execution dependency -->
     <depend>roscpp</depend>
     <depend>quad_common</depend>
-    <depend>hardware_interface</depend>
-    <depend>controller_interface</depend>
     <depend>controller_manager</depend>
     <depend>urdf</depend>
-
 </package>

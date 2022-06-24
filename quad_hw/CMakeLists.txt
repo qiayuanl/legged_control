@@ -13,7 +13,6 @@ find_package(catkin REQUIRED
         COMPONENTS
         roscpp
         quad_common
-        controller_interface
         controller_manager
         urdf
         )
@@ -26,7 +25,6 @@ catkin_package(
         CATKIN_DEPENDS
         roscpp
         quad_common
-        controller_interface
         controller_manager
         urdf
 )
