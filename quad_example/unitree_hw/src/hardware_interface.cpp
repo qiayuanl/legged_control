@@ -56,10 +56,10 @@ void UnitreeHW::read(const ros::Time& time, const ros::Duration& period)
   imu_data_.linear_acc[1] = low_state_.imu.accelerometer[1];
   imu_data_.linear_acc[2] = low_state_.imu.accelerometer[2];
 
+  contact_state_[UNITREE_LEGGED_SDK::FR_] = low_state_.footForce[UNITREE_LEGGED_SDK::FR_] > contact_threshold_;
   contact_state_[UNITREE_LEGGED_SDK::FL_] = low_state_.footForce[UNITREE_LEGGED_SDK::FL_] > contact_threshold_;
-  contact_state_[UNITREE_LEGGED_SDK::FL_] = low_state_.footForce[UNITREE_LEGGED_SDK::FR_] > contact_threshold_;
-  contact_state_[UNITREE_LEGGED_SDK::FL_] = low_state_.footForce[UNITREE_LEGGED_SDK::RL_] > contact_threshold_;
-  contact_state_[UNITREE_LEGGED_SDK::FL_] = low_state_.footForce[UNITREE_LEGGED_SDK::RR_] > contact_threshold_;
+  contact_state_[UNITREE_LEGGED_SDK::RR_] = low_state_.footForce[UNITREE_LEGGED_SDK::RR_] > contact_threshold_;
+  contact_state_[UNITREE_LEGGED_SDK::RL_] = low_state_.footForce[UNITREE_LEGGED_SDK::RL_] > contact_threshold_;
 
   // Set feedforward and velocity cmd to zero to avoid for saft when not controller setCommand
   std::vector<std::string> names = hybrid_joint_interface_.getNames();
