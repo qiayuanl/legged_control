@@ -1,0 +1,9 @@
+<library path="lib/libquad_controllers">
+
+    <class name="quad_ros/Ocs2Controller" type="quad_ros::Ocs2Controller"
+           base_class_type="controller_interface::ControllerBase">
+        <description>
+            The ocs2 controller.
+        </description>
+    </class>
+</library>

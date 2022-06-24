@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>quad_controllers</name>
+    <version>0.0.0</version>
+    <description>The quad_controllers packages.</description>
+    <maintainer email="liaoqiayuan@gmail.com">Qiayuan Liao</maintainer>
+    <license>BSD</license>
+    <author email="liaoqiayuan@gmail.com">Qiayuan Liao</author>
+
+    <!-- buildtool_depend: dependencies of the build process -->
+    <buildtool_depend>catkin</buildtool_depend>
+    <!-- depend: build, export, and execution dependency -->
+    <depend>roscpp</depend>
+    <depend>quad_common</depend>
+    <depend>ocs2_legged_robot_ros</depend>
+
+    <exec_depend>controller_manager</exec_depend>
+
+    <export>
+        <controller_interface plugin="${prefix}/quad_controllers_plugins.xml"/>
+    </export>
+</package>
