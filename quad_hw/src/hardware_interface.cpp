@@ -29,7 +29,7 @@ bool QuadHW::loadUrdf(ros::NodeHandle& root_nh)
   if (urdf_model_ == nullptr)
     urdf_model_ = std::make_shared<urdf::Model>();
   // get the urdf param on param server
-  root_nh.getParam("/robot_description", urdf_string);
+  root_nh.getParam("legged_robot_description", urdf_string);
   return !urdf_string.empty() && urdf_model_->initString(urdf_string);
 }
 
