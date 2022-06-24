@@ -19,8 +19,17 @@ bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh)
   udp_ = std::make_shared<UNITREE_LEGGED_SDK::UDP>(UNITREE_LEGGED_SDK::LOWLEVEL);
   udp_->InitCmdData(low_cmd_);
 
-  safety_ = std::make_shared<UNITREE_LEGGED_SDK::Safety>(UNITREE_LEGGED_SDK::LeggedType::A1);
-
+  std::string robot_type;
+  root_nh.getParam("robot_type", robot_type);
+  if (robot_type == "a1")
+    safety_ = std::make_shared<UNITREE_LEGGED_SDK::Safety>(UNITREE_LEGGED_SDK::LeggedType::A1);
+  else if (robot_type == "aliengo")
+    safety_ = std::make_shared<UNITREE_LEGGED_SDK::Safety>(UNITREE_LEGGED_SDK::LeggedType::Aliengo);
+  else
+  {
+    ROS_FATAL("Unknown robot type: %s", robot_type.c_str());
+    return false;
+  }
   return true;
 }
 

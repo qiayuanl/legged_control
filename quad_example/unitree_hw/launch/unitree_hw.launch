@@ -8,6 +8,7 @@
 
     <rosparam file="$(find unitree_hw)/config/default.yaml" command="load"/>
 
-    <node name="unitree_hw" pkg="unitree_hw" type="unitree_hw" respawn="false"
-          clear_params="true"/>
+    <param name="robot_type" value="$(arg robot_type)"/>
+    <node name="unitree_hw" pkg="unitree_hw" type="unitree_hw" respawn="false" clear_params="true"/>
+
 </launch>
