@@ -12,7 +12,7 @@
     <!-- depend: build, export, and execution dependency -->
     <depend>roscpp</depend>
     <depend>quad_common</depend>
-    <depend>gazebo</depend>
+    <depend>gazebo_dev</depend>
     <depend>gazebo_ros_control</depend>
 
     <export>

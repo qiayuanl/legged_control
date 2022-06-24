@@ -9,15 +9,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ## enforcing cleaner code.
 add_definitions(-Wall -Werror)
 
-# Depend on system install of Gazebo
-find_package(gazebo REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GAZEBO_CXX_FLAGS}")
-
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED
         COMPONENTS
         roscpp
         quad_common
+        gazebo_dev
         gazebo_ros_control
         )
 
