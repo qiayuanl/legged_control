@@ -25,11 +25,12 @@ bool QuadHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh)
 
 bool QuadHW::loadUrdf(ros::NodeHandle& root_nh)
 {
+  std::string urdf_string;
   if (urdf_model_ == nullptr)
     urdf_model_ = std::make_shared<urdf::Model>();
   // get the urdf param on param server
-  root_nh.getParam("/robot_description", urdf_string_);
-  return !urdf_string_.empty() && urdf_model_->initString(urdf_string_);
+  root_nh.getParam("/robot_description", urdf_string);
+  return !urdf_string.empty() && urdf_model_->initString(urdf_string);
 }
 
 }  // namespace quad_ros

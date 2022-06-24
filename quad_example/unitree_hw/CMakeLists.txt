@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(quad_hw)
+project(unitree_hw)
 
 ## Use C++14
 set(CMAKE_CXX_STANDARD 14)
@@ -12,23 +12,15 @@ add_definitions(-Wall -Werror -Wno-inconsistent-missing-override)
 find_package(catkin REQUIRED
         COMPONENTS
         roscpp
-        quad_common
-        controller_interface
-        controller_manager
-        urdf
+        quad_hw
         )
 
 catkin_package(
         INCLUDE_DIRS
         include
-        LIBRARIES
-        ${PROJECT_NAME}
         CATKIN_DEPENDS
         roscpp
-        quad_common
-        controller_interface
-        controller_manager
-        urdf
+        quad_hw
 )
 
 ###########
@@ -40,13 +32,20 @@ include_directories(
         ${catkin_INCLUDE_DIRS}
 )
 
-add_library(${PROJECT_NAME}
+link_directories(lib)
+
+set(EXTRA_LIBS libunitree_legged_sdk_amd64.so lcm)
+
+## Declare cpp executables
+add_executable(${PROJECT_NAME}
+        src/${PROJECT_NAME}.cpp
         src/hardware_interface.cpp
-        src/control_loop.cpp
         )
 
+## Specify libraries to link executable targets against
 target_link_libraries(${PROJECT_NAME}
         ${catkin_LIBRARIES}
+        ${EXTRA_LIBS}
         )
 
 #############
@@ -64,4 +63,9 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
         FILES_MATCHING PATTERN "*.h"
+        )
+
+# Mark other files for installation
+install(DIRECTORY config launch lib
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )

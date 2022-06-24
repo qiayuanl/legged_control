@@ -1,0 +1,13 @@
+<launch>
+    <arg name="robot_type" default="$(env ROBOT_TYPE)" doc="Robot type: [a1, aliengo, go1, laikago]"/>
+    <arg name="hung_up" default="false"/>
+
+    <param name="robot_description" command="$(find xacro)/xacro $(find unitree_description)/urdf/robot.xacro
+       robot_type:=$(arg robot_type) hung_up:=$(arg hung_up)
+    "/>
+
+    <rosparam file="$(find unitree_hw)/config/default.yaml" command="load"/>
+
+    <node name="unitree_hw" pkg="unitree_hw" type="unitree_hw" respawn="false"
+          clear_params="true"/>
+</launch>

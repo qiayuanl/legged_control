@@ -37,6 +37,15 @@ public:
    */
   bool init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) override;
 
+protected:
+  // Interface
+  hardware_interface::JointStateInterface joint_state_interface_;
+  hardware_interface::ImuSensorInterface imu_sensor_interface_;
+  HybridJointInterface hybrid_joint_interface_;
+  ContactSensorInterface contact_sensor_interface_;
+  // URDF model of the robot
+  std::shared_ptr<urdf::Model> urdf_model_;  // for limit
+
 private:
   /** \brief Load urdf of robot from param server.
    *
@@ -46,16 +55,6 @@ private:
    * @return True if successful.
    */
   bool loadUrdf(ros::NodeHandle& root_nh);
-
-  // Interface
-  hardware_interface::JointStateInterface joint_state_interface_;
-  hardware_interface::ImuSensorInterface imu_sensor_interface_;
-  HybridJointInterface hybrid_joint_interface_;
-  ContactSensorInterface contact_sensor_interface_;
-
-  // URDF model of the robot
-  std::string urdf_string_;                  // for transmission
-  std::shared_ptr<urdf::Model> urdf_model_;  // for limit
 };
 
 }  // namespace quad_ros
