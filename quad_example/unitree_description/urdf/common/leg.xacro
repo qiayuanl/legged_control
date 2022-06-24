@@ -6,7 +6,7 @@
 
     <xacro:macro name="leg" params="prefix mirror mirror_dae front_hind front_hind_dae *origin">
 
-        <joint name="${prefix}_hip_joint" type="revolute">
+        <joint name="${prefix}_HAA" type="revolute">
             <xacro:insert_block name="origin"/>
             <parent link="base_link"/>
             <child link="${prefix}_hip"/>
@@ -57,7 +57,7 @@
             </inertial>
         </link>
 
-        <joint name="${prefix}_thigh_joint" type="revolute">
+        <joint name="${prefix}_HFE" type="revolute">
             <origin rpy="0 0 0" xyz="0 ${thigh_offset*mirror} 0"/>
             <parent link="${prefix}_hip"/>
             <child link="${prefix}_thigh"/>
@@ -104,7 +104,7 @@
             </inertial>
         </link>
 
-        <joint name="${prefix}_calf_joint" type="revolute">
+        <joint name="${prefix}_KFE" type="revolute">
             <origin rpy="0 0 0" xyz="0 0 ${-thigh_length}"/>
             <parent link="${prefix}_thigh"/>
             <child link="${prefix}_calf"/>
@@ -140,10 +140,10 @@
         <joint name="${prefix}_foot_fixed" type="fixed">
             <origin rpy="0 0 0" xyz="0 0 ${-(calf_length)}"/>
             <parent link="${prefix}_calf"/>
-            <child link="${prefix}_foot"/>
+            <child link="${prefix}_FOOT"/>
         </joint>
 
-        <link name="${prefix}_foot">
+        <link name="${prefix}_FOOT">
             <visual>
                 <origin rpy="0 0 0" xyz="0 0 0"/>
                 <geometry>
