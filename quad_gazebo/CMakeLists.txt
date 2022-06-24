@@ -76,6 +76,6 @@ install(FILES quad_hw_sim_plugins.xml
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )
 
-install(DIRECTORY launch
+install(DIRECTORY config
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         )
