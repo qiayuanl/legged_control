@@ -9,12 +9,20 @@
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
+#include <ocs2_legged_robot/common/ModelSettings.h>
 #include <ocs2_legged_robot_ros/gait/GaitReceiver.h>
 
 namespace quad_ros
 {
 bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& controller_nh)
 {
+  HybridJointInterface* hybrid_joint_interface = robot_hw->get<HybridJointInterface>();
+  std::vector<std::string> joint_names{ "LF_HAA", "LF_HFE", "LF_KFE", "LH_HAA", "LH_HFE", "LH_KFE",
+                                        "RF_HAA", "RF_HFE", "RF_KFE", "RH_HAA", "RH_HFE", "RH_KFE" };
+  for (const auto& joint_name : joint_names)
+    hybrid_joint_handles_.push_back(hybrid_joint_interface->getHandle(joint_name));
+
+  // Initialize OCS2
   std::string task_file, urdf_file, reference_file;
   controller_nh.getParam("/task_file", task_file);
   controller_nh.getParam("/urdf_file", urdf_file);
@@ -38,8 +46,9 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
   mpc_->getSolverPtr()->setReferenceManager(ros_reference_manager_ptr);
 
   // State Estimate
-  state_estimate_ = std::make_shared<FromTopicStateEstimate>(nh, legged_interface_->getPinocchioInterface(),
-                                                             legged_interface_->getCentroidalModelInfo());
+  state_estimate_ =
+      std::make_shared<FromTopicStateEstimate>(nh, legged_interface_->getPinocchioInterface(),
+                                               legged_interface_->getCentroidalModelInfo(), hybrid_joint_handles_);
 
   // Visualization
   CentroidalModelPinocchioMapping pinocchio_mapping(legged_interface_->getCentroidalModelInfo());

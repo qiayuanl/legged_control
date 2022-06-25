@@ -8,6 +8,7 @@
 #include <realtime_tools/realtime_publisher.h>
 #include <realtime_tools/realtime_buffer.h>
 #include <hardware_interface/imu_sensor_interface.h>
+#include <quad_common/hardware_interface/hybrid_joint_interface.h>
 
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
@@ -20,7 +21,8 @@ class StateEstimateBase
 {
 public:
   StateEstimateBase(ros::NodeHandle& nh, const PinocchioInterface& pinocchio_interface,
-                    const CentroidalModelInfo& centroidal_model_info);
+                    const CentroidalModelInfo& centroidal_model_info,
+                    const std::vector<HybridJointHandle>& hybrid_joint_handles);
   virtual ~StateEstimateBase(){};
   virtual SystemObservation update(ros::Time time) = 0;
   virtual void update(ocs2::SystemObservation& state, ros::Time time)
@@ -31,6 +33,7 @@ protected:
   PinocchioInterface pinocchio_interface_;
   const CentroidalModelInfo& centroidal_model_info_;
   CentroidalModelRbdConversions centroidal_conversions_;
+  const std::vector<HybridJointHandle>& hybrid_joint_handles_;
 
 private:
   std::shared_ptr<realtime_tools::RealtimePublisher<nav_msgs::Odometry>> odom_pub_;
@@ -41,7 +44,8 @@ class FromTopicStateEstimate : public StateEstimateBase
 {
 public:
   FromTopicStateEstimate(ros::NodeHandle& nh, const PinocchioInterface& pinocchio_interface,
-                         const CentroidalModelInfo& centroidal_model_info);
+                         const CentroidalModelInfo& centroidal_model_info,
+                         const std::vector<HybridJointHandle>& hybrid_joint_handles);
   ~FromTopicStateEstimate() override{};
 
   ocs2::SystemObservation update(ros::Time time) override;

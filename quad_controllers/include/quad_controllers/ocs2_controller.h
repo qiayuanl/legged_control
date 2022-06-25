@@ -6,7 +6,6 @@
 #include "quad_controllers/state_estimate.h"
 
 #include <controller_interface/multi_interface_controller.h>
-#include <quad_common/hardware_interface/hybrid_joint_interface.h>
 #include <quad_common/hardware_interface/contact_sensor_interface.h>
 #include <hardware_interface/imu_sensor_interface.h>
 
@@ -26,7 +25,7 @@ class Ocs2Controller
 {
 public:
   Ocs2Controller() = default;
-  ~Ocs2Controller();
+  ~Ocs2Controller() override;
   bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& controller_nh) override;
   void update(const ros::Time& time, const ros::Duration& period) override;
   void starting(const ros::Time& time) override
@@ -45,6 +44,8 @@ protected:
   std::shared_ptr<StateEstimateBase> state_estimate_;
   std::shared_ptr<LeggedRobotVisualizer> visualizer_;
   SystemObservation current_observation_;
+
+  std::vector<HybridJointHandle> hybrid_joint_handles_;
 
 private:
   std::thread mpc_thread_;
