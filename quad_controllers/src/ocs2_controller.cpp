@@ -1,6 +1,12 @@
 //
 // Created by qiayuan on 2022/6/24.
 //
+
+#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
+
+#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/jacobian.hpp>
+
 #include "quad_controllers/ocs2_controller.h"
 
 #include <pluginlib/class_list_macros.hpp>
@@ -8,8 +14,8 @@
 #include <ocs2_core/thread_support/SetThreadPriority.h>
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
+#include <ocs2_centroidal_model/AccessHelperFunctions.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
-#include <ocs2_legged_robot/common/ModelSettings.h>
 #include <ocs2_legged_robot_ros/gait/GaitReceiver.h>
 
 namespace quad_ros
@@ -126,6 +132,29 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
                                    // evaluated at.
   mpc_mrt_interface_->evaluatePolicy(current_observation_.time, current_observation_.state, optimized_state,
                                      optimized_input, planned_mode);
+
+  // Set joint command
+  // TODO: Whole Body Control
+  std::vector<std::string> contact_name{ "LF_FOOT", "LH_FOOT", "RF_FOOT", "RH_FOOT" };
+
+  for (size_t i = 0; i < contact_name.size(); i++)
+  {
+    vector_t foot_force =
+        centroidal_model::getContactForces(optimized_input, i, legged_interface_->getCentroidalModelInfo());
+    current_observation_.input.segment<3>(i * 3) = foot_force;
+
+    matrix_t jac = matrix_t::Zero(6, legged_interface_->getCentroidalModelInfo().generalizedCoordinatesNum);
+    pinocchio::getFrameJacobian(legged_interface_->getPinocchioInterface().getModel(),
+                                legged_interface_->getPinocchioInterface().getData(),
+                                legged_interface_->getPinocchioInterface().getModel().getFrameId(contact_name[i]),
+                                pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, jac);
+    Eigen::Matrix<double, 6, 1> wrench;
+    wrench.setZero();
+    wrench.head(3) = -foot_force;
+    Eigen::Matrix<double, 18, 1> tau = jac.transpose() * wrench;
+    for (int j = 0; j < 3; ++j)
+      hybrid_joint_handles_[3 * i + j].setFeedforward(tau(6 + i * 3 + j));
+  }
 
   // Visualization
   visualizer_->update(current_observation_, mpc_mrt_interface_->getPolicy(), mpc_mrt_interface_->getCommand());
