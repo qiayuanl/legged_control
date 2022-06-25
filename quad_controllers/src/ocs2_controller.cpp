@@ -37,6 +37,10 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
   mpc_->getSolverPtr()->addSynchronizedModule(gait_receiver_ptr);
   mpc_->getSolverPtr()->setReferenceManager(ros_reference_manager_ptr);
 
+  // State Estimate
+  state_estimate_ = std::make_shared<FromTopicStateEstimate>(nh, legged_interface_->getPinocchioInterface(),
+                                                             legged_interface_->getCentroidalModelInfo());
+
   // Visualization
   CentroidalModelPinocchioMapping pinocchio_mapping(legged_interface_->getCentroidalModelInfo());
   PinocchioEndEffectorKinematics ee_kinematics(legged_interface_->getPinocchioInterface(), pinocchio_mapping,
@@ -49,10 +53,12 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
   mpc_mrt_interface_->initRollout(&legged_interface_->getRollout());
 
   // Initial state
-  ocs2::SystemObservation init_observation;
+  SystemObservation init_observation;
   init_observation.state = legged_interface_->getInitialState();
   init_observation.input = vector_t::Zero(legged_interface_->getCentroidalModelInfo().inputDim);
   init_observation.mode = ModeNumber::STANCE;
+  current_observation_ = init_observation;
+
   // Initial command
   TargetTrajectories init_target_trajectories({ 0.0 }, { init_observation.state }, { init_observation.input });
 
@@ -94,6 +100,26 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
 
 void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
 {
+  // State Estimate
+  current_observation_.time = current_observation_.time + period.toSec();
+  current_observation_.state = state_estimate_->update(time).state;
+
+  // Update the current state of the system
+  mpc_mrt_interface_->setCurrentObservation(current_observation_);
+
+  // Load the latest MPC policy
+  mpc_mrt_interface_->updatePolicy();
+
+  // Evaluate the current policy
+  ocs2::vector_t optimized_state;  // Evaluation of the optimized state trajectory.
+  ocs2::vector_t optimized_input;  // Evaluation of the optimized input trajectory.
+  size_t planned_mode;             // The mode that is active at the time the policy is
+                                   // evaluated at.
+  mpc_mrt_interface_->evaluatePolicy(current_observation_.time, current_observation_.state, optimized_state,
+                                     optimized_input, planned_mode);
+
+  // Visualization
+  visualizer_->update(current_observation_, mpc_mrt_interface_->getPolicy(), mpc_mrt_interface_->getCommand());
 }
 
 Ocs2Controller::~Ocs2Controller()

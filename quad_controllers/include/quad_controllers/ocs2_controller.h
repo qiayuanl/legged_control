@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include "quad_controllers/state_estimate.h"
+
 #include <controller_interface/multi_interface_controller.h>
 #include <quad_common/hardware_interface/hybrid_joint_interface.h>
 #include <quad_common/hardware_interface/contact_sensor_interface.h>
@@ -40,7 +42,9 @@ protected:
   std::shared_ptr<LeggedRobotInterface> legged_interface_;
   std::shared_ptr<MultipleShootingMpc> mpc_;
   std::shared_ptr<MPC_MRT_Interface> mpc_mrt_interface_;
+  std::shared_ptr<StateEstimateBase> state_estimate_;
   std::shared_ptr<LeggedRobotVisualizer> visualizer_;
+  SystemObservation current_observation_;
 
 private:
   std::thread mpc_thread_;

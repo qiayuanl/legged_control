@@ -21,7 +21,6 @@ find_package(catkin REQUIRED
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(pinocchio REQUIRED pinocchio)
 
-
 catkin_package(
         INCLUDE_DIRS
         include
@@ -51,6 +50,7 @@ link_directories(
 ## Declare a cpp library
 add_library(${PROJECT_NAME}
         src/ocs2_controller.cpp
+        src/state_estimate.cpp
         )
 
 target_link_libraries(${PROJECT_NAME}
