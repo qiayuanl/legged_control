@@ -8,8 +8,10 @@
 #include <quad_common/hardware_interface/contact_sensor_interface.h>
 #include <hardware_interface/imu_sensor_interface.h>
 
-#include <ocs2_legged_robot/LeggedRobotInterface.h>
 #include <ocs2_sqp/MultipleShootingMpc.h>
+#include <ocs2_mpc/MPC_MRT_Interface.h>
+#include <ocs2_legged_robot/LeggedRobotInterface.h>
+#include <ocs2_legged_robot_ros/visualization/LeggedRobotVisualizer.h>
 
 namespace quad_ros
 {
@@ -22,12 +24,27 @@ class Ocs2Controller
 {
 public:
   Ocs2Controller() = default;
+  ~Ocs2Controller();
   bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& controller_nh) override;
   void update(const ros::Time& time, const ros::Duration& period) override;
+  void starting(const ros::Time& time) override
+  {
+    mpc_running_ = true;
+  }
+  void stopping(const ros::Time& time) override
+  {
+    mpc_running_ = false;
+  }
 
 protected:
   std::shared_ptr<LeggedRobotInterface> legged_interface_;
   std::shared_ptr<MultipleShootingMpc> mpc_;
+  std::shared_ptr<MPC_MRT_Interface> mpc_mrt_interface_;
+  std::shared_ptr<LeggedRobotVisualizer> visualizer_;
+
+private:
+  std::thread mpc_thread_;
+  std::atomic_bool controller_running_, mpc_running_{};
 };
 
 }  // namespace quad_ros

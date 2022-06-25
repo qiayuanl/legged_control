@@ -12,6 +12,7 @@
     <!-- depend: build, export, and execution dependency -->
     <depend>roscpp</depend>
     <depend>quad_common</depend>
+    <depend>controller_interface</depend>
     <depend>ocs2_legged_robot_ros</depend>
 
     <exec_depend>controller_manager</exec_depend>
