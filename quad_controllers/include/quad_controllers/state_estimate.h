@@ -20,7 +20,7 @@ using namespace ocs2;
 class StateEstimateBase
 {
 public:
-  StateEstimateBase(ros::NodeHandle& nh, const PinocchioInterface& pinocchio_interface,
+  StateEstimateBase(ros::NodeHandle& nh, PinocchioInterface& pinocchio_interface,
                     const CentroidalModelInfo& centroidal_model_info,
                     const std::vector<HybridJointHandle>& hybrid_joint_handles);
   virtual ~StateEstimateBase(){};
@@ -30,7 +30,7 @@ public:
   }
 
 protected:
-  PinocchioInterface pinocchio_interface_;
+  PinocchioInterface& pinocchio_interface_;
   const CentroidalModelInfo& centroidal_model_info_;
   CentroidalModelRbdConversions centroidal_conversions_;
   const std::vector<HybridJointHandle>& hybrid_joint_handles_;
@@ -43,7 +43,7 @@ private:
 class FromTopicStateEstimate : public StateEstimateBase
 {
 public:
-  FromTopicStateEstimate(ros::NodeHandle& nh, const PinocchioInterface& pinocchio_interface,
+  FromTopicStateEstimate(ros::NodeHandle& nh, PinocchioInterface& pinocchio_interface,
                          const CentroidalModelInfo& centroidal_model_info,
                          const std::vector<HybridJointHandle>& hybrid_joint_handles);
   ~FromTopicStateEstimate() override{};

@@ -9,7 +9,7 @@
 
 namespace quad_ros
 {
-StateEstimateBase::StateEstimateBase(ros::NodeHandle& nh, const PinocchioInterface& pinocchio_interface,
+StateEstimateBase::StateEstimateBase(ros::NodeHandle& nh, PinocchioInterface& pinocchio_interface,
                                      const CentroidalModelInfo& centroidal_model_info,
                                      const std::vector<HybridJointHandle>& hybrid_joint_handles)
   : pinocchio_interface_(pinocchio_interface)
@@ -20,7 +20,7 @@ StateEstimateBase::StateEstimateBase(ros::NodeHandle& nh, const PinocchioInterfa
   odom_pub_ = std::make_shared<realtime_tools::RealtimePublisher<nav_msgs::Odometry>>(nh, "/odom", 100);
 }
 
-FromTopicStateEstimate::FromTopicStateEstimate(ros::NodeHandle& nh, const PinocchioInterface& pinocchio_interface,
+FromTopicStateEstimate::FromTopicStateEstimate(ros::NodeHandle& nh, PinocchioInterface& pinocchio_interface,
                                                const CentroidalModelInfo& centroidal_model_info,
                                                const std::vector<HybridJointHandle>& hybrid_joint_handles_)
   : StateEstimateBase(nh, pinocchio_interface, centroidal_model_info, hybrid_joint_handles_)
@@ -44,7 +44,7 @@ SystemObservation FromTopicStateEstimate::update(ros::Time time)
   vector_t rbd_state(2 * centroidal_model_info_.generalizedCoordinatesNum);
   vector_t zyx = quatToZyx(quat);
   vector_t zyx_dot(3);
-  zyx_dot << odom.twist.twist.linear.z, odom.twist.twist.linear.y, odom.twist.twist.angular.x;
+  zyx_dot << odom.twist.twist.angular.z, odom.twist.twist.angular.y, odom.twist.twist.angular.x;
   rbd_state.setZero();
   rbd_state.segment<3>(0) = zyx;
   rbd_state.segment<3>(3) << odom.pose.pose.position.x, odom.pose.pose.position.y, odom.pose.pose.position.z;
