@@ -37,22 +37,19 @@ SystemObservation FromTopicStateEstimate::update(ros::Time time)
 {
   ocs2::SystemObservation observation;
   nav_msgs::Odometry odom = *buffer_.readFromRT();
-  Eigen::Quaternion<double> quat(odom.pose.pose.orientation.w, odom.pose.pose.orientation.x,
-                                 odom.pose.pose.orientation.y, odom.pose.pose.orientation.z);
+  Eigen::Quaternion<scalar_t> quat(odom.pose.pose.orientation.w, odom.pose.pose.orientation.x,
+                                   odom.pose.pose.orientation.y, odom.pose.pose.orientation.z);
   observation.time = time.toSec();
   observation.state.setZero();
   vector_t rbd_state(2 * centroidal_model_info_.generalizedCoordinatesNum);
   vector_t zyx = quatToZyx(quat);
-  vector_t zyx_dot(3);
-  zyx_dot << odom.twist.twist.angular.z, odom.twist.twist.angular.y, odom.twist.twist.angular.x;
-  rbd_state.setZero();
   rbd_state.segment<3>(0) = zyx;
   rbd_state.segment<3>(3) << odom.pose.pose.position.x, odom.pose.pose.position.y, odom.pose.pose.position.z;
-  rbd_state.segment<3>(centroidal_model_info_.generalizedCoordinatesNum) =
-      getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(zyx, zyx_dot);
+  rbd_state.segment<3>(centroidal_model_info_.generalizedCoordinatesNum) << odom.twist.twist.angular.x,
+      odom.twist.twist.angular.y, odom.twist.twist.angular.z;
   rbd_state.segment<3>(centroidal_model_info_.generalizedCoordinatesNum + 3) << odom.twist.twist.linear.x,
       odom.twist.twist.linear.y, odom.twist.twist.linear.z;
-  for (int i = 0; i < hybrid_joint_handles_.size(); ++i)
+  for (size_t i = 0; i < hybrid_joint_handles_.size(); ++i)
   {
     rbd_state(6 + i) = hybrid_joint_handles_[i].getPosition();
     rbd_state(centroidal_model_info_.generalizedCoordinatesNum + 6 + i) = hybrid_joint_handles_[i].getVelocity();
