@@ -43,6 +43,7 @@ protected:
   std::shared_ptr<MPC_MRT_Interface> mpc_mrt_interface_;
   std::shared_ptr<StateEstimateBase> state_estimate_;
   std::shared_ptr<LeggedRobotVisualizer> visualizer_;
+  ros::Publisher observation_publisher_;
   SystemObservation current_observation_;
 
   std::vector<HybridJointHandle> hybrid_joint_handles_;

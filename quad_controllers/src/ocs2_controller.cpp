@@ -17,6 +17,9 @@
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_legged_robot_ros/gait/GaitReceiver.h>
+#include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
+#include <ocs2_ros_interfaces/common/RosMsgConversions.h>
+#include <ocs2_msgs/mpc_observation.h>
 
 namespace quad_ros
 {
@@ -50,6 +53,7 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
   ros_reference_manager_ptr->subscribe(nh);
   mpc_->getSolverPtr()->addSynchronizedModule(gait_receiver_ptr);
   mpc_->getSolverPtr()->setReferenceManager(ros_reference_manager_ptr);
+  observation_publisher_ = nh.advertise<ocs2_msgs::mpc_observation>(robot_name + "_mpc_observation", 1);
 
   // State Estimate
   state_estimate_ =
@@ -158,6 +162,9 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
 
   // Visualization
   visualizer_->update(current_observation_, mpc_mrt_interface_->getPolicy(), mpc_mrt_interface_->getCommand());
+
+  // Publish the observation. Only needed for the command interface
+  observation_publisher_.publish(ocs2::ros_msg_conversions::createObservationMsg(current_observation_));
 }
 
 Ocs2Controller::~Ocs2Controller()
