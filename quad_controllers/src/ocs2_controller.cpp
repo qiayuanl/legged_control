@@ -4,7 +4,6 @@
 
 #include <pinocchio/fwd.hpp>  // forward declarations must be included first.
 
-#include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/jacobian.hpp>
 
 #include "quad_controllers/ocs2_controller.h"
@@ -24,12 +23,6 @@ namespace quad_ros
 {
 bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& controller_nh)
 {
-  HybridJointInterface* hybrid_joint_interface = robot_hw->get<HybridJointInterface>();
-  std::vector<std::string> joint_names{ "LF_HAA", "LF_HFE", "LF_KFE", "LH_HAA", "LH_HFE", "LH_KFE",
-                                        "RF_HAA", "RF_HFE", "RF_KFE", "RH_HAA", "RH_HFE", "RH_KFE" };
-  for (const auto& joint_name : joint_names)
-    hybrid_joint_handles_.push_back(hybrid_joint_interface->getHandle(joint_name));
-
   // Initialize OCS2
   std::string task_file, urdf_file, reference_file;
   controller_nh.getParam("/task_file", task_file);
@@ -41,6 +34,9 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
   mpc_ = std::make_shared<MultipleShootingMpc>(legged_interface_->mpcSettings(), legged_interface_->sqpSettings(),
                                                legged_interface_->getOptimalControlProblem(),
                                                legged_interface_->getInitializer());
+  rbd_conversions_ = std::make_shared<CentroidalModelRbdConversions>(legged_interface_->getPinocchioInterface(),
+                                                                     legged_interface_->getCentroidalModelInfo());
+
   const std::string robot_name = "legged_robot";
   ros::NodeHandle nh;
   // Gait receiver
@@ -53,11 +49,6 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
   mpc_->getSolverPtr()->addSynchronizedModule(gait_receiver_ptr);
   mpc_->getSolverPtr()->setReferenceManager(ros_reference_manager_ptr);
   observation_publisher_ = nh.advertise<ocs2_msgs::mpc_observation>(robot_name + "_mpc_observation", 1);
-
-  // State Estimate
-  state_estimate_ =
-      std::make_shared<FromTopicStateEstimate>(nh, legged_interface_->getPinocchioInterface(),
-                                               legged_interface_->getCentroidalModelInfo(), hybrid_joint_handles_);
 
   // Visualization
   CentroidalModelPinocchioMapping pinocchio_mapping(legged_interface_->getCentroidalModelInfo());
@@ -92,6 +83,20 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
   });
   ocs2::setThreadPriority(legged_interface_->ddpSettings().threadPriority_, mpc_thread_);
 
+  HybridJointInterface* hybrid_joint_interface = robot_hw->get<HybridJointInterface>();
+  std::vector<std::string> joint_names{ "LF_HAA", "LF_HFE", "LF_KFE", "LH_HAA", "LH_HFE", "LH_KFE",
+                                        "RF_HAA", "RF_HFE", "RF_KFE", "RH_HAA", "RH_HFE", "RH_KFE" };
+  for (const auto& joint_name : joint_names)
+    hybrid_joint_handles_.push_back(hybrid_joint_interface->getHandle(joint_name));
+
+  ContactSensorInterface* contact_interface = robot_hw->get<ContactSensorInterface>();
+  std::vector<ContactSensorHandle> contact_handles;
+  for (auto& name : legged_interface_->modelSettings().contactNames3DoF)
+    contact_handles.push_back(contact_interface->getHandle(name));
+  state_estimate_ = std::make_shared<KalmanFilterEstimate>(
+      nh, *legged_interface_, hybrid_joint_handles_, contact_handles,
+      robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu"));
+
   return true;
 }
 
@@ -100,7 +105,7 @@ void Ocs2Controller::starting(const ros::Time& time)
   // Initial state
   current_observation_.mode = ModeNumber::STANCE;
   current_observation_.time = time.toSec();
-  current_observation_.state = state_estimate_->update();
+  current_observation_.state = rbd_conversions_->computeCentroidalStateFromRbdModel(state_estimate_->update());
   current_observation_.input.setZero(legged_interface_->getCentroidalModelInfo().inputDim);
 
   TargetTrajectories target_trajectories({ current_observation_.time }, { current_observation_.state },
@@ -134,15 +139,12 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
 
   // State Estimate
   current_observation_.time = time.toSec();
-  current_observation_.state = state_estimate_->update();
+  current_observation_.state = rbd_conversions_->computeCentroidalStateFromRbdModel(state_estimate_->update());
 
   // Update the current state of the system
   mpc_mrt_interface_->setCurrentObservation(current_observation_);
 
   // Load the latest MPC policy
-  //  if (!mpc_mrt_interface_->updatePolicy())
-  //    return;
-  //  ROS_INFO_STREAM(time);
   mpc_mrt_interface_->updatePolicy();
 
   // Evaluate the current policy
@@ -159,10 +161,7 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
     current_observation_.input.segment<3>(i * 3) =
         centroidal_model::getContactForces(optimized_input, i, legged_interface_->getCentroidalModelInfo());
 
-  CentroidalModelRbdConversions rbd_conversions(legged_interface_->getPinocchioInterface(),
-                                                legged_interface_->getCentroidalModelInfo());
-
-  vector_t torque = rbd_conversions.computeRbdTorqueFromCentroidalModel(
+  vector_t torque = rbd_conversions_->computeRbdTorqueFromCentroidalModel(
       optimized_state, optimized_input, vector_t::Zero(legged_interface_->getCentroidalModelInfo().actuatedDofNum));
   vector_t pos_des = centroidal_model::getJointAngles(optimized_state, legged_interface_->getCentroidalModelInfo());
   vector_t vel_des = centroidal_model::getJointVelocities(optimized_input, legged_interface_->getCentroidalModelInfo());
@@ -170,7 +169,6 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
   for (size_t j = 0; j < legged_interface_->getCentroidalModelInfo().actuatedDofNum; ++j)
     if (std::abs(torque(6 + j)) < 100)
       hybrid_joint_handles_[j].setCommand(pos_des(j), vel_des(j), 5, 1, torque(6 + j));
-  //      hybrid_joint_handles_[j].setFeedforward(torque(6 + j));
 
   // Visualization
   visualizer_->update(current_observation_, mpc_mrt_interface_->getPolicy(), mpc_mrt_interface_->getCommand());

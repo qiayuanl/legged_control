@@ -9,28 +9,38 @@
 #include <realtime_tools/realtime_buffer.h>
 #include <hardware_interface/imu_sensor_interface.h>
 #include <quad_common/hardware_interface/hybrid_joint_interface.h>
+#include <quad_common/hardware_interface/contact_sensor_interface.h>
 
-#include <ocs2_mpc/SystemObservation.h>
-#include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
+#include <ocs2_legged_robot/LeggedRobotInterface.h>
+#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
+#include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 
 namespace quad_ros
 {
 using namespace ocs2;
+using namespace legged_robot;
 
 class StateEstimateBase
 {
 public:
-  StateEstimateBase(ros::NodeHandle& nh, PinocchioInterface& pinocchio_interface,
-                    const CentroidalModelInfo& centroidal_model_info,
-                    const std::vector<HybridJointHandle>& hybrid_joint_handles);
-  virtual ~StateEstimateBase(){};
+  StateEstimateBase(ros::NodeHandle& nh, LeggedRobotInterface& legged_interface,
+                    const std::vector<HybridJointHandle>& hybrid_joint_handles,
+                    const std::vector<ContactSensorHandle>& contact_sensor_handles,
+                    const hardware_interface::ImuSensorHandle& imu_sensor_handle);
   virtual vector_t update() = 0;
 
 protected:
-  PinocchioInterface& pinocchio_interface_;
-  const CentroidalModelInfo& centroidal_model_info_;
-  CentroidalModelRbdConversions centroidal_conversions_;
-  const std::vector<HybridJointHandle>& hybrid_joint_handles_;
+  void updateAngular(const Eigen::Quaternion<scalar_t>& quat, const vector_t& angular_vel);
+  void updateLinear(const vector_t& pos, const vector_t& linear_vel);
+  void updateJointStates();
+
+  LeggedRobotInterface& legged_interface_;
+  size_t generalized_coordinates_num_;
+  vector_t rbd_state_;
+
+  const std::vector<HybridJointHandle> hybrid_joint_handles_;
+  const std::vector<ContactSensorHandle>& contact_sensor_handles_;
+  const hardware_interface::ImuSensorHandle imu_sensor_handle_;
 
 private:
   std::shared_ptr<realtime_tools::RealtimePublisher<nav_msgs::Odometry>> odom_pub_;
@@ -40,10 +50,10 @@ private:
 class FromTopicStateEstimate : public StateEstimateBase
 {
 public:
-  FromTopicStateEstimate(ros::NodeHandle& nh, PinocchioInterface& pinocchio_interface,
-                         const CentroidalModelInfo& centroidal_model_info,
-                         const std::vector<HybridJointHandle>& hybrid_joint_handles);
-  ~FromTopicStateEstimate() override{};
+  FromTopicStateEstimate(ros::NodeHandle& nh, LeggedRobotInterface& legged_interface,
+                         const std::vector<HybridJointHandle>& hybrid_joint_handles,
+                         const std::vector<ContactSensorHandle>& contact_sensor_handles,
+                         const hardware_interface::ImuSensorHandle& imu_sensor_handle);
 
   vector_t update() override;
 
@@ -52,6 +62,29 @@ private:
 
   ros::Subscriber sub_;
   realtime_tools::RealtimeBuffer<nav_msgs::Odometry> buffer_;
+};
+
+class KalmanFilterEstimate : public StateEstimateBase
+{
+public:
+  KalmanFilterEstimate(ros::NodeHandle& nh, LeggedRobotInterface& legged_interface,
+                       const std::vector<HybridJointHandle>& hybrid_joint_handles,
+                       const std::vector<ContactSensorHandle>& contact_sensor_handles,
+                       const hardware_interface::ImuSensorHandle& imu_sensor_handle);
+  vector_t update() override;
+
+private:
+  PinocchioEndEffectorKinematics pinocchio_ee_kine_;
+
+  Eigen::Matrix<scalar_t, 18, 1> x_hat_;
+  Eigen::Matrix<scalar_t, 12, 1> ps_;
+  Eigen::Matrix<scalar_t, 12, 1> vs_;
+  Eigen::Matrix<scalar_t, 18, 18> a_;
+  Eigen::Matrix<scalar_t, 18, 18> q_;
+  Eigen::Matrix<scalar_t, 18, 18> p_;
+  Eigen::Matrix<scalar_t, 28, 28> r_;
+  Eigen::Matrix<scalar_t, 18, 3> b_;
+  Eigen::Matrix<scalar_t, 28, 18> c_;
 };
 
 template <typename T>

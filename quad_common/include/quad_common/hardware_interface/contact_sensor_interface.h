@@ -26,10 +26,10 @@ public:
     return name_;
   }
 
-  const bool* getIsContact()
+  bool isContact() const
   {
     assert(is_contact_);
-    return is_contact_;
+    return *is_contact_;
   }
 
 private:
