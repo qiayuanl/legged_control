@@ -33,14 +33,11 @@ void FromTopicStateEstimate::callback(const nav_msgs::Odometry::ConstPtr& msg)
   buffer_.writeFromNonRT(*msg);
 }
 
-SystemObservation FromTopicStateEstimate::update(ros::Time time)
+vector_t FromTopicStateEstimate::update()
 {
-  ocs2::SystemObservation observation;
   nav_msgs::Odometry odom = *buffer_.readFromRT();
   Eigen::Quaternion<scalar_t> quat(odom.pose.pose.orientation.w, odom.pose.pose.orientation.x,
                                    odom.pose.pose.orientation.y, odom.pose.pose.orientation.z);
-  observation.time = time.toSec();
-  observation.state.setZero();
   vector_t rbd_state(2 * centroidal_model_info_.generalizedCoordinatesNum);
   vector_t zyx = quatToZyx(quat);
   rbd_state.segment<3>(0) = zyx;
@@ -54,9 +51,7 @@ SystemObservation FromTopicStateEstimate::update(ros::Time time)
     rbd_state(6 + i) = hybrid_joint_handles_[i].getPosition();
     rbd_state(centroidal_model_info_.generalizedCoordinatesNum + 6 + i) = hybrid_joint_handles_[i].getVelocity();
   }
-
-  observation.state = centroidal_conversions_.computeCentroidalStateFromRbdModel(rbd_state);
-  return observation;
+  return centroidal_conversions_.computeCentroidalStateFromRbdModel(rbd_state);
 }
 
 }  // namespace quad_ros

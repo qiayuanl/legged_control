@@ -24,10 +24,7 @@ public:
                     const CentroidalModelInfo& centroidal_model_info,
                     const std::vector<HybridJointHandle>& hybrid_joint_handles);
   virtual ~StateEstimateBase(){};
-  virtual SystemObservation update(ros::Time time) = 0;
-  virtual void update(ocs2::SystemObservation& state, ros::Time time)
-  {
-  }
+  virtual vector_t update() = 0;
 
 protected:
   PinocchioInterface& pinocchio_interface_;
@@ -48,7 +45,7 @@ public:
                          const std::vector<HybridJointHandle>& hybrid_joint_handles);
   ~FromTopicStateEstimate() override{};
 
-  ocs2::SystemObservation update(ros::Time time) override;
+  vector_t update() override;
 
 private:
   void callback(const nav_msgs::Odometry::ConstPtr& msg);

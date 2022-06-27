@@ -12,7 +12,6 @@
 #include <pluginlib/class_list_macros.hpp>
 #include <ocs2_core/thread_support/ExecuteAndSleep.h>
 #include <ocs2_core/thread_support/SetThreadPriority.h>
-#include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -71,13 +70,6 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
   mpc_mrt_interface_ = std::make_shared<MPC_MRT_Interface>(*mpc_);
   mpc_mrt_interface_->initRollout(&legged_interface_->getRollout());
 
-  // Initial state
-  SystemObservation init_observation;
-  init_observation.state = legged_interface_->getInitialState();
-  init_observation.input = vector_t::Zero(legged_interface_->getCentroidalModelInfo().inputDim);
-  init_observation.mode = ModeNumber::STANCE;
-  current_observation_ = init_observation;
-
   controller_running_ = true;
   mpc_thread_ = std::thread([&]() {
     while (controller_running_)
@@ -105,9 +97,14 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
 
 void Ocs2Controller::starting(const ros::Time& time)
 {
-  current_observation_.state = state_estimate_->update(time).state;
-  TargetTrajectories target_trajectories({ 0.0 }, { current_observation_.state },
-                                         { vector_t::Zero(legged_interface_->getCentroidalModelInfo().inputDim) });
+  // Initial state
+  current_observation_.mode = ModeNumber::STANCE;
+  current_observation_.time = time.toSec();
+  current_observation_.state = state_estimate_->update();
+  current_observation_.input.setZero(legged_interface_->getCentroidalModelInfo().inputDim);
+
+  TargetTrajectories target_trajectories({ current_observation_.time }, { current_observation_.state },
+                                         { current_observation_.input });
 
   // Set the first observation and command and wait for optimization to finish
   ROS_INFO_STREAM("Waiting for the initial policy ...");
@@ -125,14 +122,27 @@ void Ocs2Controller::starting(const ros::Time& time)
 
 void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
 {
+  // Simulation
+  //  mpc_mrt_interface_->setCurrentObservation(current_observation_);
+  //  mpc_mrt_interface_->updatePolicy();
+  //  const auto dt = period.toSec();
+  //  ocs2::SystemObservation next_observation;
+  //  next_observation.time = current_observation_.time + dt;
+  //  mpc_mrt_interface_->rolloutPolicy(current_observation_.time, current_observation_.state, dt, next_observation.state,
+  //                                    next_observation.input, next_observation.mode);
+  //  current_observation_ = next_observation;
+
   // State Estimate
-  current_observation_.time = current_observation_.time + period.toSec();
-  current_observation_.state = state_estimate_->update(time).state;
+  current_observation_.time = time.toSec();
+  current_observation_.state = state_estimate_->update();
 
   // Update the current state of the system
   mpc_mrt_interface_->setCurrentObservation(current_observation_);
 
   // Load the latest MPC policy
+  //  if (!mpc_mrt_interface_->updatePolicy())
+  //    return;
+  //  ROS_INFO_STREAM(time);
   mpc_mrt_interface_->updatePolicy();
 
   // Evaluate the current policy
@@ -142,29 +152,29 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
                                    // evaluated at.
   mpc_mrt_interface_->evaluatePolicy(current_observation_.time, current_observation_.state, optimized_state,
                                      optimized_input, planned_mode);
-
+  current_observation_.mode = planned_mode;
   // Set joint command
   // TODO: Whole Body Control
-  std::vector<std::string> contact_name{ "LF_FOOT", "LH_FOOT", "RF_FOOT", "RH_FOOT" };
-
-  for (size_t i = 0; i < contact_name.size(); i++)
-  {
-    vector_t foot_force =
+  for (size_t i = 0; i < legged_interface_->getCentroidalModelInfo().numThreeDofContacts; i++)
+    current_observation_.input.segment<3>(i * 3) =
         centroidal_model::getContactForces(optimized_input, i, legged_interface_->getCentroidalModelInfo());
-    current_observation_.input.segment<3>(i * 3) = foot_force;
 
-    matrix_t jac = matrix_t::Zero(6, legged_interface_->getCentroidalModelInfo().generalizedCoordinatesNum);
-    pinocchio::getFrameJacobian(legged_interface_->getPinocchioInterface().getModel(),
-                                legged_interface_->getPinocchioInterface().getData(),
-                                legged_interface_->getPinocchioInterface().getModel().getFrameId(contact_name[i]),
-                                pinocchio::ReferenceFrame::LOCAL_WORLD_ALIGNED, jac);
-    Eigen::Matrix<double, 6, 1> wrench;
-    wrench.setZero();
-    wrench.head(3) = -foot_force;
-    Eigen::Matrix<double, 18, 1> tau = jac.transpose() * wrench;
-    for (int j = 0; j < 3; ++j)
-      hybrid_joint_handles_[3 * i + j].setFeedforward(tau(6 + i * 3 + j));
-  }
+  CentroidalModelRbdConversions rbd_conversions(legged_interface_->getPinocchioInterface(),
+                                                legged_interface_->getCentroidalModelInfo());
+
+  vector_t kp = 150. * vector_t::Ones(legged_interface_->getCentroidalModelInfo().generalizedCoordinatesNum);
+  vector_t kd = 25 * vector_t::Ones(legged_interface_->getCentroidalModelInfo().actuatedDofNum);
+  kp.segment<6>(0) = vector_t::Zero(6);
+  kd.segment<6>(0) = vector_t::Zero(6);
+
+  vector_t torque = rbd_conversions.computeRbdTorqueFromCentroidalModelPD(
+      current_observation_.state, optimized_input,
+      vector_t::Zero(legged_interface_->getCentroidalModelInfo().actuatedDofNum),
+      rbd_conversions.computeRbdStateFromCentroidalModel(current_observation_.state, optimized_input), kp, kd);
+
+  for (size_t j = 0; j < legged_interface_->getCentroidalModelInfo().actuatedDofNum; ++j)
+    if (std::abs(torque(6 + j)) < 100)
+      hybrid_joint_handles_[j].setFeedforward(torque(6 + j));
 
   // Visualization
   visualizer_->update(current_observation_, mpc_mrt_interface_->getPolicy(), mpc_mrt_interface_->getCommand());
