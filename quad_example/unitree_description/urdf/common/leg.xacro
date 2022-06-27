@@ -8,7 +8,7 @@
 
         <joint name="${prefix}_HAA" type="revolute">
             <xacro:insert_block name="origin"/>
-            <parent link="base_link"/>
+            <parent link="base"/>
             <child link="${prefix}_hip"/>
             <axis xyz="1 0 0"/>
             <dynamics damping="${damping}" friction="${friction}"/>

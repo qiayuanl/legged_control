@@ -35,7 +35,20 @@
   <gazebo>
     <plugin filename="libquad_hw_sim.so" name="gazebo_ros_control">
       <robotNamespace>/</robotNamespace>
+      <robotParam>legged_robot_description</robotParam>
       <robotSimType>quad_gazebo/QuadHWSim</robotSimType>
+    </plugin>
+  </gazebo>
+  <gazebo>
+    <plugin filename="libgazebo_ros_p3d.so" name="p3d_base_controller">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>1000.0</updateRate>
+      <bodyName>base</bodyName>
+      <topicName>ground_truth/state</topicName>
+      <gaussianNoise>0</gaussianNoise>
+      <frameName>world</frameName>
+      <xyzOffsets>0 0 0</xyzOffsets>
+      <rpyOffsets>0 0 0</rpyOffsets>
     </plugin>
   </gazebo>
   <gazebo reference="base_link">
@@ -156,7 +169,7 @@
     <kp value="1000000.0"/>
     <kd value="1.0"/>
   </gazebo>
-  <link name="base_link">
+  <link name="base">
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
@@ -178,7 +191,7 @@
   <!-- Imu is fixed to the base link -->
   <joint name="unitree_imu_joint" type="fixed">
     <origin rpy="0. 0. 0." xyz="0. 0. 0."/>
-    <parent link="base_link"/>
+    <parent link="base"/>
     <child link="unitree_imu"/>
   </joint>
   <!-- Imu link -->
@@ -206,7 +219,7 @@
   </gazebo>
   <joint name="RF_HAA" type="revolute">
     <origin rpy="0 0 0" xyz="0.1805 -0.047 0"/>
-    <parent link="base_link"/>
+    <parent link="base"/>
     <child link="RF_hip"/>
     <axis xyz="1 0 0"/>
     <dynamics damping="0" friction="0"/>
@@ -353,7 +366,7 @@
   </transmission>
   <joint name="LF_HAA" type="revolute">
     <origin rpy="0 0 0" xyz="0.1805 0.047 0"/>
-    <parent link="base_link"/>
+    <parent link="base"/>
     <child link="LF_hip"/>
     <axis xyz="1 0 0"/>
     <dynamics damping="0" friction="0"/>
@@ -500,7 +513,7 @@
   </transmission>
   <joint name="RH_HAA" type="revolute">
     <origin rpy="0 0 0" xyz="-0.1805 -0.047 0"/>
-    <parent link="base_link"/>
+    <parent link="base"/>
     <child link="RH_hip"/>
     <axis xyz="1 0 0"/>
     <dynamics damping="0" friction="0"/>
@@ -647,7 +660,7 @@
   </transmission>
   <joint name="LH_HAA" type="revolute">
     <origin rpy="0 0 0" xyz="-0.1805 0.047 0"/>
-    <parent link="base_link"/>
+    <parent link="base"/>
     <child link="LH_hip"/>
     <axis xyz="1 0 0"/>
     <dynamics damping="0" friction="0"/>
@@ -793,3 +806,4 @@
     </actuator>
   </transmission>
 </robot>
+

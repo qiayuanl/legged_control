@@ -11,16 +11,8 @@
 
     <xacro:include filename="$(find unitree_description)/urdf/$(arg robot_type)/const.xacro"/>
 
-    <xacro:if value="$(arg hung_up)">
-        <link name="world"/>
-        <joint name="base_static_joint" type="fixed">
-            <origin rpy="0 0 0" xyz="0 0 0"/>
-            <parent link="world"/>
-            <child link="base_link"/>
-        </joint>
-    </xacro:if>
 
-    <link name="base_link">
+    <link name="base">
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
@@ -43,7 +35,7 @@
         </inertial>
     </link>
 
-    <xacro:IMU connected_to="base_link" imu_name="unitree_imu" xyz="0. 0. 0." rpy="0. 0. 0."/>
+    <xacro:IMU connected_to="base" imu_name="unitree_imu" xyz="0. 0. 0." rpy="0. 0. 0."/>
 
     <xacro:leg prefix="RF" mirror="-1" mirror_dae="False" front_hind="1" front_hind_dae="True">
         <origin rpy="0 0 0" xyz="${leg_offset_x} ${-leg_offset_y} 0"/>

@@ -13,7 +13,7 @@
         <plugin name="p3d_base_controller" filename="libgazebo_ros_p3d.so">
             <alwaysOn>true</alwaysOn>
             <updateRate>1000.0</updateRate>
-            <bodyName>base_link</bodyName>
+            <bodyName>base</bodyName>
             <topicName>ground_truth/state</topicName>
             <gaussianNoise>0</gaussianNoise>
             <frameName>world</frameName>
