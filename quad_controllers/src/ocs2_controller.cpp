@@ -35,7 +35,7 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
   std::string task_file, urdf_file, reference_file;
   controller_nh.getParam("/task_file", task_file);
   controller_nh.getParam("/urdf_file", urdf_file);
-  controller_nh.getParam("/reference_file", reference_file);
+  controller_nh.getParam("/referenceFile", reference_file);
 
   // Robot interface
   legged_interface_ = std::make_shared<LeggedRobotInterface>(task_file, urdf_file, reference_file);
@@ -78,20 +78,6 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
   init_observation.mode = ModeNumber::STANCE;
   current_observation_ = init_observation;
 
-  // Initial command
-  TargetTrajectories init_target_trajectories({ 0.0 }, { init_observation.state }, { init_observation.input });
-
-  // Set the first observation and command and wait for optimization to finish
-  ROS_INFO_STREAM("Waiting for the initial policy ...");
-  mpc_mrt_interface_->setCurrentObservation(init_observation);
-  mpc_mrt_interface_->getReferenceManager().setTargetTrajectories(init_target_trajectories);
-  while (!mpc_mrt_interface_->initialPolicyReceived() && ros::ok() && ros::master::check())
-  {
-    mpc_mrt_interface_->advanceMpc();
-    ros::WallRate(legged_interface_->mpcSettings().mrtDesiredFrequency_).sleep();
-  }
-  ROS_INFO_STREAM("Initial policy has been received.");
-
   controller_running_ = true;
   mpc_thread_ = std::thread([&]() {
     while (controller_running_)
@@ -115,6 +101,26 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
   ocs2::setThreadPriority(legged_interface_->ddpSettings().threadPriority_, mpc_thread_);
 
   return true;
+}
+
+void Ocs2Controller::starting(const ros::Time& time)
+{
+  current_observation_.state = state_estimate_->update(time).state;
+  TargetTrajectories target_trajectories({ 0.0 }, { current_observation_.state },
+                                         { vector_t::Zero(legged_interface_->getCentroidalModelInfo().inputDim) });
+
+  // Set the first observation and command and wait for optimization to finish
+  ROS_INFO_STREAM("Waiting for the initial policy ...");
+  mpc_mrt_interface_->setCurrentObservation(current_observation_);
+  mpc_mrt_interface_->getReferenceManager().setTargetTrajectories(target_trajectories);
+  while (!mpc_mrt_interface_->initialPolicyReceived() && ros::ok() && ros::master::check())
+  {
+    mpc_mrt_interface_->advanceMpc();
+    ros::WallRate(legged_interface_->mpcSettings().mrtDesiredFrequency_).sleep();
+  }
+  ROS_INFO_STREAM("Initial policy has been received.");
+
+  mpc_running_ = true;
 }
 
 void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)

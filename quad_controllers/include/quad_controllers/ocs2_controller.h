@@ -28,10 +28,7 @@ public:
   ~Ocs2Controller() override;
   bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& controller_nh) override;
   void update(const ros::Time& time, const ros::Duration& period) override;
-  void starting(const ros::Time& time) override
-  {
-    mpc_running_ = true;
-  }
+  void starting(const ros::Time& time) override;
   void stopping(const ros::Time& time) override
   {
     mpc_running_ = false;
