@@ -48,8 +48,6 @@
 
 namespace quad_ros
 {
-const static std::string LEG_PREFIX[4] = { "RF", "LF", "RH", "LH" };
-
 struct HybridJointData
 {
   hardware_interface::JointHandle joint_;
@@ -84,6 +82,7 @@ public:
 
 private:
   void parseImu(XmlRpc::XmlRpcValue& imu_datas, const gazebo::physics::ModelPtr& parent_model);
+  void parseContacts(XmlRpc::XmlRpcValue& contact_datas);
 
   HybridJointInterface hybrid_joint_interface_;
   ContactSensorInterface contact_sensor_interface_;
@@ -94,8 +93,9 @@ private:
   std::list<HybridJointData> hybrid_joint_datas_;
   std::list<ImuData> imu_datas_;
   std::unordered_map<std::string, std::deque<HybridJointCommand> > cmd_buffer_;
+  std::unordered_map<std::string, bool> name2contact_;
+
   double delay_;
-  bool contact_state_[4];
 };
 
 }  // namespace quad_ros

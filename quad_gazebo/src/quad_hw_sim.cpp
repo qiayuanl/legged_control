@@ -66,10 +66,11 @@ bool QuadHWSim::initSim(const std::string& robot_namespace, ros::NodeHandle mode
     parseImu(xml_rpc_value, parent_model);
   if (!model_nh.getParam("gazebo/delay", delay_))
     delay_ = 0.;
+  if (!model_nh.getParam("gazebo/contacts", xml_rpc_value))
+    ROS_WARN("No contacts specified");
+  else
+    parseContacts(xml_rpc_value);
 
-  // Contact Sensor interface
-  contact_sensor_interface_.registerHandle(ContactSensorHandle("feet", contact_state_));
-  registerInterface(&contact_sensor_interface_);
   contact_manager_ = parent_model->GetWorld()->Physics()->GetContactManager();
   contact_manager_->SetNeverDropContacts(true);  // NOTE: If false, we need to select view->contacts in gazebo GUI to
                                                  // avoid returning nothing when calling ContactManager::GetContacts()
@@ -79,6 +80,7 @@ bool QuadHWSim::initSim(const std::string& robot_namespace, ros::NodeHandle mode
 void QuadHWSim::readSim(ros::Time time, ros::Duration period)
 {
   gazebo_ros_control::DefaultRobotHWSim::readSim(time, period);
+  // Imu Sensor
   for (auto& imu : imu_datas_)
   {
     // TODO(qiayuan) Add noise
@@ -99,23 +101,20 @@ void QuadHWSim::readSim(ros::Time time, ros::Duration period)
     imu.linear_acc[2] = accel.Z();
   }
 
-  for (bool& state : contact_state_)
-    state = false;
+  // Contact Sensor
+  for (auto& state : name2contact_)
+    state.second = false;
   for (const auto& contact : contact_manager_->GetContacts())
   {
     if (static_cast<uint32_t>(contact->time.sec) != time.sec ||
         static_cast<uint32_t>(contact->time.nsec) != (time - period).nsec)
       continue;
-    std::string link_name;
-    if (contact->collision1->GetLink()->GetName().find("FOOT") != std::string::npos)
-      link_name = contact->collision1->GetLink()->GetName();
-    else if (contact->collision2->GetLink()->GetName().find("FOOT") != std::string::npos)
-      link_name = contact->collision2->GetLink()->GetName();
-    else
-      continue;
-    for (int i = 0; i < 4; ++i)
-      if (link_name.find(LEG_PREFIX[i]) != std::string::npos)
-        contact_state_[i] = true;
+    std::string link_name = contact->collision1->GetLink()->GetName();
+    if (name2contact_.find(link_name) != name2contact_.end())
+      name2contact_[link_name] = true;
+    link_name = contact->collision2->GetLink()->GetName();
+    if (name2contact_.find(link_name) != name2contact_.end())
+      name2contact_[link_name] = true;
   }
 
   // Set cmd to zero to avoid crazy soft limit oscillation when not controller loaded
@@ -206,6 +205,18 @@ void QuadHWSim::parseImu(XmlRpc::XmlRpcValue& imu_datas, const gazebo::physics::
         hardware_interface::ImuSensorHandle(it->first, frame_id, imu_data.ori, imu_data.ori_cov, imu_data.angular_vel,
                                             imu_data.angular_vel_cov, imu_data.linear_acc, imu_data.linear_acc_cov));
   }
+}
+
+void QuadHWSim::parseContacts(XmlRpc::XmlRpcValue& contact_names)
+{
+  ROS_ASSERT(contact_names.getType() == XmlRpc::XmlRpcValue::TypeArray);
+  for (int i = 0; i < contact_names.size(); ++i)
+  {
+    std::string name = contact_names[i];
+    name2contact_.insert(std::make_pair(name, false));
+    contact_sensor_interface_.registerHandle(ContactSensorHandle(name, &name2contact_[name]));
+  }
+  registerInterface(&contact_sensor_interface_);
 }
 
 }  // namespace quad_ros
