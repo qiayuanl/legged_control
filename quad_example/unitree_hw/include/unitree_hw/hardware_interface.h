@@ -12,6 +12,8 @@
 
 namespace quad_ros
 {
+const std::vector<std::string> CONTACT_SENSOR_NAMES = { "RF_FOOT", "LF_FOOT", "RH_FOOT", "LH_FOOT" };
+
 struct UnitreeMotorData
 {
   double pos_, vel_, tau_;                   // state

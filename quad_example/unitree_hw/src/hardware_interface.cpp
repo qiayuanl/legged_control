@@ -56,10 +56,8 @@ void UnitreeHW::read(const ros::Time& time, const ros::Duration& period)
   imu_data_.linear_acc[1] = low_state_.imu.accelerometer[1];
   imu_data_.linear_acc[2] = low_state_.imu.accelerometer[2];
 
-  contact_state_[UNITREE_LEGGED_SDK::FR_] = low_state_.footForce[UNITREE_LEGGED_SDK::FR_] > contact_threshold_;
-  contact_state_[UNITREE_LEGGED_SDK::FL_] = low_state_.footForce[UNITREE_LEGGED_SDK::FL_] > contact_threshold_;
-  contact_state_[UNITREE_LEGGED_SDK::RR_] = low_state_.footForce[UNITREE_LEGGED_SDK::RR_] > contact_threshold_;
-  contact_state_[UNITREE_LEGGED_SDK::RL_] = low_state_.footForce[UNITREE_LEGGED_SDK::RL_] > contact_threshold_;
+  for (size_t i = 0; i < CONTACT_SENSOR_NAMES.size(); ++i)
+    contact_state_[i] = low_state_.footForce[i] > contact_threshold_;
 
   // Set feedforward and velocity cmd to zero to avoid for safety when not controller setCommand
   std::vector<std::string> names = hybrid_joint_interface_.getNames();
@@ -133,7 +131,8 @@ bool UnitreeHW::setupImu()
 bool UnitreeHW::setupContactSensor(ros::NodeHandle& nh)
 {
   nh.getParam("contact_threshold", contact_threshold_);
-  contact_sensor_interface_.registerHandle(ContactSensorHandle("feet", contact_state_));
+  for (size_t i = 0; i < CONTACT_SENSOR_NAMES.size(); ++i)
+    contact_sensor_interface_.registerHandle(ContactSensorHandle("name", &contact_state_[i]));
   return true;
 }
 
