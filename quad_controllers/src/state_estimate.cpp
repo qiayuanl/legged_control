@@ -188,7 +188,10 @@ vector_t KalmanFilterEstimate::update()
     r.block(r_index2, r_index2, 3, 3) = (is_contact ? 1. : high_suspect_number) * r.block(r_index2, r_index2, 3, 3);
     r(r_index3, r_index3) = (is_contact ? 1. : high_suspect_number) * r(r_index3, r_index3);
 
+    scalar_t foot_radius = 0.02;
     ps_.segment(3 * i, 3) = -1. * ee_pos[i];
+    ps_.segment(3 * i, 3)[2] += foot_radius;
+
     vs_.segment(3 * i, 3) << 0, 0, 0;
   }
   Eigen::Matrix<scalar_t, 3, 1> g(0, 0, -9.81);
@@ -196,8 +199,7 @@ vector_t KalmanFilterEstimate::update()
                                           imu_sensor_handle_.getLinearAcceleration()[1],
                                           imu_sensor_handle_.getLinearAcceleration()[2]);
   Eigen::Matrix<scalar_t, 3, 1> accel = getRotationMatrixFromZyxEulerAngles(quatToZyx(quat)) * imu_accel + g;
-  scalar_t foot_radius = 0.0265;
-  Eigen::Matrix<scalar_t, 4, 1> pzs = -foot_radius * Eigen::Matrix<scalar_t, 4, 1>::Ones();
+  Eigen::Matrix<scalar_t, 4, 1> pzs = Eigen::Matrix<scalar_t, 4, 1>::Zero();
 
   Eigen::Matrix<scalar_t, 28, 1> y;
   y << ps_, vs_, pzs;
