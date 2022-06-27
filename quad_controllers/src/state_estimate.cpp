@@ -191,7 +191,7 @@ vector_t KalmanFilterEstimate::update()
     scalar_t foot_radius = 0.02;
     ps_.segment(3 * i, 3) = -1. * ee_pos[i];
     ps_.segment(3 * i, 3)[2] += foot_radius;
-
+    // TODO: Add foot velocity
     vs_.segment(3 * i, 3) << 0, 0, 0;
   }
   Eigen::Matrix<scalar_t, 3, 1> g(0, 0, -9.81);
