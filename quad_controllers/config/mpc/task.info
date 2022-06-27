@@ -23,7 +23,7 @@ swing_trajectory_config
   touchDownVelocity            -0.4
   swingHeight                   0.1
   touchdownAfterHorizon         0.2
-  swingTimeScale                0.15
+  swingTimeScale                0.05
 }
 
 ; multiple_shooting settings
@@ -106,8 +106,8 @@ mpc
 
   debugPrint                      false
 
-  mpcDesiredFrequency             50  ; [Hz]
-  mrtDesiredFrequency             400 ; [Hz]
+  mpcDesiredFrequency             100  ; [Hz]
+  mrtDesiredFrequency             1000 ; [Hz] Useless
 }
 
 initialState
@@ -123,7 +123,7 @@ initialState
    ;; Base Pose: [position, orientation] ;;
    (6,0)  0.0     ; p_base_x
    (7,0)  0.0     ; p_base_y
-   (8,0)  0.36   ; p_base_z
+   (8,0)  0.36    ; p_base_z
    (9,0)  0.0     ; theta_base_z
    (10,0) 0.0     ; theta_base_y
    (11,0) 0.0     ; theta_base_x

@@ -162,19 +162,15 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
   CentroidalModelRbdConversions rbd_conversions(legged_interface_->getPinocchioInterface(),
                                                 legged_interface_->getCentroidalModelInfo());
 
-  vector_t kp = 150. * vector_t::Ones(legged_interface_->getCentroidalModelInfo().generalizedCoordinatesNum);
-  vector_t kd = 25 * vector_t::Ones(legged_interface_->getCentroidalModelInfo().actuatedDofNum);
-  kp.segment<6>(0) = vector_t::Zero(6);
-  kd.segment<6>(0) = vector_t::Zero(6);
-
-  vector_t torque = rbd_conversions.computeRbdTorqueFromCentroidalModelPD(
-      current_observation_.state, optimized_input,
-      vector_t::Zero(legged_interface_->getCentroidalModelInfo().actuatedDofNum),
-      rbd_conversions.computeRbdStateFromCentroidalModel(current_observation_.state, optimized_input), kp, kd);
+  vector_t torque = rbd_conversions.computeRbdTorqueFromCentroidalModel(
+      optimized_state, optimized_input, vector_t::Zero(legged_interface_->getCentroidalModelInfo().actuatedDofNum));
+  vector_t pos_des = centroidal_model::getJointAngles(optimized_state, legged_interface_->getCentroidalModelInfo());
+  vector_t vel_des = centroidal_model::getJointVelocities(optimized_input, legged_interface_->getCentroidalModelInfo());
 
   for (size_t j = 0; j < legged_interface_->getCentroidalModelInfo().actuatedDofNum; ++j)
     if (std::abs(torque(6 + j)) < 100)
-      hybrid_joint_handles_[j].setFeedforward(torque(6 + j));
+      hybrid_joint_handles_[j].setCommand(pos_des(j), vel_des(j), 5, 1, torque(6 + j));
+  //      hybrid_joint_handles_[j].setFeedforward(torque(6 + j));
 
   // Visualization
   visualizer_->update(current_observation_, mpc_mrt_interface_->getPolicy(), mpc_mrt_interface_->getCommand());
