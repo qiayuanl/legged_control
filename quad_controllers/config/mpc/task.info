@@ -23,7 +23,7 @@ swing_trajectory_config
   touchDownVelocity            -0.4
   swingHeight                   0.1
   touchdownAfterHorizon         0.2
-  swingTimeScale                0.05
+  swingTimeScale                0.15
 }
 
 ; multiple_shooting settings
@@ -100,7 +100,7 @@ rollout
 
 mpc
 {
-  timeHorizon                     1.0  ; [s]
+  timeHorizon                     2.0  ; [s]
   solutionTimeWindow              -1   ; maximum [s]
   coldStart                       false
 
