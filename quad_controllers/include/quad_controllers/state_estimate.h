@@ -39,7 +39,7 @@ protected:
   vector_t rbd_state_;
 
   const std::vector<HybridJointHandle> hybrid_joint_handles_;
-  const std::vector<ContactSensorHandle>& contact_sensor_handles_;
+  const std::vector<ContactSensorHandle> contact_sensor_handles_;
   const hardware_interface::ImuSensorHandle imu_sensor_handle_;
 
 private:

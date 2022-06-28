@@ -104,7 +104,7 @@ void Ocs2Controller::starting(const ros::Time& time)
 {
   // Initial state
   current_observation_.mode = ModeNumber::STANCE;
-  current_observation_.time = time.toSec();
+  current_observation_.time = 0;
   current_observation_.state = rbd_conversions_->computeCentroidalStateFromRbdModel(state_estimate_->update());
   current_observation_.input.setZero(legged_interface_->getCentroidalModelInfo().inputDim);
 
@@ -112,10 +112,10 @@ void Ocs2Controller::starting(const ros::Time& time)
                                          { current_observation_.input });
 
   // Set the first observation and command and wait for optimization to finish
-  ROS_INFO_STREAM("Waiting for the initial policy ...");
   mpc_mrt_interface_->setCurrentObservation(current_observation_);
   mpc_mrt_interface_->getReferenceManager().setTargetTrajectories(target_trajectories);
-  while (!mpc_mrt_interface_->initialPolicyReceived() && ros::ok() && ros::master::check())
+  ROS_INFO_STREAM("Waiting for the initial policy ...");
+  while (!mpc_mrt_interface_->initialPolicyReceived() && ros::ok())
   {
     mpc_mrt_interface_->advanceMpc();
     ros::WallRate(legged_interface_->mpcSettings().mrtDesiredFrequency_).sleep();
@@ -129,7 +129,7 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
 {
   // State Estimate
   scalar_t yaw_last = current_observation_.state(9);
-  current_observation_.time = time.toSec();
+  current_observation_.time += period.toSec();
   current_observation_.state = rbd_conversions_->computeCentroidalStateFromRbdModel(state_estimate_->update());
   current_observation_.state(9) = yaw_last + angles::shortest_angular_distance(yaw_last, current_observation_.state(9));
   // Update the current state of the system

@@ -132,7 +132,7 @@ bool UnitreeHW::setupContactSensor(ros::NodeHandle& nh)
 {
   nh.getParam("contact_threshold", contact_threshold_);
   for (size_t i = 0; i < CONTACT_SENSOR_NAMES.size(); ++i)
-    contact_sensor_interface_.registerHandle(ContactSensorHandle("name", &contact_state_[i]));
+    contact_sensor_interface_.registerHandle(ContactSensorHandle(CONTACT_SENSOR_NAMES[i], &contact_state_[i]));
   return true;
 }
 
