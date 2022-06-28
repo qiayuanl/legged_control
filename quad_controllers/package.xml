@@ -14,6 +14,7 @@
     <depend>quad_common</depend>
     <depend>controller_interface</depend>
     <depend>ocs2_legged_robot_ros</depend>
+    <depend>angles</depend>
 
     <exec_depend>controller_manager</exec_depend>
 

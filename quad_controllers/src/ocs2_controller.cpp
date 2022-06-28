@@ -3,7 +3,6 @@
 //
 
 #include <pinocchio/fwd.hpp>  // forward declarations must be included first.
-
 #include <pinocchio/algorithm/jacobian.hpp>
 
 #include "quad_controllers/ocs2_controller.h"
@@ -18,6 +17,7 @@
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_msgs/mpc_observation.h>
+#include <angles/angles.h>
 
 namespace quad_ros
 {
@@ -127,20 +127,11 @@ void Ocs2Controller::starting(const ros::Time& time)
 
 void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
 {
-  // Simulation
-  //  mpc_mrt_interface_->setCurrentObservation(current_observation_);
-  //  mpc_mrt_interface_->updatePolicy();
-  //  const auto dt = period.toSec();
-  //  ocs2::SystemObservation next_observation;
-  //  next_observation.time = current_observation_.time + dt;
-  //  mpc_mrt_interface_->rolloutPolicy(current_observation_.time, current_observation_.state, dt, next_observation.state,
-  //                                    next_observation.input, next_observation.mode);
-  //  current_observation_ = next_observation;
-
   // State Estimate
+  scalar_t yaw_last = current_observation_.state(9);
   current_observation_.time = time.toSec();
   current_observation_.state = rbd_conversions_->computeCentroidalStateFromRbdModel(state_estimate_->update());
-
+  current_observation_.state(9) = yaw_last + angles::shortest_angular_distance(yaw_last, current_observation_.state(9));
   // Update the current state of the system
   mpc_mrt_interface_->setCurrentObservation(current_observation_);
 

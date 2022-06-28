@@ -14,6 +14,7 @@ find_package(catkin REQUIRED
         quad_common
         controller_interface
         ocs2_legged_robot_ros
+        angles
         )
 
 find_package(PkgConfig REQUIRED)
@@ -29,6 +30,7 @@ catkin_package(
         quad_common
         controller_interface
         ocs2_legged_robot_ros
+        angles
 )
 
 ###########
