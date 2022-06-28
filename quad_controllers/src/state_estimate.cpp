@@ -144,23 +144,32 @@ vector_t KalmanFilterEstimate::update()
 
   auto& model = legged_interface_.getPinocchioInterface().getModel();
   auto& data = legged_interface_.getPinocchioInterface().getData();
-  vector_t state, q_pino(generalized_coordinates_num_), v_pino(generalized_coordinates_num_);
-  q_pino.setZero();
-  q_pino.segment<3>(3) = rbd_state_.head<3>();  // Only update orientation, let position in origin.
   size_t actuated_dof_num = legged_interface_.getCentroidalModelInfo().actuatedDofNum;
+
+  vector_t q_pino(generalized_coordinates_num_), v_pino(generalized_coordinates_num_);
+  q_pino.setZero();
+  q_pino.segment<3>(3) = rbd_state_.head<3>();  // Only set orientation, let position in origin.
   q_pino.tail(actuated_dof_num) = rbd_state_.segment(6, actuated_dof_num);
 
-  pinocchio::forwardKinematics(model, data, q_pino);
+  v_pino.setZero();
+  v_pino.segment<3>(3) =
+      rbd_state_.segment<3>(generalized_coordinates_num_);  // Only set angular velocity, let linear velocity be zero
+  v_pino.tail(actuated_dof_num) = rbd_state_.segment(6 + generalized_coordinates_num_, actuated_dof_num);
+
+  pinocchio::forwardKinematics(model, data, q_pino, v_pino);
   pinocchio::updateFramePlacements(legged_interface_.getPinocchioInterface().getModel(),
                                    legged_interface_.getPinocchioInterface().getData());
   pinocchio_ee_kine_.setPinocchioInterface(legged_interface_.getPinocchioInterface());
+
+  vector_t state, input;  // Useless here, just to make the code compile.
   const auto ee_pos = pinocchio_ee_kine_.getPosition(state);
+  const auto ee_vel = pinocchio_ee_kine_.getVelocity(state, input);
 
   scalar_t imu_process_noise_position = 0.02;
   scalar_t imu_process_noise_velocity = 0.02;
   scalar_t foot_process_noise_position = 0.002;
   scalar_t foot_sensor_noise_position = 0.001;
-  scalar_t foot_sensor_noise_velocity = 1000.;
+  scalar_t foot_sensor_noise_velocity = 1000.;  // TODO adjest the value
   scalar_t foot_height_sensor_noise = 0.001;
   Eigen::Matrix<scalar_t, 18, 18> q = Eigen::Matrix<scalar_t, 18, 18>::Identity();
   q.block(0, 0, 3, 3) = q_.block(0, 0, 3, 3) * imu_process_noise_position;
@@ -191,8 +200,7 @@ vector_t KalmanFilterEstimate::update()
     scalar_t foot_radius = 0.02;
     ps_.segment(3 * i, 3) = -1. * ee_pos[i];
     ps_.segment(3 * i, 3)[2] += foot_radius;
-    // TODO: Add foot velocity
-    vs_.segment(3 * i, 3) << 0, 0, 0;
+    vs_.segment(3 * i, 3) = -1. * ee_vel[i];
   }
   Eigen::Matrix<scalar_t, 3, 1> g(0, 0, -9.81);
   Eigen::Matrix<scalar_t, 3, 1> imu_accel(imu_sensor_handle_.getLinearAcceleration()[0],
