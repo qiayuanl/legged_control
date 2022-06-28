@@ -21,7 +21,7 @@ roslaunch unitree_description empty_world.launch
 3. Load the controller:
 ```
 mon launch quad_controllers load_controller.launch
-```  
+```
 4. You can start the controller using `rqt_controller_manager`
 ```
 sudo apt install ros-noetic-rqt-controller-manager
