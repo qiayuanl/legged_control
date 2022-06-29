@@ -66,12 +66,13 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 ## Testing ##
 #############
+if (CATKIN_ENABLE_TESTING)
+    catkin_add_gtest(${PROJECT_NAME}_test
+            test/ho_qp_test.cpp
+            )
 
-catkin_add_gtest(${PROJECT_NAME}_test
-        test/ho_qp_test.cpp
-        )
-
-target_link_libraries(${PROJECT_NAME}_test
-        ${PROJECT_NAME}
-        gtest_main
-        )
+    target_link_libraries(${PROJECT_NAME}_test
+            ${PROJECT_NAME}
+            gtest_main
+            )
+endif (CATKIN_ENABLE_TESTING)
