@@ -169,7 +169,7 @@ void HoQp::stackSlackSolutions()
     stacked_slack_vars_ = concatenateVectors(higher_problem_->getStackedSlackSolutions(), slack_vars_solutions_);
 }
 
-vector_t concatenateVectors(const vector_t& v1, const vector_t& v2)
+vector_t HoQp::concatenateVectors(const vector_t& v1, const vector_t& v2)
 {
   if (v1.cols() == 0)
     return v2;
