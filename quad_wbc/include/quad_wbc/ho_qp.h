@@ -70,7 +70,7 @@ private:
   vector_t stacked_slack_solutions_prev_, x_prev_;
   size_t num_prev_slack_vars_;
 
-  matrix_t h_, c_, d_, f_;
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> h_, c_, d_, f_;
   vector_t stacked_slack_vars_, slack_vars_solutions_, decision_vars_solutions_;
 
   // Convenience matrices that are used multiple times

@@ -7,6 +7,7 @@
 #include "quad_wbc/ho_qp.h"
 
 #include <utility>
+#include <qpOASES.hpp>
 
 namespace quad_ros
 {
@@ -67,10 +68,6 @@ void HoQp::formulateProblem()
   buildCVector();
   buildDMatrix();
   buildFVector();
-}
-
-void HoQp::solveProblem()
-{
 }
 
 void HoQp::buildHMatrix()
@@ -159,6 +156,31 @@ void HoQp::buildZMatrix()
   }
   else
     stacked_z_ = stacked_z_prev_;
+}
+
+void HoQp::solveProblem()
+{
+  auto qp_problem = qpOASES::QProblem(d_.cols(), d_.rows());
+  qpOASES::Options options;
+  options.setToMPC();
+  options.printLevel = qpOASES::PL_NONE;
+  qp_problem.setOptions(options);
+  int n_wsr = 10;
+  qpOASES::returnValue rvalue =
+      qp_problem.init(h_.data(), c_.data(), d_.data(), nullptr, nullptr, nullptr, f_.data(), n_wsr);
+
+  if (rvalue != qpOASES::SUCCESSFUL_RETURN)
+    return;
+
+  std::vector<qpOASES::real_t> qp_sol(d_.rows(), 0);
+  qp_problem.getPrimalSolution(qp_sol.data());
+
+  decision_vars_solutions_.resize(num_decision_vars_);
+  slack_vars_solutions_.resize(num_slack_vars_);
+  for (size_t i = 0; i < num_decision_vars_; ++i)
+    decision_vars_solutions_[i] = qp_sol[i];
+  for (size_t i = 0; i < num_slack_vars_; ++i)
+    slack_vars_solutions_[i] = qp_sol[i + num_decision_vars_];
 }
 
 void HoQp::stackSlackSolutions()
