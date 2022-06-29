@@ -18,6 +18,10 @@ HoQp::HoQp(const Task& task, HoQp::HoQpPtr higher_problem) : task_(task), higher
 {
   initVars();
   formulateProblem();
+  solveProblem();
+  // For next problem
+  buildZMatrix();
+  stackSlackSolutions();
 }
 
 void HoQp::initVars()
@@ -31,7 +35,7 @@ void HoQp::initVars()
   bool has_higher_problem = higher_problem_ != nullptr;
   if (has_higher_problem)
   {
-    stacked_z_prev_ = higher_problem_->getStackedHMatrix();
+    stacked_z_prev_ = higher_problem_->getStackedZMatrix();
     stacked_tasks_prev_ = higher_problem_->getStackedTasks();
     stacked_slack_solutions_prev_ = higher_problem_->getStackedSlackSolutions();
     x_prev_ = higher_problem_->getSolutions();
@@ -59,7 +63,6 @@ void HoQp::initVars()
 
 void HoQp::formulateProblem()
 {
-  buildZMatrix();
   buildHMatrix();
   buildCVector();
   buildDMatrix();
@@ -68,18 +71,6 @@ void HoQp::formulateProblem()
 
 void HoQp::solveProblem()
 {
-}
-
-void HoQp::buildZMatrix()
-{
-  if (has_eq_constraints_)
-  {
-    matrix_t a = task_.a_;
-    assert((a.rows() > 0) && (a.cols() > 0));
-    stacked_z_ = stacked_z_prev_ * a.fullPivLu().kernel();
-  }
-  else
-    stacked_z_ = stacked_z_prev_;
 }
 
 void HoQp::buildHMatrix()
@@ -156,6 +147,39 @@ void HoQp::buildFVector()
       f_minus_d_x_prev;
 
   f_ = f;
+}
+
+void HoQp::buildZMatrix()
+{
+  if (has_eq_constraints_)
+  {
+    matrix_t a = task_.a_;
+    assert((a.cols() > 0));
+    stacked_z_ = stacked_z_prev_ * a.fullPivLu().kernel();
+  }
+  else
+    stacked_z_ = stacked_z_prev_;
+}
+
+void HoQp::stackSlackSolutions()
+{
+  if (higher_problem_ != nullptr)
+    stacked_slack_vars_ = slack_vars_solutions_;
+  else
+    stacked_slack_vars_ = concatenateVectors(higher_problem_->getStackedSlackSolutions(), slack_vars_solutions_);
+}
+
+vector_t concatenateVectors(const vector_t& v1, const vector_t& v2)
+{
+  if (v1.cols() == 0)
+    return v2;
+  else if (v2.cols() == 0)
+    return v1;
+  assert(v1.cols() == v2.cols());
+  vector_t res(v1.rows() + v2.rows());
+  res << v1, v2;
+
+  return res;
 }
 
 }  // namespace quad_ros

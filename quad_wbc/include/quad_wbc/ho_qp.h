@@ -21,24 +21,25 @@ public:
   HoQp(const Task& task);
   HoQp(const Task&, HoQpPtr higher_problem);
 
-  matrix_t getStackedHMatrix() const
+  matrix_t getStackedZMatrix() const
   {
     return stacked_z_;
   }
 
   Task getStackedTasks() const
   {
-    return Task();
+    return stacked_tasks_;
   }
 
   vector_t getStackedSlackSolutions() const
   {
-    return vector_t::Zero(num_slack_vars_);
+    return stacked_slack_vars_;
   }
 
   vector_t getSolutions() const
   {
-    return vector_t::Zero(num_slack_vars_);
+    vector_t x = x_prev_ + stacked_z_prev_ * decision_vars_solutions_;
+    return x;
   }
 
   size_t getSlackedNumVars() const
@@ -51,11 +52,14 @@ private:
   void formulateProblem();
   void solveProblem();
 
-  void buildZMatrix();
   void buildHMatrix();
   void buildCVector();
   void buildDMatrix();
   void buildFVector();
+
+  void buildZMatrix();
+  void stackSlackSolutions();
+  vector_t concatenateVectors(const vector_t& v1, const vector_t& v2);
 
   Task task_, stacked_tasks_prev_, stacked_tasks_;
   HoQpPtr higher_problem_;
@@ -67,11 +71,11 @@ private:
   size_t num_prev_slack_vars_;
 
   matrix_t h_, c_, d_, f_;
+  vector_t stacked_slack_vars_, slack_vars_solutions_, decision_vars_solutions_;
 
   // Convenience matrices that are used multiple times
   matrix_t eye_nv_nv_;
   matrix_t zero_nv_nx_;
-  matrix_t a_curr_z_prev_;
 };
 
 }  // namespace quad_ros
