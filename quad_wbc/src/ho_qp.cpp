@@ -28,13 +28,12 @@ HoQp::HoQp(const Task& task, HoQp::HoQpPtr higher_problem) : task_(task), higher
 void HoQp::initVars()
 {
   // Task variables
+  num_slack_vars_ = task_.d_.rows();
   has_eq_constraints_ = task_.a_.rows() > 0;
   has_ineq_constraints_ = num_slack_vars_ > 0;
-  num_slack_vars_ = task_.d_.rows();
 
   // Pre-Task variables
-  bool has_higher_problem = higher_problem_ != nullptr;
-  if (has_higher_problem)
+  if (higher_problem_ != nullptr)
   {
     stacked_z_prev_ = higher_problem_->getStackedZMatrix();
     stacked_tasks_prev_ = higher_problem_->getStackedTasks();
@@ -74,7 +73,8 @@ void HoQp::buildHMatrix()
 {
   matrix_t h = matrix_t::Zero(num_decision_vars_ + num_slack_vars_, num_decision_vars_ + num_slack_vars_);
 
-  Eigen::MatrixXd z_t_a_t_a_z(num_decision_vars_, num_decision_vars_);
+  matrix_t z_t_a_t_a_z(num_decision_vars_, num_decision_vars_);
+
   if (has_eq_constraints_)
   {
     // Make sure that all eigenvalues of A_t_A are non-negative,
@@ -85,9 +85,7 @@ void HoQp::buildHMatrix()
     // This way of splitting up the multiplication is about twice as fast as multiplying 4 matrices
   }
   else
-  {
     z_t_a_t_a_z.setZero();
-  }
 
   h << z_t_a_t_a_z, zero_nv_nx_.transpose(), zero_nv_nx_, eye_nv_nv_;
   h_ = h;
@@ -150,9 +148,8 @@ void HoQp::buildZMatrix()
 {
   if (has_eq_constraints_)
   {
-    matrix_t a = task_.a_;
-    assert((a.cols() > 0));
-    stacked_z_ = stacked_z_prev_ * a.fullPivLu().kernel();
+    assert((task_.a_.cols() > 0));
+    stacked_z_ = stacked_z_prev_ * (task_.a_ * stacked_z_prev_).fullPivLu().kernel();
   }
   else
     stacked_z_ = stacked_z_prev_;
@@ -186,9 +183,9 @@ void HoQp::solveProblem()
 void HoQp::stackSlackSolutions()
 {
   if (higher_problem_ != nullptr)
-    stacked_slack_vars_ = slack_vars_solutions_;
-  else
     stacked_slack_vars_ = concatenateVectors(higher_problem_->getStackedSlackSolutions(), slack_vars_solutions_);
+  else
+    stacked_slack_vars_ = slack_vars_solutions_;
 }
 
 vector_t HoQp::concatenateVectors(const vector_t& v1, const vector_t& v2)

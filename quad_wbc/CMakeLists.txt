@@ -62,3 +62,16 @@ install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
         FILES_MATCHING PATTERN "*.h"
         )
+
+#############
+## Testing ##
+#############
+
+catkin_add_gtest(${PROJECT_NAME}_test
+        test/ho_qp_test.cpp
+        )
+
+target_link_libraries(${PROJECT_NAME}_test
+        ${PROJECT_NAME}
+        gtest_main
+        )
