@@ -8,6 +8,7 @@
 
 #include <utility>
 #include <qpOASES.hpp>
+#include <iostream>
 
 namespace quad_ros
 {
@@ -169,15 +170,11 @@ void HoQp::solveProblem()
   if (rvalue != qpOASES::SUCCESSFUL_RETURN)
     return;
 
-  std::vector<qpOASES::real_t> qp_sol(d_.rows(), 0);
+  vector_t qp_sol(d_.cols());
   qp_problem.getPrimalSolution(qp_sol.data());
 
-  decision_vars_solutions_.resize(num_decision_vars_);
-  slack_vars_solutions_.resize(num_slack_vars_);
-  for (size_t i = 0; i < num_decision_vars_; ++i)
-    decision_vars_solutions_[i] = qp_sol[i];
-  for (size_t i = 0; i < num_slack_vars_; ++i)
-    slack_vars_solutions_[i] = qp_sol[i + num_decision_vars_];
+  decision_vars_solutions_ = qp_sol.head(num_decision_vars_);
+  slack_vars_solutions_ = qp_sol.tail(num_slack_vars_);
 }
 
 void HoQp::stackSlackSolutions()

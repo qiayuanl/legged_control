@@ -18,6 +18,7 @@ class HoQp
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   using HoQpPtr = std::shared_ptr<HoQp>;
   HoQp(const Task& task);
   HoQp(const Task&, HoQpPtr higher_problem);
