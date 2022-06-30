@@ -17,6 +17,7 @@ namespace quad_ros
 class HoQp
 {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using HoQpPtr = std::shared_ptr<HoQp>;
   HoQp(const Task& task);
   HoQp(const Task&, HoQpPtr higher_problem);
@@ -59,7 +60,6 @@ private:
 
   void buildZMatrix();
   void stackSlackSolutions();
-  vector_t concatenateVectors(const vector_t& v1, const vector_t& v2);
 
   Task task_, stacked_tasks_prev_, stacked_tasks_;
   HoQpPtr higher_problem_;

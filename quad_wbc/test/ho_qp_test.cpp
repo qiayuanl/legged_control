@@ -16,9 +16,11 @@ protected:
     b_ = vector_t::Ones(2);
     d_ = matrix_t::Ones(2, 4);
     f_ = 10 * vector_t::Ones(2);
-    //    HoQp ho_qp = HoQp(Task(a_, b_, d_, f_));
-    HoQp ho_qp = HoQp(Task(a_, b_, d_, f_), std::make_shared<HoQp>(Task(a_, b_, d_, f_)));
-    x_ = ho_qp.getSolutions();
+    std::shared_ptr<HoQp> ho_qp_0 = std::make_shared<HoQp>(Task(a_, b_, d_, f_));
+
+    std::shared_ptr<HoQp> ho_qp_1 = std::make_shared<HoQp>(Task(a_, b_, d_, f_), ho_qp_0);
+    //    HoQp ho_qp = HoQp(Task(a_, b_, d_, f_), std::make_shared<HoQp>(Task(a_, b_, d_, f_)));
+    x_ = ho_qp_0->getSolutions();
   }
   matrix_t a_, d_;
   vector_t b_, f_, x_;

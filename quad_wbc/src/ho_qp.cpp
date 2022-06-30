@@ -183,22 +183,9 @@ void HoQp::solveProblem()
 void HoQp::stackSlackSolutions()
 {
   if (higher_problem_ != nullptr)
-    stacked_slack_vars_ = concatenateVectors(higher_problem_->getStackedSlackSolutions(), slack_vars_solutions_);
+    stacked_slack_vars_ = Task::concatenateVectors(higher_problem_->getStackedSlackSolutions(), slack_vars_solutions_);
   else
     stacked_slack_vars_ = slack_vars_solutions_;
-}
-
-vector_t HoQp::concatenateVectors(const vector_t& v1, const vector_t& v2)
-{
-  if (v1.cols() == 0)
-    return v2;
-  else if (v2.cols() == 0)
-    return v1;
-  assert(v1.cols() == v2.cols());
-  vector_t res(v1.rows() + v2.rows());
-  res << v1, v2;
-
-  return res;
 }
 
 }  // namespace quad_ros
