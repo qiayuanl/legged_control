@@ -39,9 +39,9 @@ public:
 
   matrix_t concatenateMatrices(matrix_t m1, matrix_t m2)
   {
-    if (m1.cols() == 0)
+    if (m1.cols() <= 0)
       return m2;
-    else if (m2.cols() == 0)
+    else if (m2.cols() <= 0)
       return m1;
 
     assert(m1.cols() == m2.cols());
@@ -52,9 +52,9 @@ public:
 
   static vector_t concatenateVectors(const vector_t& v1, const vector_t& v2)
   {
-    if (v1.cols() == 0)
+    if (v1.cols() <= 0)
       return v2;
-    else if (v2.cols() == 0)
+    else if (v2.cols() <= 0)
       return v1;
     assert(v1.cols() == v2.cols());
     vector_t res(v1.rows() + v2.rows());

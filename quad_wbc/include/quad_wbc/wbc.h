@@ -18,12 +18,13 @@ class Wbc
 {
 public:
   Wbc(LeggedRobotInterface& legged_interface);
-  void update(const vector_t& rbd_state, const vector_t& input);
+  vector_t update(const vector_t& rbd_state, const vector_t& input);
 
 private:
   Task formulateFloatingBaseEomTask();
   Task formulateTorqueLimitsTask();
-  Task formulateContactForceTask();
+  Task formulateContactForceTask(const vector_t& input);
+  Task formulateFrictionConeTask(const vector_t& input);
 
   size_t num_decision_vars_;
   vector_t input_;

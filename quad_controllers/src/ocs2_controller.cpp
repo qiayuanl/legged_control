@@ -97,6 +97,7 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
       nh, *legged_interface_, hybrid_joint_handles_, contact_handles,
       robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu"));
 
+  wbc_ = std::make_shared<Wbc>(*legged_interface_);
   return true;
 }
 
@@ -152,14 +153,19 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
     current_observation_.input.segment<3>(i * 3) =
         centroidal_model::getContactForces(optimized_input, i, legged_interface_->getCentroidalModelInfo());
 
-  vector_t torque = rbd_conversions_->computeRbdTorqueFromCentroidalModel(
-      optimized_state, optimized_input, vector_t::Zero(legged_interface_->getCentroidalModelInfo().actuatedDofNum));
+  vector_t x = wbc_->update(rbd_conversions_->computeRbdStateFromCentroidalModel(optimized_state, optimized_input),
+                            optimized_input);
+
+  vector_t torque = x.tail(12);
+
   vector_t pos_des = centroidal_model::getJointAngles(optimized_state, legged_interface_->getCentroidalModelInfo());
   vector_t vel_des = centroidal_model::getJointVelocities(optimized_input, legged_interface_->getCentroidalModelInfo());
 
   for (size_t j = 0; j < legged_interface_->getCentroidalModelInfo().actuatedDofNum; ++j)
-    if (std::abs(torque(6 + j)) < 100)
-      hybrid_joint_handles_[j].setCommand(pos_des(j), vel_des(j), 5, 1, torque(6 + j));
+    if (std::abs(torque(j)) < 50)
+      hybrid_joint_handles_[j].setCommand(pos_des(j), vel_des(j), 5, 1, torque(j));
+    else
+      ROS_ERROR_STREAM("[Ocs2 Controller] Torque is too high: " << torque(j));
 
   // Visualization
   visualizer_->update(current_observation_, mpc_mrt_interface_->getPolicy(), mpc_mrt_interface_->getCommand());
