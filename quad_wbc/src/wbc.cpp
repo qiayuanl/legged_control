@@ -74,7 +74,7 @@ Task Wbc::formulateFloatingBaseEomTask()
 
 Task Wbc::formulateTorqueLimitsTask()
 {
-  scalar_t torque_max = 50;
+  scalar_t torque_max = 40;
   matrix_t d(2 * info_.actuatedDofNum, num_decision_vars_);
   d.setZero();
   matrix_t i = matrix_t::Identity(info_.actuatedDofNum, info_.actuatedDofNum);

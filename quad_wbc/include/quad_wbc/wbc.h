@@ -27,8 +27,6 @@ private:
   Task formulateFrictionConeTask(const vector_t& input);
 
   size_t num_decision_vars_;
-  vector_t input_;
-  LeggedRobotInterface& legged_interface_;
   PinocchioInterface& pino_interface_;
   const CentroidalModelInfo& info_;
 };

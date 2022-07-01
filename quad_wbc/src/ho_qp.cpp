@@ -78,8 +78,7 @@ void HoQp::buildHMatrix()
 
   if (has_eq_constraints_)
   {
-    // Make sure that all eigenvalues of A_t_A are non-negative,
-    // which could arise due to numerical issues
+    // Make sure that all eigenvalues of A_t_A are non-negative, which could arise due to numerical issues
     matrix_t a_curr_z_prev = task_.a_ * stacked_z_prev_;
     z_t_a_t_a_z =
         a_curr_z_prev.transpose() * a_curr_z_prev + 1e-12 * matrix_t::Identity(num_decision_vars_, num_decision_vars_);
@@ -158,19 +157,17 @@ void HoQp::buildZMatrix()
 
 void HoQp::solveProblem()
 {
-  auto qp_problem = qpOASES::QProblem(num_decision_vars_, has_ineq_constraints_ ? d_.rows() : 0);
+  auto qp_problem =
+      qpOASES::QProblem(num_decision_vars_ + num_slack_vars_, has_ineq_constraints_ ? num_slack_vars_ : 0);
   qpOASES::Options options;
   options.setToMPC();
-  options.printLevel = qpOASES::PL_NONE;
+  options.printLevel = qpOASES::PL_LOW;
   qp_problem.setOptions(options);
   int n_wsr = 10;
-  qpOASES::returnValue rvalue =
-      qp_problem.init(h_.data(), c_.data(), has_ineq_constraints_ ? d_.data() : nullptr, nullptr, nullptr, nullptr,
-                      has_ineq_constraints_ ? f_.data() : nullptr, n_wsr);
-  vector_t qp_sol(num_decision_vars_ + num_slack_vars_);
 
-  if (rvalue != qpOASES::SUCCESSFUL_RETURN)
-    return;
+  qp_problem.init(h_.data(), c_.data(), has_ineq_constraints_ ? d_.data() : nullptr, nullptr, nullptr, nullptr,
+                  has_ineq_constraints_ ? f_.data() : nullptr, n_wsr);
+  vector_t qp_sol(num_decision_vars_ + num_slack_vars_);
 
   qp_problem.getPrimalSolution(qp_sol.data());
 
