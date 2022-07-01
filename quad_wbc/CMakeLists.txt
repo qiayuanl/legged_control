@@ -10,11 +10,14 @@ add_definitions(-Wall)
 find_package(catkin REQUIRED
         COMPONENTS
         roscpp
-        ocs2_core
+        ocs2_legged_robot
         qpoases_catkin
         )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(pinocchio REQUIRED pinocchio)
 
 catkin_package(
         INCLUDE_DIRS
@@ -24,6 +27,8 @@ catkin_package(
         CATKIN_DEPENDS
         roscpp
         qpoases_catkin
+        DEPENDS
+        pinocchio
 )
 
 ###########
@@ -34,14 +39,21 @@ include_directories(
         include
         ${catkin_INCLUDE_DIRS}
         ${EIGEN3_INCLUDE_DIRS}
+        ${pinocchio_INCLUDE_DIRS}
+)
+
+link_directories(
+        ${pinocchio_LIBRARY_DIRS}
 )
 
 add_library(${PROJECT_NAME}
         src/ho_qp.cpp
+        src/wbc.cpp
         )
 
 target_link_libraries(${PROJECT_NAME}
         ${catkin_LIBRARIES}
+        ${pinocchio_LIBRARIES}
         )
 
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
@@ -73,6 +85,7 @@ if (CATKIN_ENABLE_TESTING)
 
     target_link_libraries(${PROJECT_NAME}_test
             ${PROJECT_NAME}
+            ${pinocchio_LIBRARIES}
             gtest_main
             )
 endif (CATKIN_ENABLE_TESTING)
