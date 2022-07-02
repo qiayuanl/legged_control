@@ -106,7 +106,7 @@ void Ocs2Controller::starting(const ros::Time& time)
   // Initial state
   current_observation_.mode = ModeNumber::STANCE;
   current_observation_.time = 0;
-  current_observation_.state = rbd_conversions_->computeCentroidalStateFromRbdModel(state_estimate_->update());
+  current_observation_.state = rbd_conversions_->computeCentroidalStateFromRbdModel(state_estimate_->update(0.001));
   current_observation_.input.setZero(legged_interface_->getCentroidalModelInfo().inputDim);
 
   TargetTrajectories target_trajectories({ current_observation_.time }, { current_observation_.state },
@@ -131,7 +131,7 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
   // State Estimate
   current_observation_.time += period.toSec();
 
-  vector_t measured_rbd_state = state_estimate_->update();
+  vector_t measured_rbd_state = state_estimate_->update(period.toSec());
   scalar_t yaw_last = current_observation_.state(9);
   current_observation_.state = rbd_conversions_->computeCentroidalStateFromRbdModel(measured_rbd_state);
   current_observation_.state(9) = yaw_last + angles::shortest_angular_distance(yaw_last, current_observation_.state(9));
@@ -163,10 +163,7 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
   vector_t vel_des = centroidal_model::getJointVelocities(optimized_input, legged_interface_->getCentroidalModelInfo());
 
   for (size_t j = 0; j < legged_interface_->getCentroidalModelInfo().actuatedDofNum; ++j)
-    if (std::abs(torque(j)) < 40)
-      hybrid_joint_handles_[j].setCommand(pos_des(j), vel_des(j), 5, 1, torque(j));
-    else
-      ROS_ERROR_STREAM("[Ocs2 Controller] Torque is too high: " << torque(j));
+    hybrid_joint_handles_[j].setCommand(pos_des(j), vel_des(j), 5, 1, torque(j));
 
   // Visualization
   visualizer_->update(current_observation_, mpc_mrt_interface_->getPolicy(), mpc_mrt_interface_->getCommand());

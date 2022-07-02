@@ -27,7 +27,7 @@ public:
                     const std::vector<HybridJointHandle>& hybrid_joint_handles,
                     const std::vector<ContactSensorHandle>& contact_sensor_handles,
                     const hardware_interface::ImuSensorHandle& imu_sensor_handle);
-  virtual vector_t update() = 0;
+  virtual vector_t update(scalar_t dt) = 0;
   size_t getMode();
 
 protected:
@@ -56,7 +56,7 @@ public:
                          const std::vector<ContactSensorHandle>& contact_sensor_handles,
                          const hardware_interface::ImuSensorHandle& imu_sensor_handle);
 
-  vector_t update() override;
+  vector_t update(scalar_t dt) override;
 
 private:
   void callback(const nav_msgs::Odometry::ConstPtr& msg);
@@ -72,7 +72,7 @@ public:
                        const std::vector<HybridJointHandle>& hybrid_joint_handles,
                        const std::vector<ContactSensorHandle>& contact_sensor_handles,
                        const hardware_interface::ImuSensorHandle& imu_sensor_handle);
-  vector_t update() override;
+  vector_t update(scalar_t dt) override;
 
 private:
   PinocchioEndEffectorKinematics pinocchio_ee_kine_;

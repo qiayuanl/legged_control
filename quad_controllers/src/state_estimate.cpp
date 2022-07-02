@@ -71,7 +71,7 @@ void FromTopicStateEstimate::callback(const nav_msgs::Odometry::ConstPtr& msg)
   buffer_.writeFromNonRT(*msg);
 }
 
-vector_t FromTopicStateEstimate::update()
+vector_t FromTopicStateEstimate::update(scalar_t dt)
 {
   nav_msgs::Odometry odom = *buffer_.readFromRT();
 
@@ -96,18 +96,14 @@ KalmanFilterEstimate::KalmanFilterEstimate(ros::NodeHandle& nh, LeggedRobotInter
                        CentroidalModelPinocchioMapping(legged_interface.getCentroidalModelInfo()),
                        legged_interface.modelSettings().contactNames3DoF)
 {
-  scalar_t dt = 0.001;
   x_hat_.setZero();
   ps_.setZero();
   vs_.setZero();
   a_.setZero();
   a_.block(0, 0, 3, 3) = Eigen::Matrix<scalar_t, 3, 3>::Identity();
-  a_.block(0, 3, 3, 3) = dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
   a_.block(3, 3, 3, 3) = Eigen::Matrix<scalar_t, 3, 3>::Identity();
   a_.block(6, 6, 12, 12) = Eigen::Matrix<scalar_t, 12, 12>::Identity();
   b_.setZero();
-  b_.block(0, 0, 3, 3) = 0.5 * dt * dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
-  b_.block(3, 0, 3, 3) = dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
 
   Eigen::Matrix<scalar_t, Eigen::Dynamic, Eigen::Dynamic> c1(3, 6);
   c1 << Eigen::Matrix<scalar_t, 3, 3>::Identity(), Eigen::Matrix<scalar_t, 3, 3>::Zero();
@@ -130,14 +126,18 @@ KalmanFilterEstimate::KalmanFilterEstimate(ros::NodeHandle& nh, LeggedRobotInter
   p_.setIdentity();
   p_ = 100. * p_;
   q_.setIdentity();
-  q_.block(0, 0, 3, 3) = (dt / 20.f) * Eigen::Matrix<scalar_t, 3, 3>::Identity();
-  q_.block(3, 3, 3, 3) = (dt * 9.81f / 20.f) * Eigen::Matrix<scalar_t, 3, 3>::Identity();
-  q_.block(6, 6, 12, 12) = dt * Eigen::Matrix<scalar_t, 12, 12>::Identity();
   r_.setIdentity();
 }
 
-vector_t KalmanFilterEstimate::update()
+vector_t KalmanFilterEstimate::update(scalar_t dt)
 {
+  a_.block(0, 3, 3, 3) = dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
+  b_.block(0, 0, 3, 3) = 0.5 * dt * dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
+  b_.block(3, 0, 3, 3) = dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
+  q_.block(0, 0, 3, 3) = (dt / 20.f) * Eigen::Matrix<scalar_t, 3, 3>::Identity();
+  q_.block(3, 3, 3, 3) = (dt * 9.81f / 20.f) * Eigen::Matrix<scalar_t, 3, 3>::Identity();
+  q_.block(6, 6, 12, 12) = dt * Eigen::Matrix<scalar_t, 12, 12>::Identity();
+
   // Angular from IMU
   Eigen::Quaternion<scalar_t> quat(imu_sensor_handle_.getOrientation()[3], imu_sensor_handle_.getOrientation()[0],
                                    imu_sensor_handle_.getOrientation()[1], imu_sensor_handle_.getOrientation()[2]);
