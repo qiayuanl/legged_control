@@ -17,20 +17,20 @@ Wbc::Wbc(LeggedRobotInterface& legged_interface)
   num_decision_vars_ = info_.generalizedCoordinatesNum + 3 * info_.numThreeDofContacts + info_.actuatedDofNum;
 }
 
-vector_t Wbc::update(const vector_t& rbd_state, const vector_t& input)
+vector_t Wbc::update(const vector_t& state_desired, const vector_t& input_desired, vector_t& measured_rbd_state,
+                     size_t mode)
 {
-  vector_t q_pino(info_.generalizedCoordinatesNum);
-  q_pino.setZero();
+  contact_flag_ = modeNumber2StanceLeg(mode);
+  vector_t q_pino(info_.generalizedCoordinatesNum), v_pino(info_.generalizedCoordinatesNum);
 
-  q_pino.segment<3>(0) = rbd_state.segment<3>(3);
-  q_pino.segment<3>(3) = rbd_state.head<3>();
-  q_pino.tail(info_.actuatedDofNum) = rbd_state.segment(6, info_.actuatedDofNum);
+  q_pino.segment<3>(0) = measured_rbd_state.segment<3>(3);
+  q_pino.segment<3>(3) = measured_rbd_state.head<3>();
+  q_pino.tail(info_.actuatedDofNum) = measured_rbd_state.segment(6, info_.actuatedDofNum);
 
-  vector_t v_pino(info_.generalizedCoordinatesNum);
-  v_pino.setZero();
-  v_pino.segment<3>(0) = rbd_state.segment<3>(info_.generalizedCoordinatesNum + 3);
-  v_pino.segment<3>(3) = rbd_state.segment<3>(info_.generalizedCoordinatesNum);
-  v_pino.tail(info_.actuatedDofNum) = rbd_state.segment(6 + info_.generalizedCoordinatesNum, info_.actuatedDofNum);
+  v_pino.segment<3>(0) = measured_rbd_state.segment<3>(info_.generalizedCoordinatesNum + 3);
+  v_pino.segment<3>(3) = measured_rbd_state.segment<3>(info_.generalizedCoordinatesNum);
+  v_pino.tail(info_.actuatedDofNum) =
+      measured_rbd_state.segment(6 + info_.generalizedCoordinatesNum, info_.actuatedDofNum);
 
   const auto& model = pino_interface_.getModel();
   auto& data = pino_interface_.getData();
@@ -42,8 +42,8 @@ vector_t Wbc::update(const vector_t& rbd_state, const vector_t& input)
   data.M.triangularView<Eigen::StrictlyLower>() = data.M.transpose().triangularView<Eigen::StrictlyLower>();
   pinocchio::nonLinearEffects(model, data, q_pino, v_pino);
 
-  Task task_0 = formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateFrictionConeTask(input);
-  Task task_1 = formulateContactForceTask(input);
+  Task task_0 = formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateFrictionConeTask(input_desired);
+  Task task_1 = formulateContactForceTask(input_desired);
   HoQp ho_qp(task_1, std::make_shared<HoQp>(task_0));
   return ho_qp.getSolutions();
 }
@@ -94,8 +94,11 @@ Task Wbc::formulateContactForceTask(const vector_t& input)
   matrix_t a(dim, num_decision_vars_);
   vector_t b(dim);
   a.setZero();
-  a.block(0, info_.generalizedCoordinatesNum, dim, dim) = matrix_t::Identity(dim, dim);
+  for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
+    if (contact_flag_[i])
+      a.block(3 * i, info_.generalizedCoordinatesNum + 3 * i, 3, 3) = matrix_t::Identity(3, 3);
   b = input.head(dim);
+
   return Task(a, b, matrix_t(), vector_t());
 }
 
@@ -109,7 +112,8 @@ Task Wbc::formulateFrictionConeTask(const vector_t& input)
   matrix_t d(5 * info_.numThreeDofContacts, num_decision_vars_);
   d.setZero();
   for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
-    d.block(5 * i, info_.generalizedCoordinatesNum + 3 * i, 5, 3) = friction_pyramic;
+    if (contact_flag_[i])
+      d.block(5 * i, info_.generalizedCoordinatesNum + 3 * i, 5, 3) = friction_pyramic;
 
   vector_t f = Eigen::VectorXd::Zero(5 * info_.numThreeDofContacts);
 

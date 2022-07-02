@@ -7,6 +7,7 @@
 
 #include "quad_controllers/state_estimate.h"
 
+#include <ocs2_legged_robot/gait/MotionPhaseDefinition.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 #include <ocs2_robotic_tools/common/RotationDerivativesTransforms.h>
 
@@ -24,6 +25,15 @@ StateEstimateBase::StateEstimateBase(ros::NodeHandle& nh, LeggedRobotInterface& 
   , imu_sensor_handle_(imu_sensor_handle)
 {
   odom_pub_ = std::make_shared<realtime_tools::RealtimePublisher<nav_msgs::Odometry>>(nh, "/odom", 100);
+}
+
+size_t StateEstimateBase::getMode()
+{
+  contact_flag_t contact_flag;
+  for (size_t i = 0; i < contact_sensor_handles_.size(); ++i)
+    contact_flag[i] = contact_sensor_handles_[i].isContact();
+
+  return stanceLeg2ModeNumber(contact_flag);
 }
 
 void StateEstimateBase::updateAngular(const Eigen::Quaternion<scalar_t>& quat, const vector_t& angular_vel)

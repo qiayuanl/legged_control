@@ -129,10 +129,14 @@ void Ocs2Controller::starting(const ros::Time& time)
 void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
 {
   // State Estimate
-  scalar_t yaw_last = current_observation_.state(9);
   current_observation_.time += period.toSec();
-  current_observation_.state = rbd_conversions_->computeCentroidalStateFromRbdModel(state_estimate_->update());
+
+  vector_t measured_rbd_state = state_estimate_->update();
+  scalar_t yaw_last = current_observation_.state(9);
+  current_observation_.state = rbd_conversions_->computeCentroidalStateFromRbdModel(measured_rbd_state);
   current_observation_.state(9) = yaw_last + angles::shortest_angular_distance(yaw_last, current_observation_.state(9));
+  current_observation_.mode = state_estimate_->getMode();
+
   // Update the current state of the system
   mpc_mrt_interface_->setCurrentObservation(current_observation_);
 
@@ -140,21 +144,18 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
   mpc_mrt_interface_->updatePolicy();
 
   // Evaluate the current policy
-  ocs2::vector_t optimized_state;  // Evaluation of the optimized state trajectory.
-  ocs2::vector_t optimized_input;  // Evaluation of the optimized input trajectory.
-  size_t planned_mode;             // The mode that is active at the time the policy is
-                                   // evaluated at.
+  vector_t optimized_state;  // Evaluation of the optimized state trajectory.
+  vector_t optimized_input;  // Evaluation of the optimized input trajectory.
+  size_t planned_mode;       // The mode that is active at the time the policy is evaluated at.
   mpc_mrt_interface_->evaluatePolicy(current_observation_.time, current_observation_.state, optimized_state,
                                      optimized_input, planned_mode);
-  current_observation_.mode = planned_mode;
-  // Set joint command
-  // TODO: Whole Body Control
+
+  // Whole body control
   for (size_t i = 0; i < legged_interface_->getCentroidalModelInfo().numThreeDofContacts; i++)
     current_observation_.input.segment<3>(i * 3) =
         centroidal_model::getContactForces(optimized_input, i, legged_interface_->getCentroidalModelInfo());
 
-  vector_t x = wbc_->update(rbd_conversions_->computeRbdStateFromCentroidalModel(optimized_state, optimized_input),
-                            optimized_input);
+  vector_t x = wbc_->update(optimized_state, optimized_input, measured_rbd_state, planned_mode);
 
   vector_t torque = x.tail(12);
 
@@ -162,7 +163,7 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
   vector_t vel_des = centroidal_model::getJointVelocities(optimized_input, legged_interface_->getCentroidalModelInfo());
 
   for (size_t j = 0; j < legged_interface_->getCentroidalModelInfo().actuatedDofNum; ++j)
-    if (std::abs(torque(j)) < 50)
+    if (std::abs(torque(j)) < 40)
       hybrid_joint_handles_[j].setCommand(pos_des(j), vel_des(j), 5, 1, torque(j));
     else
       ROS_ERROR_STREAM("[Ocs2 Controller] Torque is too high: " << torque(j));

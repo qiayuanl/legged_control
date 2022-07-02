@@ -28,6 +28,7 @@ public:
                     const std::vector<ContactSensorHandle>& contact_sensor_handles,
                     const hardware_interface::ImuSensorHandle& imu_sensor_handle);
   virtual vector_t update() = 0;
+  size_t getMode();
 
 protected:
   void updateAngular(const Eigen::Quaternion<scalar_t>& quat, const vector_t& angular_vel);
