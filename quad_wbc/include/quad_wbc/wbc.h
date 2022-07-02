@@ -33,6 +33,7 @@ private:
   PinocchioInterface& pino_interface_;
   const CentroidalModelInfo& info_;
   contact_flag_t contact_flag_;
+  size_t num_contacts_;
 };
 
 }  // namespace quad_ros

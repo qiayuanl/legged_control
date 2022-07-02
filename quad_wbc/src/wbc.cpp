@@ -21,6 +21,11 @@ vector_t Wbc::update(const vector_t& state_desired, const vector_t& input_desire
                      size_t mode)
 {
   contact_flag_ = modeNumber2StanceLeg(mode);
+  num_contacts_ = 0;
+  for (bool flag : contact_flag_)
+    if (flag)
+      num_contacts_++;
+
   vector_t q_pino(info_.generalizedCoordinatesNum), v_pino(info_.generalizedCoordinatesNum);
 
   q_pino.segment<3>(0) = measured_rbd_state.segment<3>(3);
@@ -95,8 +100,7 @@ Task Wbc::formulateContactForceTask(const vector_t& input)
   vector_t b(dim);
   a.setZero();
   for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
-    if (contact_flag_[i])
-      a.block(3 * i, info_.generalizedCoordinatesNum + 3 * i, 3, 3) = matrix_t::Identity(3, 3);
+    a.block(3 * i, info_.generalizedCoordinatesNum + 3 * i, 3, 3) = matrix_t::Identity(3, 3);
   b = input.head(dim);
 
   return Task(a, b, matrix_t(), vector_t());
@@ -109,13 +113,14 @@ Task Wbc::formulateFrictionConeTask(const vector_t& input)
   friction_pyramic << 0, 0, -1, 1, 0, -friction_coeff, -1, 0, -friction_coeff, 0, 1, -friction_coeff, 0, -1,
       -friction_coeff;
 
-  matrix_t d(5 * info_.numThreeDofContacts, num_decision_vars_);
+  matrix_t d(5 * num_contacts_, num_decision_vars_);
   d.setZero();
+  size_t j = 0;
   for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
     if (contact_flag_[i])
-      d.block(5 * i, info_.generalizedCoordinatesNum + 3 * i, 5, 3) = friction_pyramic;
+      d.block(5 * j++, info_.generalizedCoordinatesNum + 3 * i, 5, 3) = friction_pyramic;
 
-  vector_t f = Eigen::VectorXd::Zero(5 * info_.numThreeDofContacts);
+  vector_t f = Eigen::VectorXd::Zero(5 * num_contacts_);
 
   return Task(matrix_t(), vector_t(), d, f);
 }
