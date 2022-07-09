@@ -149,18 +149,19 @@ Task Wbc::formulateSwingLegTask()
       centroidal_model::getJointAngles(state_desired_, info_) - measured_rbd_state_.segment(6, info_.actuatedDofNum);
   vector_t e_vel = centroidal_model::getJointVelocities(input_desired_, info_) -
                    measured_rbd_state_.segment(6 + info_.generalizedCoordinatesNum, info_.actuatedDofNum);
-  vector_t acc = 1 * e_pos + 2 * e_vel;
-  size_t dim = 3 * num_contacts_;
+  vector_t acc = 350 * e_pos + 37 * e_vel;
+  size_t dim = 3 * (info_.numThreeDofContacts - num_contacts_);
 
   matrix_t a(dim, num_decision_vars_);
   vector_t b(dim);
   a.setZero();
   size_t j = 0;
+  size_t k[4] = { 0, 2, 1, 3 };
   for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
     if (!contact_flag_[i])
     {
-      a.block(3 * j, 12 + 3 * i, 3, 3) = matrix_t::Identity(3, 3);
-      b.segment(3 * j, 3) = acc.segment<3>(3 * i);
+      a.block(3 * j, 6 + 3 * k[i], 3, 3) = matrix_t::Identity(3, 3);
+      b.segment(3 * j, 3) = acc.segment<3>(3 * k[i]);
       ++j;
     }
   return Task(a, b, matrix_t(), vector_t());
