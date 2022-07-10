@@ -112,21 +112,29 @@ Task Wbc::formulateNoContactMotionTask()
 
 Task Wbc::formulateFrictionConeTask()
 {
-  scalar_t friction_coeff = 0.5;
+  matrix_t a(3 * (info_.numThreeDofContacts - num_contacts_), num_decision_vars_);
+  a.setZero();
+  size_t j = 0;
+  for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
+    if (!contact_flag_[i])
+      a.block(3 * j++, info_.generalizedCoordinatesNum + 3 * i, 3, 3) = matrix_t::Identity(3, 3);
+  vector_t b(a.rows());
+  b.setZero();
+
+  scalar_t friction_coeff = 0.3;
   matrix_t friction_pyramic(5, 3);
   friction_pyramic << 0, 0, -1, 1, 0, -friction_coeff, -1, 0, -friction_coeff, 0, 1, -friction_coeff, 0, -1,
       -friction_coeff;
 
-  matrix_t d(5 * num_contacts_, num_decision_vars_);
+  matrix_t d(5 * num_contacts_ + 3 * (info_.numThreeDofContacts - num_contacts_), num_decision_vars_);
   d.setZero();
-  size_t j = 0;
+  j = 0;
   for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
     if (contact_flag_[i])
       d.block(5 * j++, info_.generalizedCoordinatesNum + 3 * i, 5, 3) = friction_pyramic;
+  vector_t f = Eigen::VectorXd::Zero(d.rows());
 
-  vector_t f = Eigen::VectorXd::Zero(5 * num_contacts_);
-
-  return Task(matrix_t(), vector_t(), d, f);
+  return Task(a, b, d, f);
 }
 
 Task Wbc::formulateBaseAccelTask()
