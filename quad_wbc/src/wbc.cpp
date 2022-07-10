@@ -45,47 +45,61 @@ vector_t Wbc::update(const vector_t& state_desired, const vector_t& input_desire
   v_pino.segment<3>(3) = measured_rbd_state.segment<3>(info_.generalizedCoordinatesNum);
   v_pino.tail(info_.actuatedDofNum) =
       measured_rbd_state.segment(6 + info_.generalizedCoordinatesNum, info_.actuatedDofNum);
-
+  u_ = v_pino;
   const auto& model = pino_interface_.getModel();
   auto& data = pino_interface_.getData();
 
+  // For floating base EoM task
   pinocchio::forwardKinematics(model, data, q_pino, v_pino);
   pinocchio::computeJointJacobians(model, data);
   pinocchio::updateFramePlacements(model, data);
   pinocchio::crba(model, data, q_pino);
   data.M.triangularView<Eigen::StrictlyLower>() = data.M.transpose().triangularView<Eigen::StrictlyLower>();
   pinocchio::nonLinearEffects(model, data, q_pino, v_pino);
+  j_ = matrix_t(3 * info_.numThreeDofContacts, info_.generalizedCoordinatesNum);
+  for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
+  {
+    Eigen::Matrix<scalar_t, 6, Eigen::Dynamic> jac;
+    jac.setZero(6, info_.generalizedCoordinatesNum);
+    pinocchio::getFrameJacobian(model, data, info_.endEffectorFrameIndices[i], pinocchio::LOCAL_WORLD_ALIGNED, jac);
+    j_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum) = jac.template topRows<3>();
+  }
 
+  // For not contact motion task
+  pinocchio::computeJointJacobiansTimeVariation(model, data, q_pino, v_pino);
+  dj_ = matrix_t(3 * info_.numThreeDofContacts, info_.generalizedCoordinatesNum);
+  for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
+  {
+    Eigen::Matrix<scalar_t, 6, Eigen::Dynamic> jac;
+    jac.setZero(6, info_.generalizedCoordinatesNum);
+    pinocchio::getFrameJacobianTimeVariation(model, data, info_.endEffectorFrameIndices[i],
+                                             pinocchio::LOCAL_WORLD_ALIGNED, jac);
+    dj_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum) = jac.template topRows<3>();
+  }
+
+  // For base acceleration task
   updateCentroidalDynamics(pino_interface_, info_, q_pino);
 
-  Task task_0 = formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateFrictionConeTask();
+  Task task_0 = formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateNoContactMotionTask() +
+                formulateFrictionConeTask();
   Task task_1 = formulateBaseAccelTask();
   Task task_2 = formulateContactForceTask();
-  HoQp ho_qp(task_1, std::make_shared<HoQp>(task_2, std::make_shared<HoQp>(task_0)));
+  HoQp ho_qp(task_2, std::make_shared<HoQp>(task_1, std::make_shared<HoQp>(task_0)));
 
   return ho_qp.getSolutions();
 }
 
 Task Wbc::formulateFloatingBaseEomTask()
 {
-  const auto& model = pino_interface_.getModel();
   auto& data = pino_interface_.getData();
 
-  matrix_t j(3 * info_.numThreeDofContacts, info_.generalizedCoordinatesNum);
-  for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
-  {
-    Eigen::Matrix<scalar_t, 6, Eigen::Dynamic> jac;
-    jac.setZero(6, info_.generalizedCoordinatesNum);
-    pinocchio::getFrameJacobian(model, data, info_.endEffectorFrameIndices[i], pinocchio::LOCAL_WORLD_ALIGNED, jac);
-    j.block(3 * i, 0, 3, info_.generalizedCoordinatesNum) = jac.template topRows<3>();
-  }
   matrix_t s(info_.actuatedDofNum, info_.generalizedCoordinatesNum);
   s.block(0, 0, info_.actuatedDofNum, info_.generalizedCoordinatesNum - info_.actuatedDofNum).setZero();
   s.block(0, 6, info_.actuatedDofNum, info_.actuatedDofNum).setIdentity();
 
   matrix_t a(info_.generalizedCoordinatesNum, num_decision_vars_);
   vector_t b(info_.generalizedCoordinatesNum);
-  a << data.M, -j.transpose(), -s.transpose();
+  a << data.M, -j_.transpose(), -s.transpose();
   b = -data.nle;
   return Task(a, b, matrix_t(), vector_t());
 }
@@ -107,7 +121,23 @@ Task Wbc::formulateTorqueLimitsTask()
 
 Task Wbc::formulateNoContactMotionTask()
 {
-  return Task();
+  matrix_t a(3 * num_contacts_, num_decision_vars_);
+  vector_t b(a.rows());
+  a.setZero();
+  b.setZero();
+  size_t j = 0;
+  size_t k[4] = { 0, 2, 1, 3 };
+  for (size_t i = 3; i < info_.numThreeDofContacts; --i)
+    if (contact_flag_[i])
+    {
+      if (i == 3)  // TODO: why???
+        continue;
+      a.block(3 * j, 6, 3, info_.generalizedCoordinatesNum) = j_.block(3 * k[i], 0, 3, info_.generalizedCoordinatesNum);
+      b.segment(3 * j, 3) = -dj_.block(3 * k[i], 0, 3, info_.generalizedCoordinatesNum) * u_;
+      j++;
+    }
+
+  return Task(a, b, matrix_t(), matrix_t());
 }
 
 Task Wbc::formulateFrictionConeTask()
