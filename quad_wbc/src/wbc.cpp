@@ -86,7 +86,8 @@ vector_t Wbc::update(const vector_t& state_desired, const vector_t& input_desire
   Task task_0 = formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateFrictionConeTask() +
                 formulateNoContactMotionTask();
   Task task_1 = formulateBaseAccelTask() + formulateSwingLegTask();
-  HoQp ho_qp(task_1, std::make_shared<HoQp>(task_0));
+  Task task_2 = formulateContactForceTask();
+  HoQp ho_qp(task_2, std::make_shared<HoQp>(task_1, std::make_shared<HoQp>(task_0)));
 
   return ho_qp.getSolutions();
 }

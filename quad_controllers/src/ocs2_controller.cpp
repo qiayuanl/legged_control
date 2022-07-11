@@ -163,7 +163,7 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
   vector_t vel_des = centroidal_model::getJointVelocities(optimized_input, legged_interface_->getCentroidalModelInfo());
 
   for (size_t j = 0; j < legged_interface_->getCentroidalModelInfo().actuatedDofNum; ++j)
-    hybrid_joint_handles_[j].setCommand(pos_des(j), vel_des(j), 0, 0, torque(j));
+    hybrid_joint_handles_[j].setFeedforward(torque(j));
 
   // Visualization
   visualizer_->update(current_observation_, mpc_mrt_interface_->getPolicy(), mpc_mrt_interface_->getCommand());

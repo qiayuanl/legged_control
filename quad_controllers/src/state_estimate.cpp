@@ -175,8 +175,8 @@ vector_t KalmanFilterEstimate::update(scalar_t dt)
   const auto ee_pos = pinocchio_ee_kine_.getPosition(state);
   const auto ee_vel = pinocchio_ee_kine_.getVelocity(state, input);
 
-  scalar_t imu_process_noise_position = 0.02;
-  scalar_t imu_process_noise_velocity = 0.02;
+  scalar_t imu_process_noise_position = 0.2;
+  scalar_t imu_process_noise_velocity = 0.2;
   scalar_t foot_process_noise_position = 0.002;
   scalar_t foot_sensor_noise_position = 0.001;
   scalar_t foot_sensor_noise_velocity = 1000.;  // TODO adjest the value
