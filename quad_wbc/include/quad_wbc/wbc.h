@@ -10,6 +10,7 @@
 #include <ocs2_legged_robot/LeggedRobotInterface.h>
 #include <ocs2_legged_robot/gait/MotionPhaseDefinition.h>
 #include <ocs2_centroidal_model/PinocchioCentroidalDynamics.h>
+#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 
 namespace quad_ros
 {
@@ -20,7 +21,7 @@ using namespace legged_robot;
 class Wbc
 {
 public:
-  Wbc(LeggedRobotInterface& legged_interface);
+  Wbc(LeggedRobotInterface& legged_interface, const PinocchioEndEffectorKinematics& ee_kinematics);
   vector_t update(const vector_t& state_desired, const vector_t& input_desired, vector_t& measured_rbd_state,
                   size_t mode);
 
@@ -37,8 +38,10 @@ private:
   PinocchioInterface& pino_interface_;
   const CentroidalModelInfo& info_;
   PinocchioCentroidalDynamics centroidal_dynamics_;
+  CentroidalModelPinocchioMapping mapping_;
+  std::unique_ptr<PinocchioEndEffectorKinematics> ee_kinematics_;
 
-  vector_t state_desired_, input_desired_, measured_rbd_state_, u_;
+  vector_t state_desired_, input_desired_, measured_q_, measured_v_;
   matrix_t j_, dj_;
   contact_flag_t contact_flag_;
   size_t num_contacts_;

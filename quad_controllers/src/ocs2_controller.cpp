@@ -97,7 +97,7 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
       nh, *legged_interface_, hybrid_joint_handles_, contact_handles,
       robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu"));
 
-  wbc_ = std::make_shared<Wbc>(*legged_interface_);
+  wbc_ = std::make_shared<Wbc>(*legged_interface_, ee_kinematics);
   return true;
 }
 
@@ -163,7 +163,7 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
   vector_t vel_des = centroidal_model::getJointVelocities(optimized_input, legged_interface_->getCentroidalModelInfo());
 
   for (size_t j = 0; j < legged_interface_->getCentroidalModelInfo().actuatedDofNum; ++j)
-    hybrid_joint_handles_[j].setCommand(pos_des(j), vel_des(j), 5, 1, torque(j));
+    hybrid_joint_handles_[j].setCommand(pos_des(j), vel_des(j), 0, 0, torque(j));
 
   // Visualization
   visualizer_->update(current_observation_, mpc_mrt_interface_->getPolicy(), mpc_mrt_interface_->getCommand());

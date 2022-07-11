@@ -13,13 +13,19 @@
 
 namespace quad_ros
 {
-Wbc::Wbc(LeggedRobotInterface& legged_interface)
+Wbc::Wbc(LeggedRobotInterface& legged_interface, const PinocchioEndEffectorKinematics& ee_kinematics)
   : pino_interface_(legged_interface.getPinocchioInterface())
   , info_(legged_interface.getCentroidalModelInfo())
   , centroidal_dynamics_(info_)
+  , mapping_(info_)
+  , ee_kinematics_(ee_kinematics.clone())
 {
   num_decision_vars_ = info_.generalizedCoordinatesNum + 3 * info_.numThreeDofContacts + info_.actuatedDofNum;
   centroidal_dynamics_.setPinocchioInterface(pino_interface_);
+  mapping_.setPinocchioInterface(pino_interface_);
+  measured_q_ = vector_t(info_.generalizedCoordinatesNum);
+  measured_v_ = vector_t(info_.generalizedCoordinatesNum);
+  ee_kinematics_->setPinocchioInterface(pino_interface_);
 }
 
 vector_t Wbc::update(const vector_t& state_desired, const vector_t& input_desired, vector_t& measured_rbd_state,
@@ -27,7 +33,6 @@ vector_t Wbc::update(const vector_t& state_desired, const vector_t& input_desire
 {
   state_desired_ = state_desired;
   input_desired_ = input_desired;
-  measured_rbd_state_ = measured_rbd_state;
 
   contact_flag_ = modeNumber2StanceLeg(mode);
   num_contacts_ = 0;
@@ -35,27 +40,25 @@ vector_t Wbc::update(const vector_t& state_desired, const vector_t& input_desire
     if (flag)
       num_contacts_++;
 
-  vector_t q_pino(info_.generalizedCoordinatesNum), v_pino(info_.generalizedCoordinatesNum);
+  measured_q_.segment<3>(0) = measured_rbd_state.segment<3>(3);
+  measured_q_.segment<3>(3) = measured_rbd_state.head<3>();
+  measured_q_.tail(info_.actuatedDofNum) = measured_rbd_state.segment(6, info_.actuatedDofNum);
 
-  q_pino.segment<3>(0) = measured_rbd_state.segment<3>(3);
-  q_pino.segment<3>(3) = measured_rbd_state.head<3>();
-  q_pino.tail(info_.actuatedDofNum) = measured_rbd_state.segment(6, info_.actuatedDofNum);
-
-  v_pino.segment<3>(0) = measured_rbd_state.segment<3>(info_.generalizedCoordinatesNum + 3);
-  v_pino.segment<3>(3) = measured_rbd_state.segment<3>(info_.generalizedCoordinatesNum);
-  v_pino.tail(info_.actuatedDofNum) =
+  measured_v_.segment<3>(0) = measured_rbd_state.segment<3>(info_.generalizedCoordinatesNum + 3);
+  measured_v_.segment<3>(3) = measured_rbd_state.segment<3>(info_.generalizedCoordinatesNum);
+  measured_v_.tail(info_.actuatedDofNum) =
       measured_rbd_state.segment(6 + info_.generalizedCoordinatesNum, info_.actuatedDofNum);
-  u_ = v_pino;
+
   const auto& model = pino_interface_.getModel();
   auto& data = pino_interface_.getData();
 
   // For floating base EoM task
-  pinocchio::forwardKinematics(model, data, q_pino, v_pino);
+  pinocchio::forwardKinematics(model, data, measured_q_, measured_v_);
   pinocchio::computeJointJacobians(model, data);
   pinocchio::updateFramePlacements(model, data);
-  pinocchio::crba(model, data, q_pino);
+  pinocchio::crba(model, data, measured_q_);
   data.M.triangularView<Eigen::StrictlyLower>() = data.M.transpose().triangularView<Eigen::StrictlyLower>();
-  pinocchio::nonLinearEffects(model, data, q_pino, v_pino);
+  pinocchio::nonLinearEffects(model, data, measured_q_, measured_v_);
   j_ = matrix_t(3 * info_.numThreeDofContacts, info_.generalizedCoordinatesNum);
   for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
   {
@@ -66,7 +69,7 @@ vector_t Wbc::update(const vector_t& state_desired, const vector_t& input_desire
   }
 
   // For not contact motion task
-  pinocchio::computeJointJacobiansTimeVariation(model, data, q_pino, v_pino);
+  pinocchio::computeJointJacobiansTimeVariation(model, data, measured_q_, measured_v_);
   dj_ = matrix_t(3 * info_.numThreeDofContacts, info_.generalizedCoordinatesNum);
   for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
   {
@@ -78,13 +81,12 @@ vector_t Wbc::update(const vector_t& state_desired, const vector_t& input_desire
   }
 
   // For base acceleration task
-  updateCentroidalDynamics(pino_interface_, info_, q_pino);
+  updateCentroidalDynamics(pino_interface_, info_, measured_q_);
 
-  Task task_0 = formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateNoContactMotionTask() +
-                formulateFrictionConeTask();
-  Task task_1 = formulateBaseAccelTask();
-  Task task_2 = formulateContactForceTask();
-  HoQp ho_qp(task_2, std::make_shared<HoQp>(task_1, std::make_shared<HoQp>(task_0)));
+  Task task_0 = formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateFrictionConeTask() +
+                formulateNoContactMotionTask();
+  Task task_1 = formulateBaseAccelTask() + formulateSwingLegTask();
+  HoQp ho_qp(task_1, std::make_shared<HoQp>(task_0));
 
   return ho_qp.getSolutions();
 }
@@ -106,7 +108,7 @@ Task Wbc::formulateFloatingBaseEomTask()
 
 Task Wbc::formulateTorqueLimitsTask()
 {
-  scalar_t torque_max = 40;
+  scalar_t torque_max = 30;
   matrix_t d(2 * info_.actuatedDofNum, num_decision_vars_);
   d.setZero();
   matrix_t i = matrix_t::Identity(info_.actuatedDofNum, info_.actuatedDofNum);
@@ -126,14 +128,11 @@ Task Wbc::formulateNoContactMotionTask()
   a.setZero();
   b.setZero();
   size_t j = 0;
-  size_t k[4] = { 0, 2, 1, 3 };
-  for (size_t i = 3; i < info_.numThreeDofContacts; --i)
+  for (size_t i = 0; i < info_.numThreeDofContacts; i++)
     if (contact_flag_[i])
     {
-      if (i == 3)  // TODO: why???
-        continue;
-      a.block(3 * j, 6, 3, info_.generalizedCoordinatesNum) = j_.block(3 * k[i], 0, 3, info_.generalizedCoordinatesNum);
-      b.segment(3 * j, 3) = -dj_.block(3 * k[i], 0, 3, info_.generalizedCoordinatesNum) * u_;
+      a.block(3 * j, 0, 3, info_.generalizedCoordinatesNum) = j_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum);
+      b.segment(3 * j, 3) = -dj_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum) * measured_v_;
       j++;
     }
 
@@ -183,24 +182,31 @@ Task Wbc::formulateBaseAccelTask()
 
 Task Wbc::formulateSwingLegTask()
 {
-  vector_t e_pos =
-      centroidal_model::getJointAngles(state_desired_, info_) - measured_rbd_state_.segment(6, info_.actuatedDofNum);
-  vector_t e_vel = centroidal_model::getJointVelocities(input_desired_, info_) -
-                   measured_rbd_state_.segment(6 + info_.generalizedCoordinatesNum, info_.actuatedDofNum);
-  vector_t acc = 350 * e_pos + 37 * e_vel;
-  size_t dim = 3 * (info_.numThreeDofContacts - num_contacts_);
+  scalar_t kp = 1000, kd = 66;
 
-  matrix_t a(dim, num_decision_vars_);
-  vector_t b(dim);
+  std::vector<vector3_t> pos_measured = ee_kinematics_->getPosition(vector_t());
+  std::vector<vector3_t> vel_measured = ee_kinematics_->getVelocity(vector_t(), vector_t());
+  vector_t q_desired = mapping_.getPinocchioJointPosition(state_desired_);
+  vector_t v_desired = mapping_.getPinocchioJointVelocity(state_desired_, input_desired_);
+  const auto& model = pino_interface_.getModel();
+  auto& data = pino_interface_.getData();
+  pinocchio::forwardKinematics(model, data, q_desired, v_desired);
+  pinocchio::updateFramePlacements(model, data);
+  std::vector<vector3_t> pos_desired = ee_kinematics_->getPosition(vector_t());
+  std::vector<vector3_t> vel_desired = ee_kinematics_->getVelocity(vector_t(), vector_t());
+
+  matrix_t a(3 * (info_.numThreeDofContacts - num_contacts_), num_decision_vars_);
+  vector_t b(a.rows());
   a.setZero();
+  b.setZero();
   size_t j = 0;
-  size_t k[4] = { 0, 2, 1, 3 };
   for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
     if (!contact_flag_[i])
     {
-      a.block(3 * j, 6 + 3 * k[i], 3, 3) = matrix_t::Identity(3, 3);
-      b.segment(3 * j, 3) = acc.segment<3>(3 * k[i]);
-      ++j;
+      vector3_t accel = kp * (pos_desired[i] - pos_measured[i]) + kd * (vel_desired[i] - vel_measured[i]);
+      a.block(3 * j, 0, 3, info_.generalizedCoordinatesNum) = j_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum);
+      b.segment(3 * j, 3) = accel - dj_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum) * measured_v_;
+      j++;
     }
   return Task(a, b, matrix_t(), vector_t());
 }
