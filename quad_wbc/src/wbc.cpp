@@ -183,7 +183,7 @@ Task Wbc::formulateBaseAccelTask()
 
 Task Wbc::formulateSwingLegTask()
 {
-  scalar_t kp = 1000, kd = 66;
+  scalar_t kp = 350, kd = 37;
 
   std::vector<vector3_t> pos_measured = ee_kinematics_->getPosition(vector_t());
   std::vector<vector3_t> vel_measured = ee_kinematics_->getVelocity(vector_t(), vector_t());
@@ -214,14 +214,13 @@ Task Wbc::formulateSwingLegTask()
 
 Task Wbc::formulateContactForceTask()
 {
-  size_t dim = 3 * info_.numThreeDofContacts;
-
-  matrix_t a(dim, num_decision_vars_);
-  vector_t b(dim);
+  matrix_t a(3 * num_contacts_, num_decision_vars_);
   a.setZero();
+  size_t j = 0;
   for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
-    a.block(3 * i, info_.generalizedCoordinatesNum + 3 * i, 3, 3) = matrix_t::Identity(3, 3);
-  b = input_desired_.head(dim);
+    if (contact_flag_[i])
+      a.block(3 * j++, info_.generalizedCoordinatesNum + 3 * i, 3, 3) = matrix_t::Identity(3, 3);
+  vector_t b = input_desired_.head(a.cols());
 
   return Task(a, b, matrix_t(), vector_t());
 }

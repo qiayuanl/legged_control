@@ -159,9 +159,6 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
 
   vector_t torque = x.tail(12);
 
-  vector_t pos_des = centroidal_model::getJointAngles(optimized_state, legged_interface_->getCentroidalModelInfo());
-  vector_t vel_des = centroidal_model::getJointVelocities(optimized_input, legged_interface_->getCentroidalModelInfo());
-
   for (size_t j = 0; j < legged_interface_->getCentroidalModelInfo().actuatedDofNum; ++j)
     hybrid_joint_handles_[j].setFeedforward(torque(j));
 
