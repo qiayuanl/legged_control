@@ -119,6 +119,7 @@ Task Wbc::formulateTorqueLimitsTask()
           info_.actuatedDofNum) = -i;
   vector_t f(2 * info_.actuatedDofNum);
   f.setConstant(torque_max);
+
   return Task(matrix_t(), vector_t(), d, f);
 }
 
@@ -178,6 +179,9 @@ Task Wbc::formulateBaseAccelTask()
   const Eigen::Matrix<scalar_t, 6, 6> a_base = getCentroidalMomentumMatrix(pino_interface_).template leftCols<6>();
   const auto a_base_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(a_base);
   vector_t b = a_base_inv * momentum_rate;
+  const vector3_t angular_velocity = measured_v_.segment<3>(3);
+  b.segment<3>(3) -= a_base_inv.block<3, 3>(3, 3) * angular_velocity.cross(a_base.block<3, 3>(3, 3) * angular_velocity);
+
   return Task(a, b, matrix_t(), vector_t());
 }
 
@@ -209,18 +213,19 @@ Task Wbc::formulateSwingLegTask()
       b.segment(3 * j, 3) = accel - dj_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum) * measured_v_;
       j++;
     }
+
   return Task(a, b, matrix_t(), vector_t());
 }
 
 Task Wbc::formulateContactForceTask()
 {
-  matrix_t a(3 * num_contacts_, num_decision_vars_);
+  matrix_t a(3 * info_.numThreeDofContacts, num_decision_vars_);
+  vector_t b(a.rows());
   a.setZero();
-  size_t j = 0;
+
   for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
-    if (contact_flag_[i])
-      a.block(3 * j++, info_.generalizedCoordinatesNum + 3 * i, 3, 3) = matrix_t::Identity(3, 3);
-  vector_t b = input_desired_.head(a.cols());
+    a.block(3 * i, info_.generalizedCoordinatesNum + 3 * i, 3, 3) = matrix_t::Identity(3, 3);
+  b = input_desired_.head(a.rows());
 
   return Task(a, b, matrix_t(), vector_t());
 }
