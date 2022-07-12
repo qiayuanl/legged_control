@@ -40,14 +40,15 @@ vector_t Wbc::update(const vector_t& state_desired, const vector_t& input_desire
     if (flag)
       num_contacts_++;
 
-  measured_q_.segment<3>(0) = measured_rbd_state.segment<3>(3);
+  measured_q_.head<3>() = measured_rbd_state.segment<3>(3);
   measured_q_.segment<3>(3) = measured_rbd_state.head<3>();
   measured_q_.tail(info_.actuatedDofNum) = measured_rbd_state.segment(6, info_.actuatedDofNum);
 
-  measured_v_.segment<3>(0) = measured_rbd_state.segment<3>(info_.generalizedCoordinatesNum + 3);
-  measured_v_.segment<3>(3) = measured_rbd_state.segment<3>(info_.generalizedCoordinatesNum);
+  measured_v_.head<3>() = measured_rbd_state.segment<3>(info_.generalizedCoordinatesNum + 3);
+  measured_v_.segment<3>(3) = getEulerAnglesZyxDerivativesFromGlobalAngularVelocity<scalar_t>(
+      measured_q_.segment<3>(3), measured_rbd_state.segment<3>(info_.generalizedCoordinatesNum));
   measured_v_.tail(info_.actuatedDofNum) =
-      measured_rbd_state.segment(6 + info_.generalizedCoordinatesNum, info_.actuatedDofNum);
+      measured_rbd_state.segment(info_.generalizedCoordinatesNum + 6, info_.actuatedDofNum);
 
   const auto& model = pino_interface_.getModel();
   auto& data = pino_interface_.getData();
@@ -179,7 +180,9 @@ Task Wbc::formulateBaseAccelTask()
   const Eigen::Matrix<scalar_t, 6, 6> a_base = getCentroidalMomentumMatrix(pino_interface_).template leftCols<6>();
   const auto a_base_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(a_base);
   vector_t b = a_base_inv * momentum_rate;
-  const vector3_t angular_velocity = measured_v_.segment<3>(3);
+
+  const vector3_t angular_velocity = getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(
+      measured_q_.segment<3>(3), measured_v_.segment<3>(3));
   b.segment<3>(3) -= a_base_inv.block<3, 3>(3, 3) * angular_velocity.cross(a_base.block<3, 3>(3, 3) * angular_velocity);
 
   return Task(a, b, matrix_t(), vector_t());
