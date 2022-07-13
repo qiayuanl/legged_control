@@ -152,7 +152,7 @@ Q
   (0,0)   15.0     ; vcom_x
   (1,1)   15.0     ; vcom_y
   (2,2)   30.0     ; vcom_z
-  (3,3)   50.0      ; L_x / robotMass
+  (3,3)   5.0      ; L_x / robotMass
   (4,4)   10.0     ; L_y / robotMass
   (5,5)   10.0     ; L_z / robotMass
 
@@ -161,8 +161,8 @@ Q
   (7,7)   500.0    ; p_base_y
   (8,8)   500.0    ; p_base_z
   (9,9)   100.0    ; theta_base_z
-  (10,10) 200.0    ; theta_base_y
-  (11,11) 200.0    ; theta_base_x
+  (10,10) 300.0    ; theta_base_y
+  (11,11) 500.0    ; theta_base_x
 
   ;; Leg Joint Positions: [LF, LH, RF, RH] ;;
   (12,12) 20.0     ; LF_HAA

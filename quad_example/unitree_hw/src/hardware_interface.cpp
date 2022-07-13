@@ -66,7 +66,7 @@ void UnitreeHW::read(const ros::Time& time, const ros::Duration& period)
     HybridJointHandle handle = hybrid_joint_interface_.getHandle(name);
     handle.setFeedforward(0.);
     handle.setVelocityDesired(0.);
-    handle.setKd(10.);
+    handle.setKd(3.);
   }
 }
 
