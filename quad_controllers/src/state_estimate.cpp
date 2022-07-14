@@ -1,7 +1,6 @@
 //
 // Created by qiayuan on 2021/11/15.
 //
-#include <ocs2_pinocchio_interface/pinocchio_forward_declaration.h>
 #include <pinocchio/algorithm/kinematics.hpp>
 #include <pinocchio/algorithm/frames.hpp>
 
@@ -162,8 +161,10 @@ vector_t KalmanFilterEstimate::update(scalar_t dt)
   q_pino.tail(actuated_dof_num) = rbd_state_.segment(6, actuated_dof_num);
 
   v_pino.setZero();
-  v_pino.segment<3>(3) =
-      rbd_state_.segment<3>(generalized_coordinates_num_);  // Only set angular velocity, let linear velocity be zero
+  v_pino.segment<3>(3) = getEulerAnglesZyxDerivativesFromGlobalAngularVelocity<scalar_t>(
+      q_pino.segment<3>(3),
+      rbd_state_.segment<3>(legged_interface_.getCentroidalModelInfo()
+                                .generalizedCoordinatesNum));  // Only set angular velocity, let linear velocity be zero
   v_pino.tail(actuated_dof_num) = rbd_state_.segment(6 + generalized_coordinates_num_, actuated_dof_num);
 
   pinocchio::forwardKinematics(model, data, q_pino, v_pino);
@@ -171,15 +172,14 @@ vector_t KalmanFilterEstimate::update(scalar_t dt)
                                    legged_interface_.getPinocchioInterface().getData());
   pinocchio_ee_kine_.setPinocchioInterface(legged_interface_.getPinocchioInterface());
 
-  vector_t state, input;  // Useless here, just to make the code compile.
-  const auto ee_pos = pinocchio_ee_kine_.getPosition(state);
-  const auto ee_vel = pinocchio_ee_kine_.getVelocity(state, input);
+  const auto ee_pos = pinocchio_ee_kine_.getPosition(vector_t());
+  const auto ee_vel = pinocchio_ee_kine_.getVelocity(vector_t(), vector_t());
 
   scalar_t imu_process_noise_position = 0.2;
   scalar_t imu_process_noise_velocity = 0.2;
   scalar_t foot_process_noise_position = 0.002;
-  scalar_t foot_sensor_noise_position = 0.001;
-  scalar_t foot_sensor_noise_velocity = 1000.;  // TODO adjest the value
+  scalar_t foot_sensor_noise_position = 0.005;
+  scalar_t foot_sensor_noise_velocity = 0.1;  // TODO adjust the value
   scalar_t foot_height_sensor_noise = 0.001;
   Eigen::Matrix<scalar_t, 18, 18> q = Eigen::Matrix<scalar_t, 18, 18>::Identity();
   q.block(0, 0, 3, 3) = q_.block(0, 0, 3, 3) * imu_process_noise_position;
