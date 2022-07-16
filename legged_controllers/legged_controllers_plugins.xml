@@ -1,6 +1,6 @@
 <library path="lib/liblegged_controllers">
 
-    <class name="legged/Ocs2Controller" type="legged::Ocs2Controller"
+    <class name="legged/LeggedController" type="legged::LeggedController"
            base_class_type="controller_interface::ControllerBase">
         <description>
             The ocs2 controller.

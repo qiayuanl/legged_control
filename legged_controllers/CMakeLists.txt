@@ -51,7 +51,7 @@ link_directories(
 
 ## Declare a cpp library
 add_library(${PROJECT_NAME}
-        src/ocs2_controller.cpp
+        src/legged_controller.cpp
         src/state_estimate.cpp
         )
 

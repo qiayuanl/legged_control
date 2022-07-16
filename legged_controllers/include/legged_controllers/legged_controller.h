@@ -20,13 +20,13 @@ namespace legged
 using namespace ocs2;
 using namespace legged_robot;
 
-class Ocs2Controller
+class LeggedController
   : public controller_interface::MultiInterfaceController<HybridJointInterface, hardware_interface::ImuSensorInterface,
                                                           ContactSensorInterface>
 {
 public:
-  Ocs2Controller() = default;
-  ~Ocs2Controller() override;
+  LeggedController() = default;
+  ~LeggedController() override;
   bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& controller_nh) override;
   void update(const ros::Time& time, const ros::Duration& period) override;
   void starting(const ros::Time& time) override;

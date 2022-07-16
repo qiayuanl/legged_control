@@ -5,7 +5,7 @@
 #include <pinocchio/fwd.hpp>  // forward declarations must be included first.
 #include <pinocchio/algorithm/jacobian.hpp>
 
-#include "legged_controllers/ocs2_controller.h"
+#include "legged_controllers/legged_controller.h"
 
 #include <ocs2_core/thread_support/ExecuteAndSleep.h>
 #include <ocs2_core/thread_support/SetThreadPriority.h>
@@ -21,7 +21,7 @@
 
 namespace legged
 {
-bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& controller_nh)
+bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& controller_nh)
 {
   // Initialize OCS2
   std::string task_file, urdf_file, reference_file;
@@ -67,7 +67,7 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
     {
       try
       {
-        ocs2::executeAndSleep(
+        executeAndSleep(
             [&]() {
               if (mpc_running_)
                 mpc_mrt_interface_->advanceMpc();
@@ -81,7 +81,7 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
       }
     }
   });
-  ocs2::setThreadPriority(legged_interface_->ddpSettings().threadPriority_, mpc_thread_);
+  setThreadPriority(legged_interface_->ddpSettings().threadPriority_, mpc_thread_);
 
   HybridJointInterface* hybrid_joint_interface = robot_hw->get<HybridJointInterface>();
   std::vector<std::string> joint_names{ "LF_HAA", "LF_HFE", "LF_KFE", "LH_HAA", "LH_HFE", "LH_KFE",
@@ -101,7 +101,7 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
   return true;
 }
 
-void Ocs2Controller::starting(const ros::Time& time)
+void LeggedController::starting(const ros::Time& time)
 {
   // Initial state
   current_observation_.mode = ModeNumber::STANCE;
@@ -126,7 +126,7 @@ void Ocs2Controller::starting(const ros::Time& time)
   mpc_running_ = true;
 }
 
-void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
+void LeggedController::update(const ros::Time& time, const ros::Duration& period)
 {
   // State Estimate
   current_observation_.time += period.toSec();
@@ -169,10 +169,10 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
   visualizer_->update(current_observation_, mpc_mrt_interface_->getPolicy(), mpc_mrt_interface_->getCommand());
 
   // Publish the observation. Only needed for the command interface
-  observation_publisher_.publish(ocs2::ros_msg_conversions::createObservationMsg(current_observation_));
+  observation_publisher_.publish(ros_msg_conversions::createObservationMsg(current_observation_));
 }
 
-Ocs2Controller::~Ocs2Controller()
+LeggedController::~LeggedController()
 {
   controller_running_ = false;
   if (mpc_thread_.joinable())
@@ -181,4 +181,4 @@ Ocs2Controller::~Ocs2Controller()
 
 }  // namespace legged
 
-PLUGINLIB_EXPORT_CLASS(legged::Ocs2Controller, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(legged::LeggedController, controller_interface::ControllerBase)
