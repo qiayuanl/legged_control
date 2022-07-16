@@ -11,7 +11,6 @@
 
 #include <ocs2_sqp/MultipleShootingMpc.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
-#include <ocs2_legged_robot/LeggedRobotInterface.h>
 #include <ocs2_legged_robot_ros/visualization/LeggedRobotVisualizer.h>
 #include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
 #include <quad_wbc/wbc.h>
@@ -21,6 +20,7 @@ namespace quad_ros
 using namespace ocs2;
 using namespace legged_robot;
 
+template <typename LEGGED_INTERFACE_T>
 class Ocs2Controller
   : public controller_interface::MultiInterfaceController<HybridJointInterface, hardware_interface::ImuSensorInterface,
                                                           ContactSensorInterface>
@@ -37,7 +37,7 @@ public:
   }
 
 protected:
-  std::shared_ptr<LeggedRobotInterface> legged_interface_;
+  std::shared_ptr<LEGGED_INTERFACE_T> legged_interface_;
   std::shared_ptr<MultipleShootingMpc> mpc_;
   std::shared_ptr<MPC_MRT_Interface> mpc_mrt_interface_;
   std::shared_ptr<CentroidalModelRbdConversions> rbd_conversions_;

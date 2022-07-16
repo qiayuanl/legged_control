@@ -21,7 +21,8 @@
 
 namespace quad_ros
 {
-bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& controller_nh)
+template <typename LEGGED_INTERFACE_T>
+bool Ocs2Controller<LEGGED_INTERFACE_T>::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& controller_nh)
 {
   // Initialize OCS2
   std::string task_file, urdf_file, reference_file;
@@ -101,7 +102,8 @@ bool Ocs2Controller::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle
   return true;
 }
 
-void Ocs2Controller::starting(const ros::Time& time)
+template <typename LEGGED_INTERFACE_T>
+void Ocs2Controller<LEGGED_INTERFACE_T>::starting(const ros::Time& time)
 {
   // Initial state
   current_observation_.mode = ModeNumber::STANCE;
@@ -126,7 +128,8 @@ void Ocs2Controller::starting(const ros::Time& time)
   mpc_running_ = true;
 }
 
-void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
+template <typename LEGGED_INTERFACE_T>
+void Ocs2Controller<LEGGED_INTERFACE_T>::update(const ros::Time& time, const ros::Duration& period)
 {
   // State Estimate
   current_observation_.time += period.toSec();
@@ -172,13 +175,16 @@ void Ocs2Controller::update(const ros::Time& time, const ros::Duration& period)
   observation_publisher_.publish(ocs2::ros_msg_conversions::createObservationMsg(current_observation_));
 }
 
-Ocs2Controller::~Ocs2Controller()
+template <typename LEGGED_INTERFACE_T>
+Ocs2Controller<LEGGED_INTERFACE_T>::~Ocs2Controller()
 {
   controller_running_ = false;
   if (mpc_thread_.joinable())
     mpc_thread_.join();
 }
 
-}  // namespace quad_ros
+// explicit template instantiation
+template class Ocs2Controller<LeggedRobotInterface>;
 
-PLUGINLIB_EXPORT_CLASS(quad_ros::Ocs2Controller, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(quad_ros::Ocs2Controller<LeggedRobotInterface>, controller_interface::ControllerBase)
+}  // namespace quad_ros
