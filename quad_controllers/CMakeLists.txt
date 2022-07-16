@@ -12,10 +12,10 @@ find_package(catkin REQUIRED
         COMPONENTS
         roscpp
         quad_common
+        quad_wbc
         controller_interface
         ocs2_legged_robot_ros
         angles
-        quad_wbc
         )
 
 find_package(PkgConfig REQUIRED)
@@ -29,6 +29,7 @@ catkin_package(
         CATKIN_DEPENDS
         roscpp
         quad_common
+        quad_wbc
         controller_interface
         ocs2_legged_robot_ros
         angles

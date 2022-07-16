@@ -7,7 +7,6 @@
 
 #include "quad_controllers/ocs2_controller.h"
 
-#include <pluginlib/class_list_macros.hpp>
 #include <ocs2_core/thread_support/ExecuteAndSleep.h>
 #include <ocs2_core/thread_support/SetThreadPriority.h>
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
@@ -18,6 +17,7 @@
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_msgs/mpc_observation.h>
 #include <angles/angles.h>
+#include <pluginlib/class_list_macros.hpp>
 
 namespace quad_ros
 {
@@ -186,5 +186,6 @@ Ocs2Controller<LEGGED_INTERFACE_T>::~Ocs2Controller()
 // explicit template instantiation
 template class Ocs2Controller<LeggedRobotInterface>;
 
-PLUGINLIB_EXPORT_CLASS(quad_ros::Ocs2Controller<LeggedRobotInterface>, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(Ocs2Controller<LeggedRobotInterface>, controller_interface::ControllerBase)
+
 }  // namespace quad_ros
