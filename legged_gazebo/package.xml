@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>legged_gazebo</name>
+    <version>0.0.0</version>
+    <description>The legged_gazebo packages.</description>
+    <maintainer email="liaoqiayuan@gmail.com">Qiayuan Liao</maintainer>
+    <license>BSD</license>
+    <author email="liaoqiayuan@gmail.com">Qiayuan Liao</author>
+
+    <!-- buildtool_depend: dependencies of the build process -->
+    <buildtool_depend>catkin</buildtool_depend>
+    <!-- depend: build, export, and execution dependency -->
+    <depend>roscpp</depend>
+    <depend>legged_common</depend>
+    <depend>gazebo_dev</depend>
+    <depend>gazebo_ros_control</depend>
+
+    <export>
+        <gazebo_ros_control plugin="${prefix}/legged_hw_sim_plugins.xml"/>
+        <gazebo_ros gazebo_model_path="${prefix}/.."/>
+    </export>
+</package>

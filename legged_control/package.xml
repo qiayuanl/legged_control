@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>legged_control</name>
+    <version>0.0.0</version>
+    <description>Meta package that contains package of legged.</description>
+    <maintainer email="liaoqiayuan@gmail.com">Qiayuan Liao</maintainer>
+
+    <license>BSD</license>
+
+    <url type="repository">https://github.com/qiayuanliao/legged_control</url>
+    <url type="bugtracker">https://github.com/qiayuanliao/legged_control/issues</url>
+
+    <author email="liaoqiayuan@gmail.com">Qiayuan Liao</author>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <export>
+        <metapackage/>
+    </export>
+</package>

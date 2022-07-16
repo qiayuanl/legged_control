@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>legged_common</name>
+    <version>0.0.0</version>
+    <description>The legged_common package</description>
+
+    <maintainer email="liaoqiayuan@gmail.com">qiayuan</maintainer>
+
+    <license>BSD</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <depend>roscpp</depend>
+    <depend>hardware_interface</depend>
+
+    <!-- The export tag contains other, unspecified, tags -->
+    <export>
+
+    </export>
+</package>

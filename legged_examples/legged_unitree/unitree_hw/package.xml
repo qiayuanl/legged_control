@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>unitree_hw</name>
+    <version>0.0.0</version>
+    <description>ROS control warped interface for Unitree Robots</description>
+    <maintainer email="liaoqiayuan@gmail.com">Qiayuan Liao</maintainer>
+
+    <license>BSD</license>
+    <author email="liaoqiayuan@gmail.com">Qiayuan Liao</author>
+
+    <!-- buildtool_depend: dependencies of the build process -->
+    <buildtool_depend>catkin</buildtool_depend>
+    <!-- build_depend: dependencies only used in source files -->
+    <!-- depend: build, export, and execution dependency -->
+    <depend>roscpp</depend>
+    <depend>legged_hw</depend>
+</package>

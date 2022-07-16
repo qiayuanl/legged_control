@@ -1,6 +1,0 @@
-controllers:
-  joint_state_controller:
-    type: joint_state_controller/JointStateController
-    publish_rate: 100
-  ocs2_controller:
-    type: quad_ros/Ocs2Controller
