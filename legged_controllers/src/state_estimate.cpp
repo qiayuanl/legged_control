@@ -12,7 +12,7 @@
 
 namespace legged
 {
-StateEstimateBase::StateEstimateBase(ros::NodeHandle& nh, LeggedRobotInterface& legged_interface,
+StateEstimateBase::StateEstimateBase(ros::NodeHandle& nh, LeggedInterface& legged_interface,
                                      const std::vector<HybridJointHandle>& hybrid_joint_handles,
                                      const std::vector<ContactSensorHandle>& contact_sensor_handles,
                                      const hardware_interface::ImuSensorHandle& imu_sensor_handle)
@@ -56,7 +56,7 @@ void StateEstimateBase::updateJointStates()
   }
 }
 
-FromTopicStateEstimate::FromTopicStateEstimate(ros::NodeHandle& nh, LeggedRobotInterface& legged_interface,
+FromTopicStateEstimate::FromTopicStateEstimate(ros::NodeHandle& nh, LeggedInterface& legged_interface,
                                                const std::vector<HybridJointHandle>& hybrid_joint_handles_,
                                                const std::vector<ContactSensorHandle>& contact_sensor_handles,
                                                const hardware_interface::ImuSensorHandle& imu_sensor_handle)
@@ -86,7 +86,7 @@ vector_t FromTopicStateEstimate::update(scalar_t dt)
   return rbd_state_;
 }
 
-KalmanFilterEstimate::KalmanFilterEstimate(ros::NodeHandle& nh, LeggedRobotInterface& legged_interface,
+KalmanFilterEstimate::KalmanFilterEstimate(ros::NodeHandle& nh, LeggedInterface& legged_interface,
                                            const std::vector<HybridJointHandle>& hybrid_joint_handles,
                                            const std::vector<ContactSensorHandle>& contact_sensor_handles,
                                            const hardware_interface::ImuSensorHandle& imu_sensor_handle)

@@ -4,14 +4,13 @@
 
 #pragma once
 
-#include <ocs2_centroidal_model/FactoryFunctions.h>
 #include <ocs2_core/Types.h>
 #include <ocs2_core/penalties/Penalties.h>
-#include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 #include <ocs2_robotic_tools/end_effector/EndEffectorKinematics.h>
+#include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_sqp/MultipleShootingSettings.h>
 
 #include <ocs2_legged_robot/common/ModelSettings.h>

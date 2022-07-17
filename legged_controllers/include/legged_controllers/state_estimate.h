@@ -1,17 +1,16 @@
 //
 // Created by qiayuan on 2021/11/15.
 //
-
 #pragma once
-#include <ros/ros.h>
+
 #include <nav_msgs/Odometry.h>
 #include <realtime_tools/realtime_publisher.h>
 #include <realtime_tools/realtime_buffer.h>
 #include <hardware_interface/imu_sensor_interface.h>
 #include <legged_common/hardware_interface/hybrid_joint_interface.h>
 #include <legged_common/hardware_interface/contact_sensor_interface.h>
+#include <legged_interface/legged_interface.h>
 
-#include <ocs2_legged_robot/LeggedRobotInterface.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 
@@ -23,7 +22,7 @@ using namespace legged_robot;
 class StateEstimateBase
 {
 public:
-  StateEstimateBase(ros::NodeHandle& nh, LeggedRobotInterface& legged_interface,
+  StateEstimateBase(ros::NodeHandle& nh, LeggedInterface& legged_interface,
                     const std::vector<HybridJointHandle>& hybrid_joint_handles,
                     const std::vector<ContactSensorHandle>& contact_sensor_handles,
                     const hardware_interface::ImuSensorHandle& imu_sensor_handle);
@@ -35,7 +34,7 @@ protected:
   void updateLinear(const vector_t& pos, const vector_t& linear_vel);
   void updateJointStates();
 
-  LeggedRobotInterface& legged_interface_;
+  LeggedInterface& legged_interface_;
   size_t generalized_coordinates_num_;
   vector_t rbd_state_;
 
@@ -51,7 +50,7 @@ private:
 class FromTopicStateEstimate : public StateEstimateBase
 {
 public:
-  FromTopicStateEstimate(ros::NodeHandle& nh, LeggedRobotInterface& legged_interface,
+  FromTopicStateEstimate(ros::NodeHandle& nh, LeggedInterface& legged_interface,
                          const std::vector<HybridJointHandle>& hybrid_joint_handles,
                          const std::vector<ContactSensorHandle>& contact_sensor_handles,
                          const hardware_interface::ImuSensorHandle& imu_sensor_handle);
@@ -68,7 +67,7 @@ private:
 class KalmanFilterEstimate : public StateEstimateBase
 {
 public:
-  KalmanFilterEstimate(ros::NodeHandle& nh, LeggedRobotInterface& legged_interface,
+  KalmanFilterEstimate(ros::NodeHandle& nh, LeggedInterface& legged_interface,
                        const std::vector<HybridJointHandle>& hybrid_joint_handles,
                        const std::vector<ContactSensorHandle>& contact_sensor_handles,
                        const hardware_interface::ImuSensorHandle& imu_sensor_handle);

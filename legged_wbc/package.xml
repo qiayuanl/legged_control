@@ -13,7 +13,7 @@
     <!-- build_depend: dependencies only used in source files -->
     <!-- depend: build, export, and execution dependency -->
     <depend>roscpp</depend>
-    <depend>ocs2_legged_robot</depend>
+    <depend>legged_interface</depend>
     <depend>qpoases_catkin</depend>
     <depend>pinocchio</depend>
 </package>

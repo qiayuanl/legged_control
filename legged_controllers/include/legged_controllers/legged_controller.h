@@ -5,6 +5,9 @@
 #pragma once
 #include "legged_controllers/state_estimate.h"
 
+#include <legged_interface/legged_interface.h>
+#include <legged_wbc/wbc.h>
+
 #include <controller_interface/multi_interface_controller.h>
 #include <legged_common/hardware_interface/contact_sensor_interface.h>
 #include <hardware_interface/imu_sensor_interface.h>
@@ -13,7 +16,6 @@
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 #include <ocs2_legged_robot_ros/visualization/LeggedRobotVisualizer.h>
 #include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
-#include <legged_wbc/wbc.h>
 
 namespace legged
 {
@@ -36,12 +38,15 @@ public:
   }
 
 protected:
-  std::shared_ptr<LeggedRobotInterface> legged_interface_;
+  void setupLeggedInterface(ros::NodeHandle& controller_nh);
+
+  std::shared_ptr<LeggedInterface> legged_interface_;
+  std::shared_ptr<Wbc> wbc_;
+
   std::shared_ptr<MultipleShootingMpc> mpc_;
   std::shared_ptr<MPC_MRT_Interface> mpc_mrt_interface_;
   std::shared_ptr<CentroidalModelRbdConversions> rbd_conversions_;
   std::shared_ptr<StateEstimateBase> state_estimate_;
-  std::shared_ptr<Wbc> wbc_;
 
   std::shared_ptr<LeggedRobotVisualizer> visualizer_;
   ros::Publisher observation_publisher_;

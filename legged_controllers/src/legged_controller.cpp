@@ -24,13 +24,8 @@ namespace legged
 bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& controller_nh)
 {
   // Initialize OCS2
-  std::string task_file, urdf_file, reference_file;
-  controller_nh.getParam("/task_file", task_file);
-  controller_nh.getParam("/urdf_file", urdf_file);
-  controller_nh.getParam("/referenceFile", reference_file);
+  setupLeggedInterface(controller_nh);
 
-  // Robot interface
-  legged_interface_ = std::make_shared<LeggedRobotInterface>(task_file, urdf_file, reference_file);
   mpc_ = std::make_shared<MultipleShootingMpc>(legged_interface_->mpcSettings(), legged_interface_->sqpSettings(),
                                                legged_interface_->getOptimalControlProblem(),
                                                legged_interface_->getInitializer());
@@ -81,7 +76,7 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
       }
     }
   });
-  setThreadPriority(legged_interface_->ddpSettings().threadPriority_, mpc_thread_);
+  setThreadPriority(legged_interface_->sqpSettings().threadPriority, mpc_thread_);
 
   HybridJointInterface* hybrid_joint_interface = robot_hw->get<HybridJointInterface>();
   std::vector<std::string> joint_names{ "LF_HAA", "LF_HFE", "LF_KFE", "LH_HAA", "LH_HFE", "LH_KFE",
@@ -177,6 +172,16 @@ LeggedController::~LeggedController()
   controller_running_ = false;
   if (mpc_thread_.joinable())
     mpc_thread_.join();
+}
+
+void LeggedController::setupLeggedInterface(ros::NodeHandle& controller_nh)
+{
+  std::string task_file, urdf_file, reference_file;
+  controller_nh.getParam("/task_file", task_file);
+  controller_nh.getParam("/urdf_file", urdf_file);
+  controller_nh.getParam("/referenceFile", reference_file);
+
+  legged_interface_ = std::make_shared<LeggedInterface>(task_file, urdf_file, reference_file);
 }
 
 }  // namespace legged

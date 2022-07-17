@@ -12,6 +12,7 @@ find_package(catkin REQUIRED
         COMPONENTS
         roscpp
         legged_common
+        legged_interface
         legged_wbc
         controller_interface
         ocs2_legged_robot_ros
@@ -29,6 +30,7 @@ catkin_package(
         CATKIN_DEPENDS
         roscpp
         legged_common
+        legged_interface
         legged_wbc
         controller_interface
         ocs2_legged_robot_ros

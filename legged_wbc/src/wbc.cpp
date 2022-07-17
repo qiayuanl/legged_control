@@ -13,7 +13,7 @@
 
 namespace legged
 {
-Wbc::Wbc(LeggedRobotInterface& legged_interface, const PinocchioEndEffectorKinematics& ee_kinematics)
+Wbc::Wbc(LeggedInterface& legged_interface, const PinocchioEndEffectorKinematics& ee_kinematics)
   : pino_interface_(legged_interface.getPinocchioInterface())
   , info_(legged_interface.getCentroidalModelInfo())
   , centroidal_dynamics_(info_)

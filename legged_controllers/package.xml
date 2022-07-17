@@ -12,10 +12,12 @@
     <!-- depend: build, export, and execution dependency -->
     <depend>roscpp</depend>
     <depend>legged_common</depend>
+    <depend>legged_interface</depend>
+    <depend>legged_wbc</depend>
+
     <depend>controller_interface</depend>
     <depend>ocs2_legged_robot_ros</depend>
     <depend>angles</depend>
-    <depend>legged_wbc</depend>
 
     <exec_depend>controller_manager</exec_depend>
 

@@ -5,12 +5,10 @@ project(legged_wbc)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_definitions(-Wall)
-
 find_package(catkin REQUIRED
         COMPONENTS
         roscpp
-        ocs2_legged_robot
+        legged_interface
         qpoases_catkin
         )
 

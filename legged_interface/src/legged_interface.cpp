@@ -2,12 +2,12 @@
 // Created by qiayuan on 2022/7/16.
 //
 
-#include <pinocchio/fwd.hpp>  // forward declarations must be included first.
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/jacobian.hpp>
 
 #include "legged_interface/legged_interface.h"
 
+#include <ocs2_centroidal_model/FactoryFunctions.h>
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_centroidal_model/ModelHelperFunctions.h>
