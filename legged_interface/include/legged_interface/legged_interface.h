@@ -75,8 +75,8 @@ public:
   }
 
 protected:
-  virtual void setupOptimalControlProblem(const std::string& taskFile, const std::string& urdfFile,
-                                          const std::string& referenceFile, bool verbose);
+  void setupOptimalControlProblem(const std::string& taskFile, const std::string& urdfFile,
+                                  const std::string& referenceFile, bool verbose);
 
   std::shared_ptr<GaitSchedule> loadGaitSchedule(const std::string& file, bool verbose) const;
 
