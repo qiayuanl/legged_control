@@ -38,7 +38,7 @@ public:
   }
 
 protected:
-  void setupLeggedInterface(ros::NodeHandle& controller_nh);
+  virtual void setupLeggedInterface(ros::NodeHandle& controller_nh);
 
   std::shared_ptr<LeggedInterface> legged_interface_;
   std::shared_ptr<Wbc> wbc_;
