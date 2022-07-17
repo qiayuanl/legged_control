@@ -26,7 +26,6 @@ catkin_package(
         ${PROJECT_NAME}
         CATKIN_DEPENDS
         roscpp
-        qpoases_catkin
         DEPENDS
         pinocchio
 )
