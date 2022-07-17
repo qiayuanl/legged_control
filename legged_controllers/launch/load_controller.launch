@@ -17,7 +17,7 @@
     <node name="controller_loader" pkg="controller_manager" type="controller_manager" output="screen"
           args="load
           controllers/joint_state_controller
-          controllers/ocs2_controller
+          controllers/legged_controller
 "/>
 
     <node pkg="ocs2_legged_robot_ros" type="legged_robot_target" name="legged_robot_target"
