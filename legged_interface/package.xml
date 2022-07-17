@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>legged_interface</name>
+    <version>0.0.0</version>
+    <description>Legged interface base on OCS2</description>
+    <maintainer email="liaoqiayuan@gmail.com">Qiayuan Liao</maintainer>
+
+    <license>BSD</license>
+    <author email="liaoqiayuan@gmail.com">Qiayuan Liao</author>
+
+    <!-- buildtool_depend: dependencies of the build process -->
+    <buildtool_depend>catkin</buildtool_depend>
+    <!-- build_depend: dependencies only used in source files -->
+    <!-- depend: build, export, and execution dependency -->
+    <depend>roscpp</depend>
+    <depend>ocs2_legged_robot</depend>
+    <depend>pinocchio</depend>
+
+</package>
