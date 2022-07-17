@@ -4,14 +4,15 @@
     <arg name="task_file" default="$(find legged_controllers)/config/mpc/task.info"/>
     <arg name="reference_file" default="$(find legged_controllers)/config/command/reference.info"/>
     <arg name="urdf_file" default="$(find unitree_description)/urdf/a1.urdf"/>
-
-    <arg name="gaitCommandFile" default="$(find legged_controllers)/config/command/gait.info"/>
+    <arg name="gait_file" default="$(find legged_controllers)/config/command/gait.info"/>
 
     <!-- make the files into global parameters -->
     <param name="task_file" value="$(arg task_file)"/>
-    <param name="referenceFile" value="$(arg reference_file)"/>
+    <param name="reference_file" value="$(arg reference_file)"/>
     <param name="urdf_file" value="$(arg urdf_file)"/>
-    <param name="gaitCommandFile" value="$(arg gaitCommandFile)"/>
+
+    <param name="referenceFile" value="$(arg reference_file)"/>
+    <param name="gaitCommandFile" value="$(arg gait_file)"/>
     <rosparam file="$(find legged_controllers)/config/default.yaml" command="load"/>
 
     <node name="controller_loader" pkg="controller_manager" type="controller_manager" output="screen"

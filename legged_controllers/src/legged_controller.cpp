@@ -179,7 +179,7 @@ void LeggedController::setupLeggedInterface(ros::NodeHandle& controller_nh)
   std::string task_file, urdf_file, reference_file;
   controller_nh.getParam("/task_file", task_file);
   controller_nh.getParam("/urdf_file", urdf_file);
-  controller_nh.getParam("/referenceFile", reference_file);
+  controller_nh.getParam("/reference_file", reference_file);
 
   legged_interface_ = std::make_shared<LeggedInterface>(task_file, urdf_file, reference_file);
 }
