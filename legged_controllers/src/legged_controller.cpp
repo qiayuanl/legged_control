@@ -88,7 +88,7 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
   std::vector<ContactSensorHandle> contact_handles;
   for (auto& name : legged_interface_->modelSettings().contactNames3DoF)
     contact_handles.push_back(contact_interface->getHandle(name));
-  state_estimate_ = std::make_shared<KalmanFilterEstimate>(
+  state_estimate_ = std::make_shared<FromTopicStateEstimate>(
       nh, *legged_interface_, hybrid_joint_handles_, contact_handles,
       robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu"));
 
