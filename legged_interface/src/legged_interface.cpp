@@ -66,15 +66,7 @@ LeggedInterface::LeggedInterface(const std::string& taskFile, const std::string&
 void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, const std::string& urdfFile,
                                                  const std::string& referenceFile, bool verbose)
 {
-  // PinocchioInterface
-  pinocchioInterfacePtr_.reset(
-      new PinocchioInterface(centroidal_model::createPinocchioInterface(urdfFile, modelSettings_.jointNames)));
-
-  // CentroidalModelInfo
-  centroidalModelInfo_ = centroidal_model::createCentroidalModelInfo(
-      *pinocchioInterfacePtr_, centroidal_model::loadCentroidalType(taskFile),
-      centroidal_model::loadDefaultJointState(pinocchioInterfacePtr_->getModel().nq - 6, referenceFile),
-      modelSettings_.contactNames3DoF, modelSettings_.contactNames6DoF);
+  setupModel(taskFile, urdfFile, referenceFile, verbose);
 
   // Initial state
   initialState_.setZero(centroidalModelInfo_.stateDim);
@@ -149,6 +141,23 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
   constexpr bool extend_normalized_momentum = true;
   initializerPtr_.reset(
       new LeggedRobotInitializer(centroidalModelInfo_, *referenceManagerPtr_, extend_normalized_momentum));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void LeggedInterface::setupModel(const std::string& taskFile, const std::string& urdfFile,
+                                 const std::string& referenceFile, bool verbose)
+{
+  // PinocchioInterface
+  pinocchioInterfacePtr_.reset(
+      new PinocchioInterface(centroidal_model::createPinocchioInterface(urdfFile, modelSettings_.jointNames)));
+
+  // CentroidalModelInfo
+  centroidalModelInfo_ = centroidal_model::createCentroidalModelInfo(
+      *pinocchioInterfacePtr_, centroidal_model::loadCentroidalType(taskFile),
+      centroidal_model::loadDefaultJointState(pinocchioInterfacePtr_->getModel().nq - 6, referenceFile),
+      modelSettings_.contactNames3DoF, modelSettings_.contactNames6DoF);
 }
 
 /******************************************************************************************************/

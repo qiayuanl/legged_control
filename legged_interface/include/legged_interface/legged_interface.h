@@ -79,6 +79,9 @@ public:
   }
 
 protected:
+  virtual void setupModel(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
+                          bool verbose);
+
   std::shared_ptr<GaitSchedule> loadGaitSchedule(const std::string& file, bool verbose) const;
 
   std::unique_ptr<StateInputCost> getBaseTrackingCost(const std::string& taskFile, const CentroidalModelInfo& info,
