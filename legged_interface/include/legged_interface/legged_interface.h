@@ -25,9 +25,13 @@ using namespace legged_robot;
 class LeggedInterface : public RobotInterface
 {
 public:
-  LeggedInterface(const std::string& task_file, const std::string& urdf_file, const std::string& reference_file);
+  LeggedInterface(const std::string& task_file, const std::string& urdf_file, const std::string& reference_file,
+                  bool verbose);
 
   ~LeggedInterface() override = default;
+
+  virtual void setupOptimalControlProblem(const std::string& taskFile, const std::string& urdfFile,
+                                          const std::string& referenceFile, bool verbose);
 
   const OptimalControlProblem& getOptimalControlProblem() const override
   {
@@ -75,9 +79,6 @@ public:
   }
 
 protected:
-  void setupOptimalControlProblem(const std::string& taskFile, const std::string& urdfFile,
-                                  const std::string& referenceFile, bool verbose);
-
   std::shared_ptr<GaitSchedule> loadGaitSchedule(const std::string& file, bool verbose) const;
 
   std::unique_ptr<StateInputCost> getBaseTrackingCost(const std::string& taskFile, const CentroidalModelInfo& info,

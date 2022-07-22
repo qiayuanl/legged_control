@@ -30,7 +30,7 @@
 namespace legged
 {
 LeggedInterface::LeggedInterface(const std::string& taskFile, const std::string& urdfFile,
-                                 const std::string& referenceFile)
+                                 const std::string& referenceFile, bool verbose)
 {
   // check that task file exists
   boost::filesystem::path task_file_path(taskFile);
@@ -53,21 +53,11 @@ LeggedInterface::LeggedInterface(const std::string& taskFile, const std::string&
   else
     throw std::invalid_argument("[LeggedInterface] targetCommand file not found: " + reference_file_path.string());
 
-  bool verbose;
-  loadData::loadCppDataType(taskFile, "legged_robot_interface.verbose", verbose);
-
   // load setting from loading file
   modelSettings_ = loadModelSettings(taskFile, "model_settings", verbose);
   mpcSettings_ = mpc::loadSettings(taskFile, "mpc", verbose);
   rolloutSettings_ = rollout::loadSettings(taskFile, "rollout", verbose);
   sqpSettings_ = multiple_shooting::loadSettings(taskFile, "multiple_shooting", verbose);
-
-  // OptimalControlProblem
-  setupOptimalControlProblem(taskFile, urdfFile, referenceFile, verbose);
-
-  // initial state
-  initialState_.setZero(centroidalModelInfo_.stateDim);
-  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 }
 
 /******************************************************************************************************/
@@ -86,9 +76,14 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
       centroidal_model::loadDefaultJointState(pinocchioInterfacePtr_->getModel().nq - 6, referenceFile),
       modelSettings_.contactNames3DoF, modelSettings_.contactNames6DoF);
 
+  // Initial state
+  initialState_.setZero(centroidalModelInfo_.stateDim);
+  loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
+
   // Swing trajectory planner
   std::unique_ptr<SwingTrajectoryPlanner> swing_trajectory_planner(
-      new SwingTrajectoryPlanner(loadSwingTrajectorySettings(taskFile, "swing_trajectory_config", verbose), 4));
+      new SwingTrajectoryPlanner(loadSwingTrajectorySettings(taskFile, "swing_trajectory_config", verbose),
+                                 centroidalModelInfo_.numThreeDofContacts));
 
   // Mode schedule manager
   referenceManagerPtr_ = std::make_shared<SwitchedModelReferenceManager>(loadGaitSchedule(referenceFile, verbose),
@@ -197,12 +192,9 @@ matrix_t LeggedInterface::initializeInputCostWeight(const std::string& taskFile,
 {
   const size_t total_contact_dim = 3 * info.numThreeDofContacts;
 
-  vector_t initial_state(centroidalModelInfo_.stateDim);
-  loadData::loadEigenMatrix(taskFile, "initialState", initial_state);
-
   const auto& model = pinocchioInterfacePtr_->getModel();
   auto& data = pinocchioInterfacePtr_->getData();
-  const auto q = centroidal_model::getGeneralizedCoordinates(initial_state, centroidalModelInfo_);
+  const auto q = centroidal_model::getGeneralizedCoordinates(initialState_, centroidalModelInfo_);
   pinocchio::computeJointJacobians(model, data, q);
   pinocchio::updateFramePlacements(model, data);
 
@@ -215,16 +207,13 @@ matrix_t LeggedInterface::initializeInputCostWeight(const std::string& taskFile,
     base2feet_jac.block(3 * i, 0, 3, info.actuatedDofNum) = jac.block(0, 6, 3, info.actuatedDofNum);
   }
 
-  matrix_t r_taskspace(total_contact_dim + total_contact_dim, total_contact_dim + total_contact_dim);
+  matrix_t r_taskspace(info.inputDim, info.inputDim);
   loadData::loadEigenMatrix(taskFile, "R", r_taskspace);
-
-  matrix_t r = matrix_t::Zero(info.inputDim, info.inputDim);
-  // Contact Forces
-  r.topLeftCorner(total_contact_dim, total_contact_dim) =
-      r_taskspace.topLeftCorner(total_contact_dim, total_contact_dim);
+  matrix_t r = r_taskspace;
   // Joint velocities
-  r.bottomRightCorner(info.actuatedDofNum, info.actuatedDofNum) =
-      base2feet_jac.transpose() * r_taskspace.bottomRightCorner(total_contact_dim, total_contact_dim) * base2feet_jac;
+  r.block(total_contact_dim, total_contact_dim, info.actuatedDofNum, info.actuatedDofNum) =
+      base2feet_jac.transpose() *
+      r_taskspace.block(total_contact_dim, total_contact_dim, info.actuatedDofNum, info.actuatedDofNum) * base2feet_jac;
   return r;
 }
 

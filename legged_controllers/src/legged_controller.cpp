@@ -24,7 +24,14 @@ namespace legged
 bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& controller_nh)
 {
   // Initialize OCS2
-  setupLeggedInterface(controller_nh);
+  std::string task_file, urdf_file, reference_file;
+  controller_nh.getParam("/task_file", task_file);
+  controller_nh.getParam("/urdf_file", urdf_file);
+  controller_nh.getParam("/reference_file", reference_file);
+  bool verbose;
+  loadData::loadCppDataType(task_file, "legged_robot_interface.verbose", verbose);
+
+  setupLeggedInterface(task_file, urdf_file, reference_file, verbose);
 
   mpc_ = std::make_shared<MultipleShootingMpc>(legged_interface_->mpcSettings(), legged_interface_->sqpSettings(),
                                                legged_interface_->getOptimalControlProblem(),
@@ -174,14 +181,11 @@ LeggedController::~LeggedController()
     mpc_thread_.join();
 }
 
-void LeggedController::setupLeggedInterface(ros::NodeHandle& controller_nh)
+void LeggedController::setupLeggedInterface(const std::string& task_file, const std::string& urdf_file,
+                                            const std::string& reference_file, bool verbose)
 {
-  std::string task_file, urdf_file, reference_file;
-  controller_nh.getParam("/task_file", task_file);
-  controller_nh.getParam("/urdf_file", urdf_file);
-  controller_nh.getParam("/reference_file", reference_file);
-
-  legged_interface_ = std::make_shared<LeggedInterface>(task_file, urdf_file, reference_file);
+  legged_interface_ = std::make_shared<LeggedInterface>(task_file, urdf_file, reference_file, verbose);
+  legged_interface_->setupOptimalControlProblem(task_file, urdf_file, reference_file, verbose);
 }
 
 }  // namespace legged
