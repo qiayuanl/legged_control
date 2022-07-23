@@ -19,6 +19,7 @@
           args="load
           controllers/joint_state_controller
           controllers/legged_controller
+          controllers/legged_cheater_controller
 "/>
 
     <node pkg="ocs2_legged_robot_ros" type="legged_robot_target" name="legged_robot_command_target"

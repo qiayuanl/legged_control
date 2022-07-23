@@ -4,3 +4,5 @@ controllers:
     publish_rate: 100
   legged_controller:
     type: legged/LeggedController
+  legged_cheater_controller:
+    type: legged/LeggedCheaterController

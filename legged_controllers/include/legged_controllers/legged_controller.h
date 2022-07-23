@@ -3,9 +3,9 @@
 //
 
 #pragma once
-#include "legged_controllers/state_estimate.h"
 
 #include <legged_interface/legged_interface.h>
+#include <legged_estimation/state_estimate.h>
 #include <legged_wbc/wbc.h>
 
 #include <controller_interface/multi_interface_controller.h>
@@ -40,6 +40,10 @@ public:
 protected:
   virtual void setupLeggedInterface(const std::string& task_file, const std::string& urdf_file,
                                     const std::string& reference_file, bool verbose);
+  virtual void setupStateEstimate(LeggedInterface& legged_interface,
+                                  const std::vector<HybridJointHandle>& hybrid_joint_handles,
+                                  const std::vector<ContactSensorHandle>& contact_sensor_handles,
+                                  const hardware_interface::ImuSensorHandle& imu_sensor_handle);
 
   std::shared_ptr<LeggedInterface> legged_interface_;
   std::shared_ptr<Wbc> wbc_;
@@ -58,6 +62,15 @@ protected:
 private:
   std::thread mpc_thread_;
   std::atomic_bool controller_running_, mpc_running_{};
+};
+
+class LeggedCheaterController : public LeggedController
+{
+protected:
+  virtual void setupStateEstimate(LeggedInterface& legged_interface,
+                                  const std::vector<HybridJointHandle>& hybrid_joint_handles,
+                                  const std::vector<ContactSensorHandle>& contact_sensor_handles,
+                                  const hardware_interface::ImuSensorHandle& imu_sensor_handle) override;
 };
 
 }  // namespace legged

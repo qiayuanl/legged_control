@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(legged_controllers)
+project(legged_estimation)
 
 ## Use C++14
 set(CMAKE_CXX_STANDARD 14)
@@ -13,11 +13,6 @@ find_package(catkin REQUIRED
         roscpp
         legged_common
         legged_interface
-        legged_estimation
-        legged_wbc
-        controller_interface
-        ocs2_legged_robot_ros
-        angles
         )
 
 find_package(PkgConfig REQUIRED)
@@ -32,11 +27,6 @@ catkin_package(
         roscpp
         legged_common
         legged_interface
-        legged_estimation
-        legged_wbc
-        controller_interface
-        ocs2_legged_robot_ros
-        angles
 )
 
 ###########
@@ -55,7 +45,7 @@ link_directories(
 
 ## Declare a cpp library
 add_library(${PROJECT_NAME}
-        src/legged_controller.cpp
+        src/state_estimate.cpp
         )
 
 target_link_libraries(${PROJECT_NAME}
@@ -64,17 +54,3 @@ target_link_libraries(${PROJECT_NAME}
         )
 
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
-
-# Goal command node for target trajectories
-add_executable(goal_target
-        src/goal_target_node.cpp
-        )
-add_dependencies(goal_target
-        ${PROJECT_NAME}
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(goal_target
-        ${PROJECT_NAME}
-        ${catkin_LIBRARIES}
-        )
-target_compile_options(goal_target PRIVATE ${OCS2_CXX_FLAGS})

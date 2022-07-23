@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-    <name>legged_controllers</name>
+    <name>legged_estimation</name>
     <version>0.0.0</version>
-    <description>The legged_controllers packages.</description>
+    <description>The legged_estimation packages.</description>
     <maintainer email="liaoqiayuan@gmail.com">Qiayuan Liao</maintainer>
     <license>BSD</license>
     <author email="liaoqiayuan@gmail.com">Qiayuan Liao</author>
@@ -13,16 +13,5 @@
     <depend>roscpp</depend>
     <depend>legged_common</depend>
     <depend>legged_interface</depend>
-    <depend>legged_estimation</depend>
-    <depend>legged_wbc</depend>
 
-    <depend>controller_interface</depend>
-    <depend>ocs2_legged_robot_ros</depend>
-    <depend>angles</depend>
-
-    <exec_depend>controller_manager</exec_depend>
-
-    <export>
-        <controller_interface plugin="${prefix}/legged_controllers_plugins.xml"/>
-    </export>
 </package>

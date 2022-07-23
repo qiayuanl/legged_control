@@ -4,7 +4,7 @@
 #include <pinocchio/algorithm/kinematics.hpp>
 #include <pinocchio/algorithm/frames.hpp>
 
-#include "legged_controllers/state_estimate.h"
+#include "legged_estimation/state_estimate.h"
 
 #include <ocs2_legged_robot/gait/MotionPhaseDefinition.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>

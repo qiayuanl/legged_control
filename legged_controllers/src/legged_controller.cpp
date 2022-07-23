@@ -85,6 +85,7 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
   });
   setThreadPriority(legged_interface_->sqpSettings().threadPriority, mpc_thread_);
 
+  // Hardware interface
   HybridJointInterface* hybrid_joint_interface = robot_hw->get<HybridJointInterface>();
   std::vector<std::string> joint_names{ "LF_HAA", "LF_HFE", "LF_KFE", "LH_HAA", "LH_HFE", "LH_KFE",
                                         "RF_HAA", "RF_HFE", "RF_KFE", "RH_HAA", "RH_HFE", "RH_KFE" };
@@ -95,10 +96,12 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
   std::vector<ContactSensorHandle> contact_handles;
   for (auto& name : legged_interface_->modelSettings().contactNames3DoF)
     contact_handles.push_back(contact_interface->getHandle(name));
-  state_estimate_ = std::make_shared<KalmanFilterEstimate>(
-      *legged_interface_, hybrid_joint_handles_, contact_handles,
-      robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu"));
 
+  // State estimation
+  setupStateEstimate(*legged_interface_, hybrid_joint_handles_, contact_handles,
+                     robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu"));
+
+  // Whole body control
   wbc_ = std::make_shared<Wbc>(*legged_interface_, ee_kinematics);
   return true;
 }
@@ -188,6 +191,26 @@ void LeggedController::setupLeggedInterface(const std::string& task_file, const 
   legged_interface_->setupOptimalControlProblem(task_file, urdf_file, reference_file, verbose);
 }
 
+void LeggedController::setupStateEstimate(LeggedInterface& legged_interface,
+                                          const std::vector<HybridJointHandle>& hybrid_joint_handles,
+                                          const std::vector<ContactSensorHandle>& contact_sensor_handles,
+                                          const hardware_interface::ImuSensorHandle& imu_sensor_handle)
+{
+  state_estimate_ = std::make_shared<KalmanFilterEstimate>(*legged_interface_, hybrid_joint_handles_,
+                                                           contact_sensor_handles, imu_sensor_handle);
+}
+
+void LeggedCheaterController::setupStateEstimate(LeggedInterface& legged_interface,
+                                                 const std::vector<HybridJointHandle>& hybrid_joint_handles,
+                                                 const std::vector<ContactSensorHandle>& contact_sensor_handles,
+                                                 const hardware_interface::ImuSensorHandle& imu_sensor_handle)
+{
+  char error_message[] = "Cheater controller shouldn't be used with real hardware.";
+  ROS_ERROR_STREAM(error_message);
+  throw std::runtime_error(error_message);
+}
+
 }  // namespace legged
 
 PLUGINLIB_EXPORT_CLASS(legged::LeggedController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(legged::LeggedCheaterController, controller_interface::ControllerBase)
