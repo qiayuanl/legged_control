@@ -1,7 +1,7 @@
 //
 // Created by qiayuan on 2022/7/18.
 //
-#include "legged_controllers/target_trajectories_goal_publisher.h"
+#include "legged_controllers/target_trajectories_cmd_vel_publisher.h"
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/misc/LoadData.h>
@@ -16,33 +16,26 @@ scalar_t COM_HEIGHT;
 vector_t DEFAULT_JOINT_STATE(12);
 }  // namespace
 
-scalar_t estimateTimeToTarget(const vector_t& desired_base_displacement)
+TargetTrajectories cmdVelToTargetTrajectories(const vector_t& cmd_vel, const SystemObservation& observation)
 {
-  const scalar_t& dx = desired_base_displacement(0);
-  const scalar_t& dy = desired_base_displacement(1);
-  const scalar_t& dyaw = desired_base_displacement(3);
-  const scalar_t rotation_time = std::abs(dyaw) / TARGET_ROTATION_VELOCITY;
-  const scalar_t displacement = std::sqrt(dx * dx + dy * dy);
-  const scalar_t displacement_time = displacement / TARGET_DISPLACEMENT_VELOCITY;
-  return std::max(rotation_time, displacement_time);
-}
+  // TODO set time_to_target as a parameters
+  const scalar_t time_to_target = 1.0;
+  const vector_t current_pose = observation.state.segment<6>(6);
 
-TargetTrajectories goalToTargetTrajectories(const vector_t& goal, const SystemObservation& observation)
-{
   const vector_t target_pose = [&]() {
     vector_t target(6);
-    target(0) = goal(0);
-    target(1) = goal(1);
+    target(0) = current_pose(0) + cmd_vel(0) * time_to_target;
+    target(1) = current_pose(1) + cmd_vel(1) * time_to_target;
     target(2) = COM_HEIGHT;
-    target(3) = goal(3);
+    target(3) = current_pose(3) + cmd_vel(5) * time_to_target;
     target(4) = 0;
     target(5) = 0;
     return target;
   }();
 
-  const vector_t current_pose = observation.state.segment<6>(6);
   // target reaching duration
-  const scalar_t target_reaching_time = observation.time + estimateTimeToTarget(target_pose - current_pose);
+
+  const scalar_t target_reaching_time = observation.time + time_to_target;
 
   // desired time trajectory
   const scalar_array_t time_trajectory{ observation.time, target_reaching_time };
@@ -74,7 +67,7 @@ int main(int argc, char* argv[])
   loadData::loadCppDataType(reference_file, "targetRotationVelocity", TARGET_ROTATION_VELOCITY);
   loadData::loadCppDataType(reference_file, "targetDisplacementVelocity", TARGET_DISPLACEMENT_VELOCITY);
 
-  TargetTrajectoriesGoalPublisher target_pose_command(node_handle, robot_name, &goalToTargetTrajectories);
+  TargetTrajectoriesGoalPublisher target_pose_command(node_handle, robot_name, &cmdVelToTargetTrajectories);
 
   ros::spin();
   // Successful exit

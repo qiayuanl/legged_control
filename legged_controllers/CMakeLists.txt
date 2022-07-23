@@ -65,16 +65,30 @@ target_link_libraries(${PROJECT_NAME}
 
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
-# Goal command node for target trajectories
-add_executable(goal_target
+# Target trajectories publish node for goal command
+add_executable(legged_goal_target
         src/goal_target_node.cpp
         )
-add_dependencies(goal_target
+add_dependencies(legged_goal_target
         ${PROJECT_NAME}
         ${catkin_EXPORTED_TARGETS}
         )
-target_link_libraries(goal_target
+target_link_libraries(legged_goal_target
         ${PROJECT_NAME}
         ${catkin_LIBRARIES}
         )
-target_compile_options(goal_target PRIVATE ${OCS2_CXX_FLAGS})
+target_compile_options(legged_goal_target PRIVATE ${OCS2_CXX_FLAGS})
+
+# Target trajectories publish node for goal command
+add_executable(legged_cmd_vel
+        src/cmd_vel_node.cpp
+        )
+add_dependencies(legged_cmd_vel
+        ${PROJECT_NAME}
+        ${catkin_EXPORTED_TARGETS}
+        )
+target_link_libraries(legged_cmd_vel
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
+target_compile_options(legged_cmd_vel PRIVATE ${OCS2_CXX_FLAGS})
