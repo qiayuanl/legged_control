@@ -3,8 +3,8 @@
 //
 #pragma once
 
+#include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
-#include <realtime_tools/realtime_publisher.h>
 #include <realtime_tools/realtime_buffer.h>
 #include <hardware_interface/imu_sensor_interface.h>
 #include <legged_common/hardware_interface/hybrid_joint_interface.h>
@@ -22,8 +22,7 @@ using namespace legged_robot;
 class StateEstimateBase
 {
 public:
-  StateEstimateBase(ros::NodeHandle& nh, LeggedInterface& legged_interface,
-                    const std::vector<HybridJointHandle>& hybrid_joint_handles,
+  StateEstimateBase(LeggedInterface& legged_interface, const std::vector<HybridJointHandle>& hybrid_joint_handles,
                     const std::vector<ContactSensorHandle>& contact_sensor_handles,
                     const hardware_interface::ImuSensorHandle& imu_sensor_handle);
   virtual vector_t update(scalar_t dt) = 0;
@@ -41,17 +40,12 @@ protected:
   const std::vector<HybridJointHandle> hybrid_joint_handles_;
   const std::vector<ContactSensorHandle> contact_sensor_handles_;
   const hardware_interface::ImuSensorHandle imu_sensor_handle_;
-
-private:
-  std::shared_ptr<realtime_tools::RealtimePublisher<nav_msgs::Odometry>> odom_pub_;
-  ros::Time last_publish_;
 };
 
 class FromTopicStateEstimate : public StateEstimateBase
 {
 public:
-  FromTopicStateEstimate(ros::NodeHandle& nh, LeggedInterface& legged_interface,
-                         const std::vector<HybridJointHandle>& hybrid_joint_handles,
+  FromTopicStateEstimate(LeggedInterface& legged_interface, const std::vector<HybridJointHandle>& hybrid_joint_handles,
                          const std::vector<ContactSensorHandle>& contact_sensor_handles,
                          const hardware_interface::ImuSensorHandle& imu_sensor_handle);
 
@@ -67,8 +61,7 @@ private:
 class KalmanFilterEstimate : public StateEstimateBase
 {
 public:
-  KalmanFilterEstimate(ros::NodeHandle& nh, LeggedInterface& legged_interface,
-                       const std::vector<HybridJointHandle>& hybrid_joint_handles,
+  KalmanFilterEstimate(LeggedInterface& legged_interface, const std::vector<HybridJointHandle>& hybrid_joint_handles,
                        const std::vector<ContactSensorHandle>& contact_sensor_handles,
                        const hardware_interface::ImuSensorHandle& imu_sensor_handle);
   vector_t update(scalar_t dt) override;

@@ -12,7 +12,7 @@
 
 namespace legged
 {
-StateEstimateBase::StateEstimateBase(ros::NodeHandle& nh, LeggedInterface& legged_interface,
+StateEstimateBase::StateEstimateBase(LeggedInterface& legged_interface,
                                      const std::vector<HybridJointHandle>& hybrid_joint_handles,
                                      const std::vector<ContactSensorHandle>& contact_sensor_handles,
                                      const hardware_interface::ImuSensorHandle& imu_sensor_handle)
@@ -23,7 +23,6 @@ StateEstimateBase::StateEstimateBase(ros::NodeHandle& nh, LeggedInterface& legge
   , contact_sensor_handles_(contact_sensor_handles)
   , imu_sensor_handle_(imu_sensor_handle)
 {
-  odom_pub_ = std::make_shared<realtime_tools::RealtimePublisher<nav_msgs::Odometry>>(nh, "/odom", 100);
 }
 
 size_t StateEstimateBase::getMode()
@@ -56,12 +55,13 @@ void StateEstimateBase::updateJointStates()
   }
 }
 
-FromTopicStateEstimate::FromTopicStateEstimate(ros::NodeHandle& nh, LeggedInterface& legged_interface,
+FromTopicStateEstimate::FromTopicStateEstimate(LeggedInterface& legged_interface,
                                                const std::vector<HybridJointHandle>& hybrid_joint_handles_,
                                                const std::vector<ContactSensorHandle>& contact_sensor_handles,
                                                const hardware_interface::ImuSensorHandle& imu_sensor_handle)
-  : StateEstimateBase(nh, legged_interface, hybrid_joint_handles_, contact_sensor_handles, imu_sensor_handle)
+  : StateEstimateBase(legged_interface, hybrid_joint_handles_, contact_sensor_handles, imu_sensor_handle)
 {
+  ros::NodeHandle nh;
   sub_ = nh.subscribe<nav_msgs::Odometry>("/ground_truth/state", 100, &FromTopicStateEstimate::callback, this);
 }
 
@@ -86,11 +86,11 @@ vector_t FromTopicStateEstimate::update(scalar_t dt)
   return rbd_state_;
 }
 
-KalmanFilterEstimate::KalmanFilterEstimate(ros::NodeHandle& nh, LeggedInterface& legged_interface,
+KalmanFilterEstimate::KalmanFilterEstimate(LeggedInterface& legged_interface,
                                            const std::vector<HybridJointHandle>& hybrid_joint_handles,
                                            const std::vector<ContactSensorHandle>& contact_sensor_handles,
                                            const hardware_interface::ImuSensorHandle& imu_sensor_handle)
-  : StateEstimateBase(nh, legged_interface, hybrid_joint_handles, contact_sensor_handles, imu_sensor_handle)
+  : StateEstimateBase(legged_interface, hybrid_joint_handles, contact_sensor_handles, imu_sensor_handle)
   , pinocchio_ee_kine_(legged_interface.getPinocchioInterface(),
                        CentroidalModelPinocchioMapping(legged_interface.getCentroidalModelInfo()),
                        legged_interface.modelSettings().contactNames3DoF)

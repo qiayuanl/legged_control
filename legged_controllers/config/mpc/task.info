@@ -57,7 +57,7 @@ rollout
 
 mpc
 {
-  timeHorizon                     1.  ; [s]
+  timeHorizon                     1.5  ; [s]
   solutionTimeWindow              -1   ; maximum [s]
   coldStart                       false
 
@@ -109,9 +109,9 @@ Q
   (0,0)   15.0     ; vcom_x
   (1,1)   15.0     ; vcom_y
   (2,2)   30.0     ; vcom_z
-  (3,3)   5.0      ; L_x / robotMass
+  (3,3)   10.0     ; L_x / robotMass
   (4,4)   10.0     ; L_y / robotMass
-  (5,5)   10.0     ; L_z / robotMass
+  (5,5)   5.0      ; L_z / robotMass
 
   ;; Base Pose: [position, orientation] ;;
   (6,6)   500.0    ; p_base_x
