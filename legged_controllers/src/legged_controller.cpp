@@ -205,9 +205,8 @@ void LeggedCheaterController::setupStateEstimate(LeggedInterface& legged_interfa
                                                  const std::vector<ContactSensorHandle>& contact_sensor_handles,
                                                  const hardware_interface::ImuSensorHandle& imu_sensor_handle)
 {
-  char error_message[] = "Cheater controller shouldn't be used with real hardware.";
-  ROS_ERROR_STREAM(error_message);
-  throw std::runtime_error(error_message);
+  state_estimate_ = std::make_shared<FromTopicStateEstimate>(*legged_interface_, hybrid_joint_handles_,
+                                                             contact_sensor_handles, imu_sensor_handle);
 }
 
 }  // namespace legged
