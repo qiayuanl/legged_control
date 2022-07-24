@@ -28,7 +28,6 @@
     <node pkg="ocs2_legged_robot_ros" type="legged_robot_gait_command" name="legged_robot_gait_command"
           output="screen" launch-prefix="gnome-terminal --"/>
 
-    <node pkg="legged_controllers" type="legged_goal_target" name="legged_robot_goal_target" output="screen"/>
-    <node pkg="legged_controllers" type="legged_cmd_vel" name="legged_robot_cmd_vel" output="screen"/>
-
+    <node pkg="legged_controllers" type="legged_target_trajectories_publisher" name="legged_robot_target"
+          output="screen"/>
 </launch>

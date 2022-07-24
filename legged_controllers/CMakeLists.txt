@@ -5,8 +5,6 @@ project(legged_controllers)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_definitions(-Wall)
-
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED
         COMPONENTS
@@ -65,30 +63,17 @@ target_link_libraries(${PROJECT_NAME}
 
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
-# Target trajectories publish node for goal command
-add_executable(legged_goal_target
-        src/goal_target_node.cpp
-        )
-add_dependencies(legged_goal_target
-        ${PROJECT_NAME}
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(legged_goal_target
-        ${PROJECT_NAME}
-        ${catkin_LIBRARIES}
-        )
-target_compile_options(legged_goal_target PRIVATE ${OCS2_CXX_FLAGS})
 
-# Target trajectories publish node for goal command
-add_executable(legged_cmd_vel
-        src/cmd_vel_node.cpp
+# Target trajectories publish node
+add_executable(legged_target_trajectories_publisher
+        src/target_trajectories_publisher.cpp
         )
-add_dependencies(legged_cmd_vel
+add_dependencies(legged_target_trajectories_publisher
         ${PROJECT_NAME}
         ${catkin_EXPORTED_TARGETS}
         )
-target_link_libraries(legged_cmd_vel
+target_link_libraries(legged_target_trajectories_publisher
         ${PROJECT_NAME}
         ${catkin_LIBRARIES}
         )
-target_compile_options(legged_cmd_vel PRIVATE ${OCS2_CXX_FLAGS})
+target_compile_options(legged_target_trajectories_publisher PRIVATE ${OCS2_CXX_FLAGS})
