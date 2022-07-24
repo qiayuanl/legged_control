@@ -5,7 +5,7 @@
 #pragma once
 
 #include <legged_interface/legged_interface.h>
-#include <legged_estimation/state_estimate.h>
+#include <legged_estimation/state_estimate_base.h>
 #include <legged_wbc/wbc.h>
 
 #include <controller_interface/multi_interface_controller.h>

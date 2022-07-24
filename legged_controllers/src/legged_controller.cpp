@@ -16,6 +16,9 @@
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_msgs/mpc_observation.h>
+
+#include <legged_estimation/from_topice_estimate.h>
+#include <legged_estimation/linear_kalman_filter.h>
 #include <angles/angles.h>
 #include <pluginlib/class_list_macros.hpp>
 

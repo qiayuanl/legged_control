@@ -11,7 +11,7 @@ model_settings
   phaseTransitionStanceTime     0.4
 
   verboseCppAd                  true
-  recompileLibrariesCppAd       false
+  recompileLibrariesCppAd       true
   modelFolderCppAd              /tmp/ocs2
 }
 
@@ -168,6 +168,8 @@ R
   (21,21) 5000.0    ; x
   (22,22) 5000.0    ; y
   (23,23) 5000.0    ; z
+
+  (24,24) 500.0     ; Slacking
 }
 
 frictionConeSoftConstraint
@@ -175,6 +177,6 @@ frictionConeSoftConstraint
   frictionCoefficient    0.3
 
   ; relaxed log barrier parameters
-  mu                     0.1
+  mu                     1.
   delta                  5.0
 }

@@ -5,8 +5,6 @@ project(legged_estimation)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_definitions(-Wall)
-
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED
         COMPONENTS
@@ -45,7 +43,9 @@ link_directories(
 
 ## Declare a cpp library
 add_library(${PROJECT_NAME}
-        src/state_estimate.cpp
+        src/state_estimate_base.cpp
+        src/from_topic_estimate.cpp
+        src/linear_kalman_filter.cpp
         )
 
 target_link_libraries(${PROJECT_NAME}
