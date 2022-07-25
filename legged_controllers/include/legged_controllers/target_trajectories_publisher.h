@@ -62,8 +62,14 @@ public:
       geometry_msgs::Vector3Stamped linear_velocity;
       linear_velocity.header.frame_id = "base";
       linear_velocity.vector = msg->linear;
-      tf_buffer_.transform(linear_velocity, linear_velocity, "odom");
-
+      try
+      {
+        tf_buffer_.transform(linear_velocity, linear_velocity, "odom");
+      }
+      catch (tf2::TransformException& ex)
+      {
+        ROS_WARN("%s", ex.what());
+      }
       vector_t cmd_vel = vector_t::Zero(4);
       cmd_vel[0] = linear_velocity.vector.x;
       cmd_vel[1] = linear_velocity.vector.y;
