@@ -16,6 +16,7 @@ find_package(catkin REQUIRED
         controller_interface
         ocs2_legged_robot_ros
         angles
+        tf2_geometry_msgs
         )
 
 find_package(PkgConfig REQUIRED)
@@ -35,6 +36,7 @@ catkin_package(
         controller_interface
         ocs2_legged_robot_ros
         angles
+        tf2_geometry_msgs
 )
 
 ###########

@@ -73,7 +73,7 @@ TargetTrajectories cmdVelToTargetTrajectories(const vector_t& cmd_vel, const Sys
     target(0) = current_pose(0) + cmd_vel(0) * time_to_target;
     target(1) = current_pose(1) + cmd_vel(1) * time_to_target;
     target(2) = COM_HEIGHT;
-    target(3) = current_pose(3) + cmd_vel(5) * time_to_target;
+    target(3) = current_pose(3) + cmd_vel(3) * time_to_target;
     target(4) = 0;
     target(5) = 0;
     return target;
