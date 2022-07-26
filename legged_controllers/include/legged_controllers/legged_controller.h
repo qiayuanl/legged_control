@@ -4,10 +4,6 @@
 
 #pragma once
 
-#include <legged_interface/legged_interface.h>
-#include <legged_estimation/state_estimate_base.h>
-#include <legged_wbc/wbc.h>
-
 #include <controller_interface/multi_interface_controller.h>
 #include <legged_common/hardware_interface/contact_sensor_interface.h>
 #include <hardware_interface/imu_sensor_interface.h>
@@ -16,6 +12,12 @@
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 #include <ocs2_legged_robot_ros/visualization/LeggedRobotVisualizer.h>
 #include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
+
+#include <legged_interface/legged_interface.h>
+#include <legged_estimation/state_estimate_base.h>
+#include <legged_wbc/wbc.h>
+
+#include "legged_controllers/safety_checker.h"
 
 namespace legged
 {
@@ -47,6 +49,7 @@ protected:
 
   std::shared_ptr<LeggedInterface> legged_interface_;
   std::shared_ptr<Wbc> wbc_;
+  std::shared_ptr<SafetyChecker> safety_checker_;
 
   std::shared_ptr<MultipleShootingMpc> mpc_;
   std::shared_ptr<MPC_MRT_Interface> mpc_mrt_interface_;
@@ -67,10 +70,9 @@ private:
 class LeggedCheaterController : public LeggedController
 {
 protected:
-  virtual void setupStateEstimate(LeggedInterface& legged_interface,
-                                  const std::vector<HybridJointHandle>& hybrid_joint_handles,
-                                  const std::vector<ContactSensorHandle>& contact_sensor_handles,
-                                  const hardware_interface::ImuSensorHandle& imu_sensor_handle) override;
+  void setupStateEstimate(LeggedInterface& legged_interface, const std::vector<HybridJointHandle>& hybrid_joint_handles,
+                          const std::vector<ContactSensorHandle>& contact_sensor_handles,
+                          const hardware_interface::ImuSensorHandle& imu_sensor_handle) override;
 };
 
 }  // namespace legged

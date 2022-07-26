@@ -106,6 +106,10 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
 
   // Whole body control
   wbc_ = std::make_shared<Wbc>(*legged_interface_, ee_kinematics);
+
+  // Safety Checker
+  safety_checker_ = std::make_shared<SafetyChecker>(legged_interface_->getCentroidalModelInfo());
+
   return true;
 }
 
@@ -152,9 +156,8 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
   mpc_mrt_interface_->updatePolicy();
 
   // Evaluate the current policy
-  vector_t optimized_state;  // Evaluation of the optimized state trajectory.
-  vector_t optimized_input;  // Evaluation of the optimized input trajectory.
-  size_t planned_mode;       // The mode that is active at the time the policy is evaluated at.
+  vector_t optimized_state, optimized_input;
+  size_t planned_mode;  // The mode that is active at the time the policy is evaluated at.
   mpc_mrt_interface_->evaluatePolicy(current_observation_.time, current_observation_.state, optimized_state,
                                      optimized_input, planned_mode);
 
@@ -169,6 +172,13 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
 
   vector_t pos_des = centroidal_model::getJointAngles(optimized_state, legged_interface_->getCentroidalModelInfo());
   vector_t vel_des = centroidal_model::getJointVelocities(optimized_input, legged_interface_->getCentroidalModelInfo());
+
+  // Safety check, if failed, stop the controller
+  if (!safety_checker_->check(current_observation_, optimized_state, optimized_input))
+  {
+    ROS_ERROR_STREAM("[Legged Controller] Safety check failed, stopping the controller.");
+    stopRequest(time);
+  }
 
   for (size_t j = 0; j < legged_interface_->getCentroidalModelInfo().actuatedDofNum; ++j)
     hybrid_joint_handles_[j].setCommand(pos_des(j), vel_des(j), 5, 3, torque(j));
