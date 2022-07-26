@@ -105,7 +105,7 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
                      robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu"));
 
   // Whole body control
-  wbc_ = std::make_shared<Wbc>(*legged_interface_, ee_kinematics);
+  wbc_ = std::make_shared<Wbc>(task_file, *legged_interface_, ee_kinematics, verbose);
 
   // Safety Checker
   safety_checker_ = std::make_shared<SafetyChecker>(legged_interface_->getCentroidalModelInfo());

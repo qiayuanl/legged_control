@@ -175,6 +175,26 @@ frictionConeSoftConstraint
   frictionCoefficient    0.3
 
   ; relaxed log barrier parameters
-  mu                     1.
+  mu                     0.1
   delta                  5.0
+}
+
+; Whole body control
+
+torqueLimitsTask
+{
+   (0,0)  33.5     ; HAA
+   (1,0)  33.5     ; HFE
+   (2,0)  33.5     ; KFE
+}
+
+frictionConeTask
+{
+  frictionCoefficient    0.3
+}
+
+swingLegTask
+{
+    kp                   350
+    kd                   37
 }

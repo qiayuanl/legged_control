@@ -20,11 +20,14 @@ using namespace legged_robot;
 class Wbc
 {
 public:
-  Wbc(LeggedInterface& legged_interface, const PinocchioEndEffectorKinematics& ee_kinematics);
+  Wbc(const std::string& task_file, LeggedInterface& legged_interface,
+      const PinocchioEndEffectorKinematics& ee_kinematics, bool verbose);
   vector_t update(const vector_t& state_desired, const vector_t& input_desired, vector_t& measured_rbd_state,
                   size_t mode);
 
 private:
+  void loadTasksSetting(const std::string& task_file, bool verbose);
+
   Task formulateFloatingBaseEomTask();
   Task formulateTorqueLimitsTask();
   Task formulateNoContactMotionTask();
@@ -44,6 +47,10 @@ private:
   matrix_t j_, dj_;
   contact_flag_t contact_flag_;
   size_t num_contacts_;
+
+  // Task Parameters:
+  vector_t torque_limits_;
+  scalar_t friction_coeff_, swing_kp_, swing_kd_;
 };
 
 }  // namespace legged
