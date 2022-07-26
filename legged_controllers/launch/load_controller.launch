@@ -1,17 +1,16 @@
 <?xml version="1.0" ?>
 
 <launch>
-    <arg name="task_file" default="$(find legged_controllers)/config/mpc/task.info"/>
-    <arg name="reference_file" default="$(find legged_controllers)/config/command/reference.info"/>
+    <arg name="task_file" default="$(find legged_controllers)/config/task.info"/>
+    <arg name="reference_file" default="$(find legged_controllers)/config/reference.info"/>
     <arg name="urdf_file" default="$(find unitree_description)/urdf/a1.urdf"/>
-    <arg name="gait_file" default="$(find legged_controllers)/config/command/gait.info"/>
+    <arg name="gait_file" default="$(find legged_controllers)/config/gait.info"/>
 
     <!-- make the files into global parameters -->
     <param name="task_file" value="$(arg task_file)"/>
     <param name="reference_file" value="$(arg reference_file)"/>
     <param name="urdf_file" value="$(arg urdf_file)"/>
 
-    <param name="referenceFile" value="$(arg reference_file)"/>
     <param name="gaitCommandFile" value="$(arg gait_file)"/>
     <rosparam file="$(find legged_controllers)/config/default.yaml" command="load"/>
 
@@ -21,9 +20,6 @@
           controllers/legged_controller
           controllers/legged_cheater_controller
 "/>
-
-    <node pkg="ocs2_legged_robot_ros" type="legged_robot_target" name="legged_robot_command_target"
-          output="screen" launch-prefix="gnome-terminal --"/>
 
     <node pkg="ocs2_legged_robot_ros" type="legged_robot_gait_command" name="legged_robot_gait_command"
           output="screen" launch-prefix="gnome-terminal --"/>
