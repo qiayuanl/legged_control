@@ -19,7 +19,6 @@
     <depend>controller_interface</depend>
     <depend>ocs2_legged_robot_ros</depend>
     <depend>angles</depend>
-    <depend>tf2_geometry_msgs</depend>
 
     <exec_depend>controller_manager</exec_depend>
 

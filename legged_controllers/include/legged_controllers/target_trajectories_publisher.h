@@ -8,8 +8,6 @@
 #include <ros/subscriber.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <tf2_ros/transform_listener.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesRosPublisher.h>
@@ -18,15 +16,15 @@ namespace legged
 {
 using namespace ocs2;
 
-class TargetTrajectoriesGoalPublisher final
+class TargetTrajectoriesPublisher final
 {
 public:
   using CmdToTargetTrajectories =
       std::function<TargetTrajectories(const vector_t& cmd, const SystemObservation& observation)>;
 
-  TargetTrajectoriesGoalPublisher(::ros::NodeHandle& nh, const std::string& topic_prefix,
-                                  CmdToTargetTrajectories goal_to_target_trajectories,
-                                  CmdToTargetTrajectories cmd_vel_to_target_trajectories)
+  TargetTrajectoriesPublisher(::ros::NodeHandle& nh, const std::string& topic_prefix,
+                              CmdToTargetTrajectories goal_to_target_trajectories,
+                              CmdToTargetTrajectories cmd_vel_to_target_trajectories)
     : goal_to_target_trajectories_(std::move(goal_to_target_trajectories))
     , cmd_vel_to_target_trajectories_(std::move(cmd_vel_to_target_trajectories))
   {
@@ -43,6 +41,9 @@ public:
 
     // goal subscriber
     auto goal_callback = [this](const geometry_msgs::PoseStamped::ConstPtr& msg) {
+      if (latest_observation_.time == 0.0)
+        return;
+
       vector_t cmd_goal = vector_t::Zero(6);
       cmd_goal[0] = msg->pose.position.x;
       cmd_goal[1] = msg->pose.position.y;
@@ -59,28 +60,18 @@ public:
 
     // cmd_vel subscriber
     auto cmd_vel_callback = [this](const geometry_msgs::Twist::ConstPtr& msg) {
-      geometry_msgs::Vector3Stamped linear_velocity;
-      linear_velocity.header.frame_id = "base";
-      linear_velocity.vector = msg->linear;
-      try
-      {
-        tf_buffer_.transform(linear_velocity, linear_velocity, "odom");
-      }
-      catch (tf2::TransformException& ex)
-      {
-        ROS_WARN("%s", ex.what());
-      }
+      if (latest_observation_.time == 0.0)
+        return;
+
       vector_t cmd_vel = vector_t::Zero(4);
-      cmd_vel[0] = linear_velocity.vector.x;
-      cmd_vel[1] = linear_velocity.vector.y;
-      cmd_vel[2] = linear_velocity.vector.z;
+      cmd_vel[0] = msg->linear.x;
+      cmd_vel[1] = msg->linear.y;
+      cmd_vel[2] = msg->linear.z;
       cmd_vel[3] = msg->angular.z;
 
       const auto trajectories = cmd_vel_to_target_trajectories_(cmd_vel, latest_observation_);
       target_trajectories_publisher_->publishTargetTrajectories(trajectories);
     };
-
-    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(tf_buffer_);
 
     goal_sub_ = nh.subscribe<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1, goal_callback);
     cmd_vel_sub_ = nh.subscribe<geometry_msgs::Twist>("/cmd_vel", 1, cmd_vel_callback);
@@ -94,9 +85,6 @@ private:
   ::ros::Subscriber observation_sub_, goal_sub_, cmd_vel_sub_;
   mutable std::mutex latest_observation_mutex_;
   SystemObservation latest_observation_;
-
-  tf2_ros::Buffer tf_buffer_;
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 };
 
 }  // namespace legged

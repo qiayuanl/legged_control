@@ -6,6 +6,7 @@
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_robotic_tools/common/RotationTransforms.h>
 
 using namespace legged;
 
@@ -67,11 +68,14 @@ TargetTrajectories goalToTargetTrajectories(const vector_t& goal, const SystemOb
 TargetTrajectories cmdVelToTargetTrajectories(const vector_t& cmd_vel, const SystemObservation& observation)
 {
   const vector_t current_pose = observation.state.segment<6>(6);
+  const Eigen::Matrix<scalar_t, 3, 1> zyx = current_pose.tail(3);
+  vector_t cmd_vel_rot = getRotationMatrixFromZyxEulerAngles(zyx) * cmd_vel.head(3);
+
   const scalar_t time_to_target = TIME_TO_TARGET;
   const vector_t target_pose = [&]() {
     vector_t target(6);
-    target(0) = current_pose(0) + cmd_vel(0) * time_to_target;
-    target(1) = current_pose(1) + cmd_vel(1) * time_to_target;
+    target(0) = current_pose(0) + cmd_vel_rot(0) * time_to_target;
+    target(1) = current_pose(1) + cmd_vel_rot(1) * time_to_target;
     target(2) = COM_HEIGHT;
     target(3) = current_pose(3) + cmd_vel(3) * time_to_target;
     target(4) = 0;
@@ -102,8 +106,8 @@ int main(int argc, char* argv[])
   loadData::loadCppDataType(reference_file, "targetDisplacementVelocity", TARGET_DISPLACEMENT_VELOCITY);
   loadData::loadCppDataType(task_file, "mpc.timeHorizon", TIME_TO_TARGET);
 
-  TargetTrajectoriesGoalPublisher target_pose_command(node_handle, robot_name, &goalToTargetTrajectories,
-                                                      &cmdVelToTargetTrajectories);
+  TargetTrajectoriesPublisher target_pose_command(node_handle, robot_name, &goalToTargetTrajectories,
+                                                  &cmdVelToTargetTrajectories);
 
   ros::spin();
   // Successful exit
