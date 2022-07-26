@@ -157,16 +157,14 @@ void HoQp::buildZMatrix()
 
 void HoQp::solveProblem()
 {
-  auto qp_problem =
-      qpOASES::QProblem(num_decision_vars_ + num_slack_vars_, has_ineq_constraints_ ? num_slack_vars_ : 0);
+  auto qp_problem = qpOASES::QProblem(num_decision_vars_ + num_slack_vars_, f_.size());
   qpOASES::Options options;
   options.setToMPC();
   options.printLevel = qpOASES::PL_LOW;
   qp_problem.setOptions(options);
-  int n_wsr = 10;
+  int n_wsr = 20;
 
-  qp_problem.init(h_.data(), c_.data(), has_ineq_constraints_ ? d_.data() : nullptr, nullptr, nullptr, nullptr,
-                  has_ineq_constraints_ ? f_.data() : nullptr, n_wsr);
+  qp_problem.init(h_.data(), c_.data(), d_.data(), nullptr, nullptr, nullptr, f_.data(), n_wsr);
   vector_t qp_sol(num_decision_vars_ + num_slack_vars_);
 
   qp_problem.getPrimalSolution(qp_sol.data());
