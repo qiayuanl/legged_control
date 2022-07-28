@@ -103,6 +103,7 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
   // State estimation
   setupStateEstimate(*legged_interface_, hybrid_joint_handles_, contact_handles,
                      robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu"));
+  current_observation_.time = 0;
 
   // Whole body control
   wbc_ = std::make_shared<Wbc>(task_file, *legged_interface_, ee_kinematics, verbose);
@@ -117,7 +118,6 @@ void LeggedController::starting(const ros::Time& time)
 {
   // Initial state
   current_observation_.mode = ModeNumber::STANCE;
-  current_observation_.time = 0;
   current_observation_.state = rbd_conversions_->computeCentroidalStateFromRbdModel(state_estimate_->update(0.001));
   current_observation_.input.setZero(legged_interface_->getCentroidalModelInfo().inputDim);
 
