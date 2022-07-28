@@ -35,4 +35,7 @@ sudo apt install ros-noetic-rqt-controller-manager
 rosrun rqt_controller_manager rqt_controller_manager
 ```
 
-5. After start the controller, you can command the robot by two terminal created by step 3.
+5. After start the `legged_controller` or `legged_cheater_controller`, **NOTE that you are not allowed to start the `legged_cheater_controller` in real hardware!**
+
+6. Set the gait then use RViz and other tools to control the robot
+![ezgif-5-684a1e1e23.gif](https://s2.loli.net/2022/07/27/lBzdeRa1gmvwx9C.gif)
