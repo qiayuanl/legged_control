@@ -1,6 +1,5 @@
 <launch>
     <arg name="robot_type" default="$(env ROBOT_TYPE)" doc="Robot type: [a1, aliengo, go1, laikago]"/>
-    <arg name="paused" default="false"/>
 
     <rosparam file="$(find legged_gazebo)/config/default.yaml" command="load"/>
 
@@ -9,9 +8,7 @@
     "/>
 
     <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
-    <include file="$(find gazebo_ros)/launch/empty_world.launch">
-        <arg name="paused" value="$(arg paused)"/>
-    </include>
+    <include file="$(find gazebo_ros)/launch/empty_world.launch"/>
 
     <!-- push robot_description to factory and spawn robot in gazebo -->
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" clear_params="true"
