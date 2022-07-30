@@ -175,7 +175,7 @@ void QuadHWSim::parseImu(XmlRpc::XmlRpcValue& imu_datas, const gazebo::physics::
     ROS_ASSERT(ori_cov.size() == 3);
     for (int i = 0; i < ori_cov.size(); ++i)
       ROS_ASSERT(ori_cov[i].getType() == XmlRpc::XmlRpcValue::TypeDouble);
-    XmlRpc::XmlRpcValue angular_cov = imu_datas[it->first]["orientation_covariance_diagonal"];
+    XmlRpc::XmlRpcValue angular_cov = imu_datas[it->first]["angular_velocity_covariance"];
     ROS_ASSERT(angular_cov.getType() == XmlRpc::XmlRpcValue::TypeArray);
     ROS_ASSERT(angular_cov.size() == 3);
     for (int i = 0; i < angular_cov.size(); ++i)

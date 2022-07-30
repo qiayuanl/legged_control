@@ -54,8 +54,10 @@ KalmanFilterEstimate::KalmanFilterEstimate(LeggedInterface& legged_interface,
   r_.setIdentity();
 }
 
-vector_t KalmanFilterEstimate::update(scalar_t dt)
+vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration& period)
 {
+  scalar_t dt = period.toSec();
+
   a_.block(0, 3, 3, 3) = dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
   b_.block(0, 0, 3, 3) = 0.5 * dt * dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
   b_.block(3, 0, 3, 3) = dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
@@ -70,9 +72,9 @@ vector_t KalmanFilterEstimate::update(scalar_t dt)
                                                   imu_sensor_handle_.getAngularVelocity()[1],
                                                   imu_sensor_handle_.getAngularVelocity()[2]);
   vector_t zyx = quatToZyx(quat);
-
-  updateAngular(quat, getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(
-                          zyx, getEulerAnglesZyxDerivativesFromLocalAngularVelocity<scalar_t>(zyx, angular_vel_local)));
+  Eigen::Matrix<scalar_t, 3, 1> angular_vel_global = getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(
+      zyx, getEulerAnglesZyxDerivativesFromLocalAngularVelocity<scalar_t>(zyx, angular_vel_local));
+  updateAngular(quat, angular_vel_global);
 
   // Joint states
   updateJointStates();
@@ -170,7 +172,41 @@ vector_t KalmanFilterEstimate::update(scalar_t dt)
     p_.block(2, 0, 16, 2).setZero();
     p_.block(0, 0, 2, 2) /= 10.;
   }
-  updateLinear(x_hat_.block(0, 0, 3, 1), x_hat_.block(3, 0, 3, 1));
+  updateLinear(x_hat_.segment<3>(0), x_hat_.segment<3>(3));
+
+  nav_msgs::Odometry odom;
+  odom.pose.pose.position.x = x_hat_.segment<3>(0)(0);
+  odom.pose.pose.position.y = x_hat_.segment<3>(0)(1);
+  odom.pose.pose.position.z = x_hat_.segment<3>(0)(2);
+  odom.pose.pose.orientation.x = quat.x();
+  odom.pose.pose.orientation.y = quat.y();
+  odom.pose.pose.orientation.z = quat.z();
+  odom.pose.pose.orientation.w = quat.w();
+  odom.pose.pose.orientation.x = quat.x();
+  for (int i = 0; i < 3; ++i)
+  {
+    for (int j = 0; j < 3; ++j)
+    {
+      odom.pose.covariance[i * 6 + j] = p_(i, j);
+      odom.pose.covariance[6 * (3 + i) + (3 + j)] = imu_sensor_handle_.getOrientationCovariance()[i * 3 + j];
+    }
+  }
+  odom.twist.twist.linear.x = x_hat_.segment<3>(3)(0);
+  odom.twist.twist.linear.y = x_hat_.segment<3>(3)(1);
+  odom.twist.twist.linear.z = x_hat_.segment<3>(3)(2);
+  odom.twist.twist.angular.x = angular_vel_global.x();
+  odom.twist.twist.angular.y = angular_vel_global.y();
+  odom.twist.twist.angular.z = angular_vel_global.z();
+  for (int i = 0; i < 3; ++i)
+  {
+    for (int j = 0; j < 3; ++j)
+    {
+      odom.twist.covariance[i * 6 + j] = p_.block<3, 3>(3, 3)(i, j);
+      odom.twist.covariance[6 * (3 + i) + (3 + j)] = imu_sensor_handle_.getAngularVelocityCovariance()[i * 3 + j];
+    }
+  }
+  publishMsgs(odom, time);
+
   return rbd_state_;
 }
 

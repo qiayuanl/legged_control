@@ -5,6 +5,10 @@
 
 #include <ros/ros.h>
 
+#include <nav_msgs/Odometry.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <realtime_tools/realtime_publisher.h>
+
 #include <hardware_interface/imu_sensor_interface.h>
 #include <legged_common/hardware_interface/hybrid_joint_interface.h>
 #include <legged_common/hardware_interface/contact_sensor_interface.h>
@@ -21,13 +25,14 @@ public:
   StateEstimateBase(LeggedInterface& legged_interface, const std::vector<HybridJointHandle>& hybrid_joint_handles,
                     const std::vector<ContactSensorHandle>& contact_sensor_handles,
                     const hardware_interface::ImuSensorHandle& imu_sensor_handle);
-  virtual vector_t update(scalar_t dt) = 0;
+  virtual vector_t update(const ros::Time& time, const ros::Duration& period) = 0;
   size_t getMode();
 
 protected:
   void updateAngular(const Eigen::Quaternion<scalar_t>& quat, const vector_t& angular_vel);
   void updateLinear(const vector_t& pos, const vector_t& linear_vel);
   void updateJointStates();
+  void publishMsgs(const nav_msgs::Odometry& odom, const ros::Time& time);
 
   LeggedInterface& legged_interface_;
   size_t generalized_coordinates_num_;
@@ -36,6 +41,10 @@ protected:
   const std::vector<HybridJointHandle> hybrid_joint_handles_;
   const std::vector<ContactSensorHandle> contact_sensor_handles_;
   const hardware_interface::ImuSensorHandle imu_sensor_handle_;
+
+  std::shared_ptr<realtime_tools::RealtimePublisher<nav_msgs::Odometry>> odom_pub_;
+  std::shared_ptr<realtime_tools::RealtimePublisher<geometry_msgs::PoseWithCovarianceStamped>> pose_pub_;
+  ros::Time last_pub_;
 };
 
 template <typename T>

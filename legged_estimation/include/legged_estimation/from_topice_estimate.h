@@ -4,7 +4,6 @@
 
 #include "legged_estimation/state_estimate_base.h"
 
-#include <nav_msgs/Odometry.h>
 #include <realtime_tools/realtime_buffer.h>
 
 #pragma once
@@ -19,7 +18,7 @@ public:
                          const std::vector<ContactSensorHandle>& contact_sensor_handles,
                          const hardware_interface::ImuSensorHandle& imu_sensor_handle);
 
-  vector_t update(scalar_t dt) override;
+  vector_t update(const ros::Time& time, const ros::Duration& period) override;
 
 private:
   void callback(const nav_msgs::Odometry::ConstPtr& msg);

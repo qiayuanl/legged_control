@@ -118,7 +118,8 @@ void LeggedController::starting(const ros::Time& time)
 {
   // Initial state
   current_observation_.mode = ModeNumber::STANCE;
-  current_observation_.state = rbd_conversions_->computeCentroidalStateFromRbdModel(state_estimate_->update(0.001));
+  current_observation_.state =
+      rbd_conversions_->computeCentroidalStateFromRbdModel(state_estimate_->update(time, ros::Duration(0.002)));
   current_observation_.input.setZero(legged_interface_->getCentroidalModelInfo().inputDim);
 
   TargetTrajectories target_trajectories({ current_observation_.time }, { current_observation_.state },
@@ -143,7 +144,7 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
   // State Estimate
   current_observation_.time += period.toSec();
 
-  vector_t measured_rbd_state = state_estimate_->update(period.toSec());
+  vector_t measured_rbd_state = state_estimate_->update(time, period);
   scalar_t yaw_last = current_observation_.state(9);
   current_observation_.state = rbd_conversions_->computeCentroidalStateFromRbdModel(measured_rbd_state);
   current_observation_.state(9) = yaw_last + angles::shortest_angular_distance(yaw_last, current_observation_.state(9));

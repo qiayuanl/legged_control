@@ -19,6 +19,13 @@ StateEstimateBase::StateEstimateBase(LeggedInterface& legged_interface,
   , contact_sensor_handles_(contact_sensor_handles)
   , imu_sensor_handle_(imu_sensor_handle)
 {
+  ros::NodeHandle nh;
+  odom_pub_.reset(new realtime_tools::RealtimePublisher<nav_msgs::Odometry>(nh, "odom", 10));
+  odom_pub_->msg_.header.frame_id = "odom";
+  odom_pub_->msg_.child_frame_id = "base";
+
+  pose_pub_.reset(new realtime_tools::RealtimePublisher<geometry_msgs::PoseWithCovarianceStamped>(nh, "pose", 10));
+  pose_pub_->msg_.header.frame_id = "odom";
 }
 
 size_t StateEstimateBase::getMode()
@@ -48,6 +55,27 @@ void StateEstimateBase::updateJointStates()
   {
     rbd_state_(6 + i) = hybrid_joint_handles_[i].getPosition();
     rbd_state_(generalized_coordinates_num_ + 6 + i) = hybrid_joint_handles_[i].getVelocity();
+  }
+}
+
+void StateEstimateBase::publishMsgs(const nav_msgs::Odometry& odom, const ros::Time& time)
+{
+  scalar_t publish_rate = 100;
+  if (last_pub_ + ros::Duration(1. / publish_rate) < time)
+  {
+    if (odom_pub_->trylock())
+    {
+      odom_pub_->msg_.header.stamp = time;
+      odom_pub_->msg_.pose = odom.pose;
+      odom_pub_->msg_.twist = odom.twist;
+      odom_pub_->unlockAndPublish();
+    }
+    if (pose_pub_->trylock())
+    {
+      pose_pub_->msg_.header.stamp = time;
+      pose_pub_->msg_.pose = odom.pose;
+      pose_pub_->unlockAndPublish();
+    }
   }
 }
 

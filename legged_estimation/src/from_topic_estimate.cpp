@@ -21,7 +21,7 @@ void FromTopicStateEstimate::callback(const nav_msgs::Odometry::ConstPtr& msg)
   buffer_.writeFromNonRT(*msg);
 }
 
-vector_t FromTopicStateEstimate::update(scalar_t dt)
+vector_t FromTopicStateEstimate::update(const ros::Time& time, const ros::Duration& period)
 {
   nav_msgs::Odometry odom = *buffer_.readFromRT();
 
@@ -33,6 +33,8 @@ vector_t FromTopicStateEstimate::update(scalar_t dt)
       Eigen::Matrix<scalar_t, 3, 1>(odom.pose.pose.position.x, odom.pose.pose.position.y, odom.pose.pose.position.z),
       Eigen::Matrix<scalar_t, 3, 1>(odom.twist.twist.linear.x, odom.twist.twist.linear.y, odom.twist.twist.linear.z));
   updateJointStates();
+
+  publishMsgs(odom, time);
 
   return rbd_state_;
 }
