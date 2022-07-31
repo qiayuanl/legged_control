@@ -38,6 +38,7 @@
 #pragma once
 
 #include <deque>
+#include <unordered_map>
 
 #include <gazebo_ros_control/default_robot_hw_sim.h>
 #include <hardware_interface/imu_sensor_interface.h>
