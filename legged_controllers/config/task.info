@@ -57,7 +57,7 @@ rollout
 
 mpc
 {
-  timeHorizon                     1.5  ; [s]
+  timeHorizon                     1.0  ; [s]
   solutionTimeWindow              -1   ; maximum [s]
   coldStart                       false
 
