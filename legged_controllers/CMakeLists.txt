@@ -11,8 +11,8 @@ find_package(catkin REQUIRED
         roscpp
         legged_common
         legged_interface
-        legged_estimation
         legged_wbc
+        legged_estimation
         controller_interface
         ocs2_legged_robot_ros
         angles
@@ -30,8 +30,8 @@ catkin_package(
         roscpp
         legged_common
         legged_interface
-        legged_estimation
         legged_wbc
+        legged_estimation
         controller_interface
         ocs2_legged_robot_ros
         angles
@@ -77,3 +77,16 @@ target_link_libraries(legged_target_trajectories_publisher
         ${catkin_LIBRARIES}
         )
 target_compile_options(legged_target_trajectories_publisher PRIVATE ${OCS2_CXX_FLAGS})
+
+# Mark executables and/or libraries for installation
+install(TARGETS ${PROJECT_NAME}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
+
+# Mark cpp header files for installation
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+        FILES_MATCHING PATTERN "*.h"
+        )

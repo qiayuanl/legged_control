@@ -13,5 +13,6 @@
     <depend>roscpp</depend>
     <depend>legged_common</depend>
     <depend>legged_interface</depend>
+    <depend>realtime_tools</depend>
 
 </package>
