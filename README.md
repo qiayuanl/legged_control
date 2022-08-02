@@ -25,7 +25,7 @@ roslaunch unitree_description empty_world.launch
 3. Load the controller:
 
 ```
-mon launch legged_controllers load_controller.launch
+roslaunch legged_controllers load_controller.launch
 ```
 
 4. You can start the controller using `rqt_controller_manager`
@@ -35,16 +35,15 @@ sudo apt install ros-noetic-rqt-controller-manager
 rosrun rqt_controller_manager rqt_controller_manager
 ```
 
-5. Start the `legged_controller` or `legged_cheater_controller`, **NOTE that you are not allowed to start the `legged_cheater_controller` in real hardware!**
+5. Start the `legged_controller` or `legged_cheater_controller`, **NOTE that you are not allowed to start
+   the `legged_cheater_controller` in real hardware!**
 
-6. Set the gait then use RViz and other tools to control the robot
+6. Set the gait in the terminal of `load_controller.launch`, then use RViz and other tools to control the robot
+
 ![ezgif-5-684a1e1e23.gif](https://s2.loli.net/2022/07/27/lBzdeRa1gmvwx9C.gif)
 
 ## Statistics
+
 The table below shown lab succefully deploy this repo in their **real A1**
-|  Lab   |  Spend Time  |
-|  ----  | ----  |
-| XPeng Robotics | 1 day |
-|  Unitree | - |
-|  Geely Auto |  3 hours |
-|  Hybrid Robotics |  2 hours |
+| Lab | Spend Time | | ---- | ---- | | XPeng Robotics | 1 day | | Unitree | - | | Geely Auto | 3 hours | | Hybrid
+Robotics | 2 hours |

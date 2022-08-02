@@ -58,8 +58,8 @@ int main(int argc, char** argv)
     .sched_priority = 95
   };
   if (sched_setscheduler(0, SCHED_FIFO, &params) == -1)
-    ROS_ERROR("Set scheduler failed, RUN THIS NODE AS SUPER USER.\n");
-
+    ROS_WARN("Failed to set threads priority (one possible reason could be that the user and the group permissions "
+             "are not set properly.).\n");
   try
   {
     // Create the hardware interface specific to your robot

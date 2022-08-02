@@ -38,7 +38,7 @@ void UnitreeHW::read(const ros::Time& time, const ros::Duration& period)
   udp_->Recv();
   udp_->GetRecv(low_state_);
 
-  for (int i = 0; i < 20; ++i)
+  for (int i = 0; i < 12; ++i)
   {
     joint_data_[i].pos_ = low_state_.motorState[i].q;
     joint_data_[i].vel_ = low_state_.motorState[i].dq;
@@ -72,7 +72,7 @@ void UnitreeHW::read(const ros::Time& time, const ros::Duration& period)
 
 void UnitreeHW::write(const ros::Time& time, const ros::Duration& period)
 {
-  for (int i = 0; i < 20; ++i)
+  for (int i = 0; i < 12; ++i)
   {
     low_cmd_.motorCmd[i].q = joint_data_[i].pos_des_;
     low_cmd_.motorCmd[i].dq = joint_data_[i].vel_des_;

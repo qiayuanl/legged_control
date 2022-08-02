@@ -1,6 +1,8 @@
 <?xml version="1.0" ?>
 
 <launch>
+    <arg name="cheater" default="false"/>
+
     <arg name="task_file" default="$(find legged_controllers)/config/task.info"/>
     <arg name="reference_file" default="$(find legged_controllers)/config/reference.info"/>
     <arg name="urdf_file" default="$(find unitree_description)/urdf/a1.urdf"/>
@@ -14,15 +16,21 @@
     <param name="gaitCommandFile" value="$(arg gait_file)"/>
     <rosparam file="$(find legged_controllers)/config/default.yaml" command="load"/>
 
-    <node name="controller_loader" pkg="controller_manager" type="controller_manager" output="screen"
-          args="load
+    <node if="$(arg cheater)" name="controller_loader" pkg="controller_manager" type="controller_manager"
+          output="screen" args="load
           controllers/joint_state_controller
           controllers/legged_controller
           controllers/legged_cheater_controller
 "/>
 
+    <node unless="$(arg cheater)" name="controller_loader" pkg="controller_manager" type="controller_manager"
+          output="screen" args="load
+          controllers/joint_state_controller
+          controllers/legged_controller
+"/>
+
     <node pkg="ocs2_legged_robot_ros" type="legged_robot_gait_command" name="legged_robot_gait_command"
-          output="screen" launch-prefix="gnome-terminal --"/>
+          output="screen"/>
 
     <node pkg="legged_controllers" type="legged_target_trajectories_publisher" name="legged_robot_target"
           output="screen"/>

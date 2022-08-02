@@ -3,7 +3,7 @@
     <arg name="hung_up" default="false"/>
 
     <param name="legged_robot_description" command="$(find xacro)/xacro $(find unitree_description)/urdf/robot.xacro
-       robot_type:=$(arg robot_type) hung_up:=$(arg hung_up)
+       robot_type:=$(arg robot_type)
     "/>
 
     <rosparam file="$(find unitree_hw)/config/default.yaml" command="load"/>

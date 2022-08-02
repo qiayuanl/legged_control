@@ -76,7 +76,7 @@ private:
   UNITREE_LEGGED_SDK::LowState low_state_{};
   UNITREE_LEGGED_SDK::LowCmd low_cmd_{};
 
-  UnitreeMotorData joint_data_[20]{};
+  UnitreeMotorData joint_data_[12]{};
   UnitreeImuData imu_data_{};
   bool contact_state_[4]{};
   int contact_threshold_{};
