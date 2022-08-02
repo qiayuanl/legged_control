@@ -39,3 +39,12 @@ rosrun rqt_controller_manager rqt_controller_manager
 
 6. Set the gait then use RViz and other tools to control the robot
 ![ezgif-5-684a1e1e23.gif](https://s2.loli.net/2022/07/27/lBzdeRa1gmvwx9C.gif)
+
+## Statistics
+The table below shown lab succefully deploy this repo in their **real A1**
+|  Lab   |  Spend Time  |
+|  ----  | ----  |
+| XPeng Robotics | 1 day |
+|  Unitree | - |
+|  Geely Auto |  3 hours |
+|  Hybrid Robotics |  2 hours |
