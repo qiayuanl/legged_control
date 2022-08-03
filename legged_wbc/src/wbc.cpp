@@ -142,7 +142,7 @@ Task Wbc::formulateNoContactMotionTask()
       j++;
     }
 
-  return Task(a, b, matrix_t(), matrix_t());
+  return Task(a, b, matrix_t(), vector_t());
 }
 
 Task Wbc::formulateFrictionConeTask()
