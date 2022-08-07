@@ -191,12 +191,14 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
       odom.pose.covariance[6 * (3 + i) + (3 + j)] = imu_sensor_handle_.getOrientationCovariance()[i * 3 + j];
     }
   }
-  odom.twist.twist.linear.x = x_hat_.segment<3>(3)(0);
-  odom.twist.twist.linear.y = x_hat_.segment<3>(3)(1);
-  odom.twist.twist.linear.z = x_hat_.segment<3>(3)(2);
-  odom.twist.twist.angular.x = angular_vel_global.x();
-  odom.twist.twist.angular.y = angular_vel_global.y();
-  odom.twist.twist.angular.z = angular_vel_global.z();
+  //  The twist in this message should be specified in the coordinate frame given by the child_frame_id: "base"
+  vector_t twist = getRotationMatrixFromZyxEulerAngles(quatToZyx(quat)).transpose() * x_hat_.segment<3>(3);
+  odom.twist.twist.linear.x = twist.x();
+  odom.twist.twist.linear.y = twist.y();
+  odom.twist.twist.linear.z = twist.z();
+  odom.twist.twist.angular.x = angular_vel_local.x();
+  odom.twist.twist.angular.y = angular_vel_local.y();
+  odom.twist.twist.angular.z = angular_vel_local.z();
   for (int i = 0; i < 3; ++i)
   {
     for (int j = 0; j < 3; ++j)
