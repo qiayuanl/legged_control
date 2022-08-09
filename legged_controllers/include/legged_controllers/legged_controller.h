@@ -42,6 +42,8 @@ public:
 protected:
   virtual void setupLeggedInterface(const std::string& task_file, const std::string& urdf_file,
                                     const std::string& reference_file, bool verbose);
+  virtual void setupMpc();
+  virtual void setupMrt();
   virtual void setupStateEstimate(LeggedInterface& legged_interface,
                                   const std::vector<HybridJointHandle>& hybrid_joint_handles,
                                   const std::vector<ContactSensorHandle>& contact_sensor_handles,
