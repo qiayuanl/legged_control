@@ -120,9 +120,7 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
                                      optimized_input, planned_mode);
 
   // Whole body control
-  for (size_t i = 0; i < legged_interface_->getCentroidalModelInfo().numThreeDofContacts; i++)
-    current_observation_.input.segment<3>(i * 3) =
-        centroidal_model::getContactForces(optimized_input, i, legged_interface_->getCentroidalModelInfo());
+  current_observation_.input = optimized_input;
 
   vector_t x = wbc_->update(optimized_state, optimized_input, measured_rbd_state, planned_mode);
 
