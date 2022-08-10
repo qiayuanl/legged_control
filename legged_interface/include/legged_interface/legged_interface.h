@@ -10,6 +10,7 @@
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 #include <ocs2_robotic_tools/end_effector/EndEffectorKinematics.h>
+#include <ocs2_ddp/DDP_Settings.h>
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_sqp/MultipleShootingSettings.h>
 
@@ -44,6 +45,10 @@ public:
   const mpc::Settings& mpcSettings() const
   {
     return mpcSettings_;
+  }
+  const ddp::Settings& ddpSettings() const
+  {
+    return ddpSettings_;
   }
   const multiple_shooting::Settings& sqpSettings()
   {
@@ -97,6 +102,7 @@ protected:
 
   ModelSettings modelSettings_;
   mpc::Settings mpcSettings_;
+  ddp::Settings ddpSettings_;
   multiple_shooting::Settings sqpSettings_;
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
