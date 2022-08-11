@@ -16,6 +16,8 @@
 #include <ocs2_ros_interfaces/synchronized_module/RosReferenceManager.h>
 #include <ocs2_ros_interfaces/common/RosMsgConversions.h>
 #include <ocs2_msgs/mpc_observation.h>
+#include <ocs2_ddp/GaussNewtonDDP_MPC.h>
+#include <ocs2_sqp/MultipleShootingMpc.h>
 
 #include <legged_estimation/from_topice_estimate.h>
 #include <legged_estimation/linear_kalman_filter.h>
@@ -162,6 +164,10 @@ void LeggedController::setupLeggedInterface(const std::string& task_file, const 
 
 void LeggedController::setupMpc()
 {
+  //  mpc_ = std::make_shared<GaussNewtonDDP_MPC>(legged_interface_->mpcSettings(), legged_interface_->ddpSettings(),
+  //                                              legged_interface_->getRollout(),
+  //                                              legged_interface_->getOptimalControlProblem(),
+  //                                              legged_interface_->getInitializer());
   mpc_ = std::make_shared<MultipleShootingMpc>(legged_interface_->mpcSettings(), legged_interface_->sqpSettings(),
                                                legged_interface_->getOptimalControlProblem(),
                                                legged_interface_->getInitializer());

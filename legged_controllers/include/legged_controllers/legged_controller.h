@@ -8,7 +8,6 @@
 #include <legged_common/hardware_interface/contact_sensor_interface.h>
 #include <hardware_interface/imu_sensor_interface.h>
 
-#include <ocs2_sqp/MultipleShootingMpc.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 #include <ocs2_legged_robot_ros/visualization/LeggedRobotVisualizer.h>
 #include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
@@ -53,7 +52,7 @@ protected:
   std::shared_ptr<Wbc> wbc_;
   std::shared_ptr<SafetyChecker> safety_checker_;
 
-  std::shared_ptr<MultipleShootingMpc> mpc_;
+  std::shared_ptr<MPC_BASE> mpc_;
   std::shared_ptr<MPC_MRT_Interface> mpc_mrt_interface_;
   std::shared_ptr<CentroidalModelRbdConversions> rbd_conversions_;
   std::shared_ptr<StateEstimateBase> state_estimate_;
