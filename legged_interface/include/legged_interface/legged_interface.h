@@ -6,8 +6,10 @@
 
 #include <ocs2_core/Types.h>
 #include <ocs2_core/penalties/Penalties.h>
+#include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
+#include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 #include <ocs2_robotic_tools/end_effector/EndEffectorKinematics.h>
 #include <ocs2_ddp/DDP_Settings.h>
@@ -15,7 +17,6 @@
 #include <ocs2_sqp/MultipleShootingSettings.h>
 
 #include <ocs2_legged_robot/common/ModelSettings.h>
-#include <ocs2_legged_robot/initialization/LeggedRobotInitializer.h>
 #include <ocs2_legged_robot/reference_manager/SwitchedModelReferenceManager.h>
 
 namespace legged
@@ -74,7 +75,7 @@ public:
   {
     return referenceManagerPtr_;
   }
-  const LeggedRobotInitializer& getInitializer() const override
+  const Initializer& getInitializer() const override
   {
     return *initializerPtr_;
   }
@@ -113,7 +114,7 @@ protected:
 
   rollout::Settings rolloutSettings_;
   std::unique_ptr<RolloutBase> rolloutPtr_;
-  std::unique_ptr<LeggedRobotInitializer> initializerPtr_;
+  std::unique_ptr<Initializer> initializerPtr_;
 
   vector_t initialState_;
 };

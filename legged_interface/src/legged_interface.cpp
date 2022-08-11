@@ -26,6 +26,7 @@
 #include <ocs2_legged_robot/constraint/ZeroVelocityConstraintCppAd.h>
 #include <ocs2_legged_robot/cost/LeggedRobotStateInputQuadraticCost.h>
 #include <ocs2_legged_robot/dynamics/LeggedRobotDynamicsAD.h>
+#include <ocs2_legged_robot/initialization/LeggedRobotInitializer.h>
 
 namespace legged
 {
