@@ -129,6 +129,11 @@ void QuadHWSim::writeSim(ros::Time time, ros::Duration period)
   for (auto joint : hybrid_joint_datas_)
   {
     auto& buffer = cmd_buffer_.find(joint.joint_.getName())->second;
+    if (time == ros::Time(period.toSec()))  // Simulation reset
+      buffer.clear();
+
+    while (!buffer.empty() && buffer.back().stamp_ + ros::Duration(delay_) < time)
+      buffer.pop_back();
     buffer.push_front(HybridJointCommand{ .stamp_ = time,
                                           .pos_des_ = joint.pos_des_,
                                           .vel_des_ = joint.vel_des_,
@@ -136,8 +141,6 @@ void QuadHWSim::writeSim(ros::Time time, ros::Duration period)
                                           .kd_ = joint.kd_,
                                           .ff_ = joint.ff_ });
 
-    while (!buffer.empty() && buffer.back().stamp_ + ros::Duration(delay_) < time)
-      buffer.pop_back();
     const auto& cmd = buffer.back();
     joint.joint_.setCommand(cmd.kp_ * (cmd.pos_des_ - joint.joint_.getPosition()) +
                             cmd.kd_ * (cmd.vel_des_ - joint.joint_.getVelocity()) + cmd.ff_);
