@@ -125,6 +125,14 @@ bool UnitreeHW::setupImu()
   imu_sensor_interface_.registerHandle(hardware_interface::ImuSensorHandle(
       "unitree_imu", "unitree_imu", imu_data_.ori, imu_data_.ori_cov, imu_data_.angular_vel, imu_data_.angular_vel_cov,
       imu_data_.linear_acc, imu_data_.linear_acc_cov));
+  imu_data_.ori_cov[0] = 0.0012;
+  imu_data_.ori_cov[4] = 0.0012;
+  imu_data_.ori_cov[8] = 0.0012;
+
+  imu_data_.angular_vel_cov[0] = 0.0004;
+  imu_data_.angular_vel_cov[4] = 0.0004;
+  imu_data_.angular_vel_cov[8] = 0.0004;
+
   return true;
 }
 
