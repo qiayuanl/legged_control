@@ -70,7 +70,7 @@ int main(int argc, char** argv)
     unitree_hw->init(nh, robot_hw_nh);
 
     // Start the control loop
-    legged::QuadHWLoop control_loop(nh, unitree_hw);
+    legged::LeggedHWLoop control_loop(nh, unitree_hw);
 
     // Wait until shutdown signal received
     ros::waitForShutdown();

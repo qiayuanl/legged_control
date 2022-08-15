@@ -9,7 +9,7 @@ namespace legged
 {
 bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh)
 {
-  if (!QuadHW::init(root_nh, robot_hw_nh))
+  if (!LeggedHW::init(root_nh, robot_hw_nh))
     return false;
 
   setupJoints();

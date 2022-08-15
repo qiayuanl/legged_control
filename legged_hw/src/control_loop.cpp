@@ -6,7 +6,7 @@
 
 namespace legged
 {
-QuadHWLoop::QuadHWLoop(ros::NodeHandle& nh, std::shared_ptr<QuadHW> hardware_interface)
+LeggedHWLoop::LeggedHWLoop(ros::NodeHandle& nh, std::shared_ptr<LeggedHW> hardware_interface)
   : nh_(nh), hardware_interface_(std::move(hardware_interface))
 {
   // Create the controller manager
@@ -30,10 +30,10 @@ QuadHWLoop::QuadHWLoop(ros::NodeHandle& nh, std::shared_ptr<QuadHW> hardware_int
 
   // Start timer that will periodically call RmRobotHWLoop::update
   desired_update_freq_ = ros::Duration(1 / loop_hz_);
-  loop_timer_ = nh_.createTimer(desired_update_freq_, &QuadHWLoop::update, this);
+  loop_timer_ = nh_.createTimer(desired_update_freq_, &LeggedHWLoop::update, this);
 }
 
-void QuadHWLoop::update(const ros::TimerEvent& /*unused*/)
+void LeggedHWLoop::update(const ros::TimerEvent& /*unused*/)
 {
   // Get change in time
   current_time_ = steady_clock::now();

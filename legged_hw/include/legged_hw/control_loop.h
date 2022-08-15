@@ -53,7 +53,7 @@ namespace legged
 {
 using namespace std::chrono;
 
-class QuadHWLoop
+class LeggedHWLoop
 {
 public:
   /** \brief Create controller manager. Load loop frequency. Start control loop which call @ref
@@ -62,7 +62,7 @@ public:
    * @param nh Node-handle of a ROS node.
    * @param hardware_interface A pointer which point to hardware_interface.
    */
-  QuadHWLoop(ros::NodeHandle& nh, std::shared_ptr<QuadHW> hardware_interface);
+  LeggedHWLoop(ros::NodeHandle& nh, std::shared_ptr<LeggedHW> hardware_interface);
 
   /** \brief Timed method that reads current hardware's state, runs the controller code once and sends the new commands
    * to the hardware.
@@ -99,6 +99,6 @@ private:
   std::shared_ptr<controller_manager::ControllerManager> controller_manager_;
 
   // Abstract Hardware Interface for your robot
-  std::shared_ptr<QuadHW> hardware_interface_;
+  std::shared_ptr<LeggedHW> hardware_interface_;
 };
 }  // namespace legged

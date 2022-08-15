@@ -7,7 +7,7 @@
 
 namespace legged
 {
-bool QuadHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh)
+bool LeggedHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh)
 {
   if (!loadUrdf(root_nh))
   {
@@ -23,7 +23,7 @@ bool QuadHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh)
   return true;
 }
 
-bool QuadHW::loadUrdf(ros::NodeHandle& root_nh)
+bool LeggedHW::loadUrdf(ros::NodeHandle& root_nh)
 {
   std::string urdf_string;
   if (urdf_model_ == nullptr)

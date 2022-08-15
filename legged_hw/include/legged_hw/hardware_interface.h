@@ -22,10 +22,10 @@
 
 namespace legged
 {
-class QuadHW : public hardware_interface::RobotHW
+class LeggedHW : public hardware_interface::RobotHW
 {
 public:
-  QuadHW() = default;
+  LeggedHW() = default;
   /** \brief Get necessary params from param server. Init hardware_interface.
    *
    * Get params from param server and check whether these params are set. Load urdf of robot. Set up transmission and

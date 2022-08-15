@@ -30,7 +30,7 @@ struct UnitreeImuData
   double linear_acc_cov[9];
 };
 
-class UnitreeHW : public QuadHW
+class UnitreeHW : public LeggedHW
 {
 public:
   UnitreeHW() = default;
