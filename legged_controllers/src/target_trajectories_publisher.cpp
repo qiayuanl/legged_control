@@ -37,7 +37,9 @@ TargetTrajectories targetPoseToTargetTrajectories(const vector_t& target_pose, c
   const scalar_array_t time_trajectory{ observation.time, target_reaching_time };
 
   // desired state trajectory
-  const vector_t current_pose = observation.state.segment<6>(6);
+  vector_t current_pose = observation.state.segment<6>(6);
+  current_pose(4) = 0;
+  current_pose(5) = 0;
   vector_array_t state_trajectory(2, vector_t::Zero(observation.state.size()));
   state_trajectory[0] << vector_t::Zero(6), current_pose, DEFAULT_JOINT_STATE;
   state_trajectory[1] << vector_t::Zero(6), target_pose, DEFAULT_JOINT_STATE;
