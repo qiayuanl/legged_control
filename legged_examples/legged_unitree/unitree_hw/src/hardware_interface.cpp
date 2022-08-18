@@ -12,6 +12,8 @@ bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh)
   if (!LeggedHW::init(root_nh, robot_hw_nh))
     return false;
 
+  root_nh.getParam("power_limit", power_limit_);
+
   setupJoints();
   setupImu();
   setupContactSensor(robot_hw_nh);
@@ -81,6 +83,7 @@ void UnitreeHW::write(const ros::Time& time, const ros::Duration& period)
     low_cmd_.motorCmd[i].tau = joint_data_[i].ff_;
   }
   safety_->PositionLimit(low_cmd_);
+  safety_->PowerProtect(low_cmd_, low_state_, power_limit_);
   udp_->SetSend(low_cmd_);
   udp_->Send();
 }

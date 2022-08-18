@@ -79,6 +79,8 @@ private:
   UnitreeMotorData joint_data_[12]{};
   UnitreeImuData imu_data_{};
   bool contact_state_[4]{};
+
+  int power_limit_{};
   int contact_threshold_{};
 };
 
