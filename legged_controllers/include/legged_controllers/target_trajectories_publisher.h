@@ -8,6 +8,8 @@
 #include <ros/subscriber.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <ocs2_mpc/SystemObservation.h>
 #include <ocs2_ros_interfaces/command/TargetTrajectoriesRosPublisher.h>
@@ -27,6 +29,7 @@ public:
                               CmdToTargetTrajectories cmd_vel_to_target_trajectories)
     : goal_to_target_trajectories_(std::move(goal_to_target_trajectories))
     , cmd_vel_to_target_trajectories_(std::move(cmd_vel_to_target_trajectories))
+    , tf2_(buffer_)
   {
     // Trajectories publisher
     target_trajectories_publisher_.reset(new TargetTrajectoriesRosPublisher(nh, topic_prefix));
@@ -43,13 +46,23 @@ public:
     auto goal_callback = [this](const geometry_msgs::PoseStamped::ConstPtr& msg) {
       if (latest_observation_.time == 0.0)
         return;
+      geometry_msgs::PoseStamped pose = *msg;
+      try
+      {
+        buffer_.transform(pose, pose, "odom");
+      }
+      catch (tf2::TransformException& ex)
+      {
+        ROS_WARN("Failure %s\n", ex.what());
+        return;
+      }
 
       vector_t cmd_goal = vector_t::Zero(6);
-      cmd_goal[0] = msg->pose.position.x;
-      cmd_goal[1] = msg->pose.position.y;
-      cmd_goal[2] = msg->pose.position.z;
-      Eigen::Quaternion<scalar_t> q(msg->pose.orientation.w, msg->pose.orientation.x, msg->pose.orientation.y,
-                                    msg->pose.orientation.z);
+      cmd_goal[0] = pose.pose.position.x;
+      cmd_goal[1] = pose.pose.position.y;
+      cmd_goal[2] = pose.pose.position.z;
+      Eigen::Quaternion<scalar_t> q(pose.pose.orientation.w, pose.pose.orientation.x, pose.pose.orientation.y,
+                                    pose.pose.orientation.z);
       cmd_goal[3] = q.toRotationMatrix().eulerAngles(0, 1, 2).z();
       cmd_goal[4] = q.toRotationMatrix().eulerAngles(0, 1, 2).y();
       cmd_goal[5] = q.toRotationMatrix().eulerAngles(0, 1, 2).x();
@@ -83,6 +96,9 @@ private:
   std::unique_ptr<TargetTrajectoriesRosPublisher> target_trajectories_publisher_;
 
   ::ros::Subscriber observation_sub_, goal_sub_, cmd_vel_sub_;
+  tf2_ros::Buffer buffer_;
+  tf2_ros::TransformListener tf2_;
+
   mutable std::mutex latest_observation_mutex_;
   SystemObservation latest_observation_;
 };
