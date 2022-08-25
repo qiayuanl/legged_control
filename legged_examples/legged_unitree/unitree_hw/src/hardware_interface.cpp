@@ -12,7 +12,7 @@ bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh)
   if (!LeggedHW::init(root_nh, robot_hw_nh))
     return false;
 
-  root_nh.getParam("power_limit", power_limit_);
+  robot_hw_nh.getParam("power_limit", power_limit_);
 
   setupJoints();
   setupImu();
