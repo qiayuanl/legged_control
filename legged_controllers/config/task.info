@@ -128,18 +128,18 @@ initialState
    (11,0) 0.0     ; theta_base_x
 
    ;; Leg Joint Positions: [LF, LH, RF, RH] ;;
-   (12,0)  -0.05  ; LF_HAA
-   (13,0)  0.83   ; LF_HFE
-   (14,0) -1.68   ; LF_KFE
-   (15,0)  -0.05  ; LH_HAA
-   (16,0)  0.83   ; LH_HFE
-   (17,0) -1.68   ; LH_KFE
-   (18,0)  0.05   ; RF_HAA
-   (19,0)  0.83   ; RF_HFE
-   (20,0) -1.68   ; RF_KFE
-   (21,0)  0.05   ; RH_HAA
-   (22,0)  0.83   ; RH_HFE
-   (23,0) -1.68   ; RH_KFE
+   (12,0) -0.15   ; LF_HAA
+   (13,0)  0.72   ; LF_HFE
+   (14,0) -1.44   ; LF_KFE
+   (15,0) -0.15   ; LH_HAA
+   (16,0)  0.72   ; LH_HFE
+   (17,0) -1.44   ; LH_KFE
+   (18,0)  0.15   ; RF_HAA
+   (19,0)  0.72   ; RF_HFE
+   (20,0) -1.44   ; RF_KFE
+   (21,0)  0.15   ; RH_HAA
+   (22,0)  0.72   ; RH_HFE
+   (23,0) -1.44   ; RH_KFE
 }
 
 ; standard state weight matrix
@@ -152,13 +152,13 @@ Q
   (1,1)   15.0     ; vcom_y
   (2,2)   30.0     ; vcom_z
   (3,3)   10.0     ; L_x / robotMass
-  (4,4)   10.0     ; L_y / robotMass
-  (5,5)   5.0      ; L_z / robotMass
+  (4,4)   30.0     ; L_y / robotMass
+  (5,5)   30.0     ; L_z / robotMass
 
   ;; Base Pose: [position, orientation] ;;
-  (6,6)   500.0    ; p_base_x
-  (7,7)   500.0    ; p_base_y
-  (8,8)   500.0    ; p_base_z
+  (6,6)   1000.0   ; p_base_x
+  (7,7)   1000.0   ; p_base_y
+  (8,8)   1500.0   ; p_base_z
   (9,9)   100.0    ; theta_base_z
   (10,10) 300.0    ; theta_base_y
   (11,11) 300.0    ; theta_base_x
