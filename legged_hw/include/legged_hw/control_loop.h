@@ -39,19 +39,16 @@
 
 #include "legged_hw/hardware_interface.h"
 
-// Timer
 #include <chrono>
-#include <utility>
+#include <thread>
 
-// ROS
 #include <ros/ros.h>
-
-// ROS control
 #include <controller_manager/controller_manager.h>
 
 namespace legged
 {
 using namespace std::chrono;
+using clock = high_resolution_clock;
 
 class LeggedHWLoop
 {
@@ -64,31 +61,30 @@ public:
    */
   LeggedHWLoop(ros::NodeHandle& nh, std::shared_ptr<LeggedHW> hardware_interface);
 
+  ~LeggedHWLoop();
+
   /** \brief Timed method that reads current hardware's state, runs the controller code once and sends the new commands
    * to the hardware.
    *
    * Timed method that reads current hardware's state, runs the controller code once and sends the new commands to the
    * hardware.
    *
-   * Note: we do not use the TimerEvent time difference because it does NOT guarantee that the time source is strictly
-   * linearly increasing.
    */
-  void update(const ros::TimerEvent&);
+  void update();
 
 private:
   // Startup and shutdown of the internal node inside a roscpp program
   ros::NodeHandle nh_;
 
   // Settings
-  ros::Duration desired_update_freq_;
   double cycle_time_error_threshold_{};
 
   // Timing
-  ros::Timer loop_timer_;
-  ros::Duration elapsed_time_;
+  std::thread loop_thread_;
+  std::atomic_bool loop_running_;
   double loop_hz_{};
-  steady_clock::time_point last_time_;
-  steady_clock::time_point current_time_;
+  ros::Duration elapsed_time_;
+  clock::time_point last_time_;
 
   /** ROS Controller Manager and Runner
 

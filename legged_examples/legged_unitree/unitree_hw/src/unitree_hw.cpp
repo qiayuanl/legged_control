@@ -53,13 +53,6 @@ int main(int argc, char** argv)
   ros::AsyncSpinner spinner(3);
   spinner.start();
 
-  struct sched_param params
-  {
-    .sched_priority = 95
-  };
-  if (sched_setscheduler(0, SCHED_FIFO, &params) == -1)
-    ROS_WARN("Failed to set threads priority (one possible reason could be that the user and the group permissions "
-             "are not set properly.).\n");
   try
   {
     // Create the hardware interface specific to your robot
