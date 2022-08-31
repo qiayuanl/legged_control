@@ -108,12 +108,14 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   const auto ee_pos = pinocchio_ee_kine_.getPosition(vector_t());
   const auto ee_vel = pinocchio_ee_kine_.getVelocity(vector_t(), vector_t());
 
+  scalar_t foot_radius = 0.015;
   scalar_t imu_process_noise_position = 0.2;
   scalar_t imu_process_noise_velocity = 0.2;
   scalar_t foot_process_noise_position = 0.002;
   scalar_t foot_sensor_noise_position = 0.005;
   scalar_t foot_sensor_noise_velocity = 0.1;  // TODO adjust the value
-  scalar_t foot_height_sensor_noise = 0.001;
+  scalar_t foot_height_sensor_noise = 0.005;
+
   Eigen::Matrix<scalar_t, 18, 18> q = Eigen::Matrix<scalar_t, 18, 18>::Identity();
   q.block(0, 0, 3, 3) = q_.block(0, 0, 3, 3) * imu_process_noise_position;
   q.block(3, 3, 3, 3) = q_.block(3, 3, 3, 3) * imu_process_noise_velocity;
@@ -140,7 +142,6 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
     r.block(r_index2, r_index2, 3, 3) = (is_contact ? 1. : high_suspect_number) * r.block(r_index2, r_index2, 3, 3);
     r(r_index3, r_index3) = (is_contact ? 1. : high_suspect_number) * r(r_index3, r_index3);
 
-    scalar_t foot_radius = 0.02;
     ps_.segment(3 * i, 3) = -1. * ee_pos[i];
     ps_.segment(3 * i, 3)[2] += foot_radius;
     vs_.segment(3 * i, 3) = -1. * ee_vel[i];
