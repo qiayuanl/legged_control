@@ -49,7 +49,7 @@ public:
       geometry_msgs::PoseStamped pose = *msg;
       try
       {
-        buffer_.transform(pose, pose, "odom");
+        buffer_.transform(pose, pose, "odom", ros::Duration(0.2));
       }
       catch (tf2::TransformException& ex)
       {

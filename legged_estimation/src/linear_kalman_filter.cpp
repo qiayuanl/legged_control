@@ -20,6 +20,8 @@ KalmanFilterEstimate::KalmanFilterEstimate(LeggedInterface& legged_interface,
   , pinocchio_ee_kine_(legged_interface.getPinocchioInterface(),
                        CentroidalModelPinocchioMapping(legged_interface.getCentroidalModelInfo()),
                        legged_interface.modelSettings().contactNames3DoF)
+  , tf_listener_(tf_buffer_)
+  , topic_updated_(false)
 {
   x_hat_.setZero();
   ps_.setZero();
@@ -39,7 +41,7 @@ KalmanFilterEstimate::KalmanFilterEstimate(LeggedInterface& legged_interface,
   c_.block(3, 0, 3, 6) = c1;
   c_.block(6, 0, 3, 6) = c1;
   c_.block(9, 0, 3, 6) = c1;
-  c_.block(0, 6, 12, 12) = Eigen::Matrix<scalar_t, 12, 12>::Identity();
+  c_.block(0, 6, 12, 12) = -Eigen::Matrix<scalar_t, 12, 12>::Identity();
   c_.block(12, 0, 3, 6) = c2;
   c_.block(15, 0, 3, 6) = c2;
   c_.block(18, 0, 3, 6) = c2;
@@ -52,19 +54,14 @@ KalmanFilterEstimate::KalmanFilterEstimate(LeggedInterface& legged_interface,
   p_ = 100. * p_;
   q_.setIdentity();
   r_.setIdentity();
+
+  world2odom_.setRotation(tf2::Quaternion::getIdentity());
+  sub_ = ros::NodeHandle().subscribe<nav_msgs::Odometry>("/tracking_camera/odom/sample", 10,
+                                                         &KalmanFilterEstimate::callback, this);
 }
 
 vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration& period)
 {
-  scalar_t dt = period.toSec();
-
-  a_.block(0, 3, 3, 3) = dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
-  b_.block(0, 0, 3, 3) = 0.5 * dt * dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
-  b_.block(3, 0, 3, 3) = dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
-  q_.block(0, 0, 3, 3) = (dt / 20.f) * Eigen::Matrix<scalar_t, 3, 3>::Identity();
-  q_.block(3, 3, 3, 3) = (dt * 9.81f / 20.f) * Eigen::Matrix<scalar_t, 3, 3>::Identity();
-  q_.block(6, 6, 12, 12) = dt * Eigen::Matrix<scalar_t, 12, 12>::Identity();
-
   // Angular from IMU
   Eigen::Quaternion<scalar_t> quat(imu_sensor_handle_.getOrientation()[3], imu_sensor_handle_.getOrientation()[0],
                                    imu_sensor_handle_.getOrientation()[1], imu_sensor_handle_.getOrientation()[2]);
@@ -78,6 +75,14 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
 
   // Joint states
   updateJointStates();
+
+  scalar_t dt = period.toSec();
+  a_.block(0, 3, 3, 3) = dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
+  b_.block(0, 0, 3, 3) = 0.5 * dt * dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
+  b_.block(3, 0, 3, 3) = dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
+  q_.block(0, 0, 3, 3) = (dt / 20.f) * Eigen::Matrix<scalar_t, 3, 3>::Identity();
+  q_.block(3, 3, 3, 3) = (dt * 9.81f / 20.f) * Eigen::Matrix<scalar_t, 3, 3>::Identity();
+  q_.block(6, 6, 12, 12) = dt * Eigen::Matrix<scalar_t, 12, 12>::Identity();
 
   auto& model = legged_interface_.getPinocchioInterface().getModel();
   auto& data = legged_interface_.getPinocchioInterface().getData();
@@ -172,6 +177,13 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
     p_.block(2, 0, 16, 2).setZero();
     p_.block(0, 0, 2, 2) /= 10.;
   }
+
+  if (topic_updated_)
+  {
+    updateFromTopic();
+    topic_updated_ = false;
+  }
+
   updateLinear(x_hat_.segment<3>(0), x_hat_.segment<3>(3));
 
   nav_msgs::Odometry odom;
@@ -210,6 +222,56 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   publishMsgs(odom, time);
 
   return rbd_state_;
+}
+
+void KalmanFilterEstimate::updateFromTopic()
+{
+  auto msg = buffer_.readFromRT();
+
+  tf2::Transform world2sensor;
+  world2sensor.setOrigin(tf2::Vector3(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z));
+  world2sensor.setRotation(tf2::Quaternion(msg->pose.pose.orientation.x, msg->pose.pose.orientation.y,
+                                           msg->pose.pose.orientation.z, msg->pose.pose.orientation.w));
+
+  if (world2odom_.getRotation() == tf2::Quaternion::getIdentity())  // First received
+  {
+    tf2::Transform odom2sensor;
+    try
+    {
+      geometry_msgs::TransformStamped tf_msg =
+          tf_buffer_.lookupTransform("odom", msg->child_frame_id, msg->header.stamp);
+      tf2::fromMsg(tf_msg.transform, odom2sensor);
+    }
+    catch (tf2::TransformException& ex)
+    {
+      ROS_WARN("%s", ex.what());
+      return;
+    }
+    world2odom_ = world2sensor * odom2sensor.inverse();
+  }
+  tf2::Transform base2sensor;
+  try
+  {
+    geometry_msgs::TransformStamped tf_msg = tf_buffer_.lookupTransform("base", msg->child_frame_id, msg->header.stamp);
+    tf2::fromMsg(tf_msg.transform, base2sensor);
+  }
+  catch (tf2::TransformException& ex)
+  {
+    ROS_WARN("%s", ex.what());
+    return;
+  }
+  tf2::Transform odom2base = world2odom_.inverse() * world2sensor * base2sensor.inverse();
+  vector3_t new_pos(odom2base.getOrigin().x(), odom2base.getOrigin().y(), odom2base.getOrigin().z());
+  vector_t delta_pos = new_pos - x_hat_.segment<3>(0);
+  x_hat_.segment<3>(0) = new_pos;
+  for (size_t i = 0; i < 4; ++i)
+    x_hat_.segment<3>(6 + i * 3) += delta_pos;
+}
+
+void KalmanFilterEstimate::callback(const nav_msgs::Odometry::ConstPtr& msg)
+{
+  buffer_.writeFromNonRT(*msg);
+  topic_updated_ = true;
 }
 
 }  // namespace legged

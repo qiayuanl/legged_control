@@ -60,17 +60,6 @@ target_link_libraries(${PROJECT_NAME}
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
 
 
-# Target trajectories publish node
-add_executable(odom_correction
-        src/odom_correction.cpp
-        )
-add_dependencies(odom_correction
-        ${catkin_EXPORTED_TARGETS}
-        )
-target_link_libraries(odom_correction
-        ${catkin_LIBRARIES}
-        )
-
 # Mark executables and/or libraries for installation
 install(TARGETS ${PROJECT_NAME}
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
