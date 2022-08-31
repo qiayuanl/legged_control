@@ -13,7 +13,7 @@ FromTopicStateEstimate::FromTopicStateEstimate(LeggedInterface& legged_interface
   : StateEstimateBase(legged_interface, hybrid_joint_handles_, contact_sensor_handles, imu_sensor_handle)
 {
   ros::NodeHandle nh;
-  sub_ = nh.subscribe<nav_msgs::Odometry>("/ground_truth/state", 100, &FromTopicStateEstimate::callback, this);
+  sub_ = nh.subscribe<nav_msgs::Odometry>("/ground_truth/state", 10, &FromTopicStateEstimate::callback, this);
 }
 
 void FromTopicStateEstimate::callback(const nav_msgs::Odometry::ConstPtr& msg)
