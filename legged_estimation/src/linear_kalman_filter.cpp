@@ -262,7 +262,8 @@ void KalmanFilterEstimate::updateFromTopic()
     return;
   }
   tf2::Transform odom2base = world2odom_.inverse() * world2sensor * base2sensor.inverse();
-  vector3_t new_pos(odom2base.getOrigin().x(), odom2base.getOrigin().y(), odom2base.getOrigin().z());
+  //  vector3_t new_pos(odom2base.getOrigin().x(), odom2base.getOrigin().y(), odom2base.getOrigin().z());
+  vector3_t new_pos(odom2base.getOrigin().x(), odom2base.getOrigin().y(), x_hat_(2));
   vector_t delta_pos = new_pos - x_hat_.segment<3>(0);
   x_hat_.segment<3>(0) = new_pos;
   for (size_t i = 0; i < 4; ++i)
