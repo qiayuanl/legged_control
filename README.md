@@ -87,11 +87,8 @@ rosrun rqt_controller_manager rqt_controller_manager
 
 ## Statistics
 
-The table below shows lab successfully deploy this repo in their **real A1**
+The table below shows the labs successfully deploy this repo in their **real A1**, feel free to open a PR for update these infos.
 
-| Lab | Spend Time | 
-| ---- | ---- | 
-| XPeng Robotics | 1 day | 
-| Unitree | - | 
-| Geely Auto | 3 hours | 
-| Hybrid Robotics | 2 hours |
+| Lab | XPeng Robotics | Unitree | Geely Auto | Hybrid Robotics |
+| ---- | ---- | ---- | ---- | ---- |
+| Spend Time | 1 day | - | 3 hours |  2 hours |
