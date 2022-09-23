@@ -28,6 +28,7 @@ OCS2 is a huge monorepo; **DO NOT** try to compile the whole repo. You only need
    ```
 2. Compile the `ocs2_legged_robot_ros` package with [catkin tools](https://catkin-tools.readthedocs.io/en/latest/) instead of `catkin_make`. It will take you about ten minutes.
    ```
+   catkin config -DCMAKE_BUILD_TYPE=RelWithDebInfo
    catkin build ocs2_legged_robot_ros
    ```
    Ensure you can command the ANYmal as shown in the [document](https://leggedrobotics.github.io/ocs2/robotic_examples.html#legged-robot) and below.
