@@ -82,7 +82,7 @@ rosrun rqt_controller_manager rqt_controller_manager
 
 5. Start the `legged_controller` or `legged_cheater_controller`, **NOTE that you are not allowed to start the `legged_cheater_controller` in real hardware!**
 
-6. Set the gait in the terminal of `load_controller.launch`, then use RViz and other tools to control the robot
+6. Set the gait in the terminal of `load_controller.launch`, then use RViz (you need to add what you want to display by yourself) and control the robot by `cmd_vel` and `move_base_simple/goal`:
 
 ![ezgif-5-684a1e1e23.gif](https://s2.loli.net/2022/07/27/lBzdeRa1gmvwx9C.gif)
 
