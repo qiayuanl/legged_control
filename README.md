@@ -1,6 +1,9 @@
 # legged_control
 ## Introduction
-`legged_control` is an NMPC-WBC legged robot control stack and framework based on [OCS2](https://github.com/leggedrobotics/ocs2) and [ros-control](http://wiki.ros.org/ros_control). To the author’s best knowledge, this framework is probably the best-performing open-source legged robot MPC control framework. Thanks to the ros-control interface, you can easily use this framework for your robot.
+legged_control is an NMPC-WBC legged robot control stack and framework based on [OCS2](https://github.com/leggedrobotics/ocs2) and [ros-control](http://wiki.ros.org/ros_control). To the author’s best knowledge, this framework is probably the best-performing open-source legged robot MPC control framework. Thanks to the ros-control interface, you can easily use this framework for your robot.
+
+https://user-images.githubusercontent.com/21256355/192135828-8fa7d9bb-9b4d-41f9-907a-68d34e6809d8.mp4
+
 
 ## Installation
 ### Source code
