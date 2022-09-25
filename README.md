@@ -115,14 +115,24 @@ The main module of the entire control framework is NMPC and WBC, and the followi
 The NMPC part solves the following optimization problems at each cycle through the formulation and solving interfaces provided by OCS2:
 
 $$
-\begin{split}     \begin{cases}     \underset{\mathbf u(.)}{\min} \ \ \phi(\mathbf x(t_I)) + \displaystyle \int_{t_0}^{t_I} l(\mathbf x(t), \mathbf u(t), t) \, dt \\     \text{s.t.} \ \ \mathbf x(t_0) = \mathbf x_0 \,\hspace{11.5em} \text{initial state} \\     \ \ \ \ \ \dot{\mathbf x}(t) = \mathbf f(\mathbf x(t), \mathbf u(t), t) \hspace{7.5em} \text{system flow map} \\     \ \ \ \ \ \mathbf g_1(\mathbf x(t), \mathbf u(t), t) = \mathbf{0} \hspace{8.5em} \text{state-input equality constraints} \\     \ \ \ \ \ \mathbf g_2(\mathbf x(t), t) = \mathbf{0}  \hspace{10.5em}  \text{state-only equality constraints}  \\     \ \ \ \ \ \mathbf h(\mathbf x(t), \mathbf u(t), t) \geq \mathbf{0} \hspace{8.5em}  \text{inequality constraints}     \end{cases}\end{split}
+\begin{split}
+    \begin{cases}
+    \underset{\mathbf u(.)}{\min} \ \ \phi(\mathbf x(t_I)) + \displaystyle \int_{t_0}^{t_I} l(\mathbf x(t), \mathbf u(t), t) \, dt \\
+    \text{s.t.} \ \ \mathbf x(t_0) = \mathbf x_0 \,\hspace{11.5em} \text{initial state} \\
+    \ \ \ \ \ \dot{\mathbf x}(t) = \mathbf f(\mathbf x(t), \mathbf u(t), t) \hspace{7.5em} \text{system flow map} \\
+    \ \ \ \ \ \mathbf g_1(\mathbf x(t), \mathbf u(t), t) = \mathbf{0} \hspace{8.5em} \text{state-input equality constraints} \\
+    \ \ \ \ \ \mathbf g_2(\mathbf x(t), t) = \mathbf{0}  \hspace{10.5em}  \text{state-only equality constraints}  \\
+    \ \ \ \ \ \mathbf h(\mathbf x(t), \mathbf u(t), t) \geq \mathbf{0} \hspace{8.5em}  \text{inequality constraints}
+    \end{cases}\end{split}
 $$
 
 For this framework, we defined system state $\mathbf{x}$ and input $\mathbf{u}$ as:
+
 $$
 \begin{equation}     \mathbf{x}= [\mathbf{h}_{com}^T, \mathbf{q}_b^T, \mathbf{q}_j^T]^T, \mathbf{u} = [\mathbf{f}_c^T, \mathbf{v}_j^T]^T \end{equation}
 $$
-where $\mathbf{h}_{com} \in \R^6$ is the collection of the normalized centroidal momentum, $\mathbf{q}=[\mathbf{q}_b^T, \mathbf{q}_j^T]^T$ is the generalized coordinate. $\mathbf{f}_c \in \R^{12}$ consists of contact forces at four contact points, i.e., four ground reaction forces of the foot. $\mathbf{q}_j$ and $\mathbf{v}_j$ are the joint positions and velocities.
+
+where $\mathbf{h}_{com} \in \mathbb{R}^6$ is the collection of the normalized centroidal momentum, $\mathbf{q}=[\mathbf{q}_b^T, \mathbf{q}_j^T]^T$ is the generalized coordinate. $\mathbf{f}_c \in \mathbb{R}^{12}$ consists of contact forces at four contact points, i.e., four ground reaction forces of the foot. $\mathbf{q}_j$ and $\mathbf{v}_j$ are the joint positions and velocities.
 While the cost function is simply the quadratic cost of tracking the error of all states and the input, the system dynamics uses centroidal dynamics with the following constraints:
 
 - Friction cone;
@@ -135,9 +145,11 @@ To solve this optimal control problem, a multiple shooting is formulated to tran
 ![](docs/tasks.png)
 
 WBC only considers the current moment. Several tasks are defined in the table above. Each task is the equality constraints or inequality constraints on decision variables. The decision variables of WBC are:
+
 $$
-\mathbf{x}_{wbc} = [\ddot{\mathbf{q}}^T, \mathbf{f}_{c_i}^T, \mathbf{\tau}^T]^T
+\mathbf{x}_{wbc} = [\ddot{\mathbf{q}}^T, \mathbf{f}_c^T, \mathbf{\tau}^T]^T
 $$
+
 where $\ddot{\mathbf{q}}$ is acceleration of generalized coordinate, $\mathbf{\tau}$ is the joint torque. The WBC solves the QP problem in the null space of the higher priority tasks' linear constraints and tries to minimize the slacking variables of inequality constraints. This approach can consider the full nonlinear rigid body dynamics and ensure strict hierarchy results. For more details [4].
 
 ## Deploy and Develop
