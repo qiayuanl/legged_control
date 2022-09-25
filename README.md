@@ -1,6 +1,13 @@
 # legged_control
 ## Introduction
-legged_control is an NMPC-WBC legged robot control stack and framework based on [OCS2](https://github.com/leggedrobotics/ocs2) and [ros-control](http://wiki.ros.org/ros_control). To the author’s best knowledge, this framework is probably the best-performing open-source legged robot MPC control framework. Thanks to the ros-control interface, you can easily use this framework for your robot.
+legged_control is an NMPC-WBC legged robot control stack and framework based on [OCS2](https://github.com/leggedrobotics/ocs2) and [ros-control](http://wiki.ros.org/ros_control). 
+
+The advantage shows below:
+1. To the author's best knowledge, this framework is probably the best-performing open-source legged robot MPC control framework;
+2. You can deploy this framework in your A1 robot within hours;
+3. Thanks to the ros-control interface, you can easily use this framework for your custom robot.
+
+I believe this framework can provide a high-performance and easy-to-use model-based baseline for the legged robot community.
 
 https://user-images.githubusercontent.com/21256355/192135828-8fa7d9bb-9b4d-41f9-907a-68d34e6809d8.mp4
 
@@ -47,7 +54,7 @@ Build the simulation (**DO NOT** run on the onboard computer)
 ```
 catkin build legged_gazebo
 ```
-Build the hardware interface real robot. If you use your computer only for simulation, you **DO NOT** need to compile `unitree_hw` (TODO: add legged prefix to the package name)
+Build the hardware interface real robot. If you use your computer only for simulation, you **DO NOT** need to compile `unitree_hw` (TODO: add a legged prefix to the package name)
 ```
 catkin build unitree_hw
 ```
@@ -89,9 +96,44 @@ rosrun rqt_controller_manager rqt_controller_manager
 
 ![ezgif-5-684a1e1e23.gif](https://s2.loli.net/2022/07/27/lBzdeRa1gmvwx9C.gif)
 
+
+## Framework
+The system framework diagram is shown below. 
+![](docs/system_diagram.png)
+
+- The robot torso's desired velocity or position goal is converted to state trajectory and then sent to the NMPC; 
+- The NMPC will evaluate an optimized system state and input. 
+- The Whole-body Controller (WBC) figures out the joint torques according to the optimized states and inputs from the NMPC.
+- The torque is set as a feed-forward term and is sent to the robot's motor controller.
+Low-gain joint-space position and velocity PD commands are sent to the robot's motors to reduce the shock during foot contact and for better tracking performance.
+- The NMPC and WBC need to know the current robot state, the base orientation, and the joint state, all obtained directly from the IMU and the motors. Running in the same loop with WBC, a linear Kalman filter estimates the base position and velocity from base orientation, base acceleration, and joint foot position measurements.
+
+## Module
+The main module of the entire control framework is NMPC and WBC, and the following is only a very brief introduction.
+
+### NMPC
+The NMPC part solves the following optimization problems at each cycle through the formulation and solving interfaces provided by OCS2:
+
+$$
+\begin{split}     \begin{cases}     \underset{\mathbf u(.)}{\min} \ \ \phi(\mathbf x(t_I)) + \displaystyle \int_{t_0}^{t_I} l(\mathbf x(t), \mathbf u(t), t) \, dt \\     \text{s.t.} \ \ \mathbf x(t_0) = \mathbf x_0 \,\hspace{11.5em} \text{initial state} \\     \ \ \ \ \ \dot{\mathbf x}(t) = \mathbf f(\mathbf x(t), \mathbf u(t), t) \hspace{7.5em} \text{system flow map} \\     \ \ \ \ \ \mathbf g_1(\mathbf x(t), \mathbf u(t), t) = \mathbf{0} \hspace{8.5em} \text{state-input equality constraints} \\     \ \ \ \ \ \mathbf g_2(\mathbf x(t), t) = \mathbf{0}  \hspace{10.5em}  \text{state-only equality constraints}  \\     \ \ \ \ \ \mathbf h(\mathbf x(t), \mathbf u(t), t) \geq \mathbf{0} \hspace{8.5em}  \text{inequality constraints}     \end{cases}\end{split}
+$$
+
+For this framework, we defined system state $\mathbf{x}$ and input $\mathbf{u}$ as:
+$$
+\begin{equation}     \mathbf{x}= [\mathbf{h}_{com}^T, \mathbf{q}_b^T, \mathbf{q}_j^T]^T, \mathbf{u} = [\mathbf{f}_c^T, \mathbf{v}_j^T]^T \end{equation}
+$$
+where $\mathbf{h}_{com} \in \R^6$ is the collection of the normalized centroidal momentum, $\mathbf{q}=[\mathbf{q}_b^T, \mathbf{q}_j^T]^T$ is the generalized coordinate. $\mathbf{f}_c \in \R^{12}$ consists of contact forces at four contact points, i.e., four ground reaction forces of the foot. $\mathbf{q}_j$ and $\mathbf{v}_j$ are the joint positions and velocities.
+While the cost function is simply the quadratic cost of tracking the error of all states and the input, the system dynamics uses centroidal dynamics with the following constraints:
+
+- Friction cone;
+- No motion at the standing foot;
+- The z-axis position of the swinging foot satisfies the gait-generated curve.
+
+To solve this optimal control problem, a multiple shooting is formulated to transcribe the optimal control problem to a nonlinear program (NLP) problem, and the NLP problem is solved using Sequential Quadratic Programming (SQP), and the QP subproblem is solved using HPIPM.
+
 ## Statistics
 
-The table below shows the labs successfully deploy this repo in their **real A1**, feel free to open a PR for update these infos.
+The table below shows the labs successfully deploying this repo in their **real A1**; feel free to open a PR to update this info.
 
 | Lab | XPeng Robotics | Unitree | Hybrid Robotics |
 | ---- | ---- | ---- | ---- |
