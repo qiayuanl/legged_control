@@ -99,6 +99,7 @@ rosrun rqt_controller_manager rqt_controller_manager
 
 ## Framework
 The system framework diagram is shown below. 
+
 ![](docs/system_diagram.png)
 
 - The robot torso's desired velocity or position goal is converted to state trajectory and then sent to the NMPC; 
