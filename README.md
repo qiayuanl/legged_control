@@ -47,7 +47,7 @@ OCS2 is a huge monorepo; **DO NOT** try to compile the whole repo. You only need
 ### Build
 Build the source code of `legged_control` by:
 ```
-catkin build legged_controllers
+catkin build legged_controllers unitree_description
 ```
 
 Build the simulation (**DO NOT** run on the onboard computer)
@@ -99,6 +99,7 @@ rosrun rqt_controller_manager rqt_controller_manager
 
 ## Framework
 The system framework diagram is shown below. 
+
 ![](docs/system_diagram.png)
 
 - The robot torso's desired velocity or position goal is converted to state trajectory and then sent to the NMPC; 
