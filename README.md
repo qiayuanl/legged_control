@@ -105,7 +105,7 @@ rosrun rqt_controller_manager rqt_controller_manager
 ![ezgif-5-684a1e1e23.gif](https://s2.loli.net/2022/07/27/lBzdeRa1gmvwx9C.gif)
 
 ### Note
--  **THE GAIT AND GOAL ARE COMPLETELY DIFFERENT AND SEPARATED!**  You don't need to type stance while the robot is lying on the ground **with four foot touching the ground**; it's completely wrong since the robot is already in the stance gait.
+-  **THE GAIT AND THE GOAL ARE COMPLETELY DIFFERENT AND SEPARATED!**  You don't need to type stance while the robot is lying on the ground **with four foot touching the ground**; it's completely wrong since the robot is already in the stance gait.
 -  The target_trajectories_publisher is for demonstration. You can combine the trajectory publisher and gait command into a very simple node to add gamepad and keyboard input for different gaits and torso heights and to start/stop controller (by ros service).
 
 ## Framework
