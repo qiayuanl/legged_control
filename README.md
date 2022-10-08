@@ -83,19 +83,30 @@ roslaunch unitree_hw unitree_hw.launch
 roslaunch legged_controllers load_controller.launch cheater:=false
 ```
 
-4. You can start the controller using `rqt_controller_manager`
+4. Start the `legged_controller` or `legged_cheater_controller`, **NOTE that you are not allowed to start the `legged_cheater_controller` in real hardware!**
+
+```
+rosservice call /controller_manager/switch_controller "start_controllers: ['controllers/legged_controller']                   
+stop_controllers: ['']
+strictness: 0
+start_asap: false
+timeout: 0.0" 
+```
+
+Or, you can start the controller using `rqt_controller_manager` GUI:
 
 ```
 sudo apt install ros-noetic-rqt-controller-manager
 rosrun rqt_controller_manager rqt_controller_manager
 ```
 
-5. Start the `legged_controller` or `legged_cheater_controller`, **NOTE that you are not allowed to start the `legged_cheater_controller` in real hardware!**
-
-6. Set the gait in the terminal of `load_controller.launch`, then use RViz (you need to add what you want to display by yourself) and control the robot by `cmd_vel` and `move_base_simple/goal`:
+5. Set the gait in the terminal of `load_controller.launch`, then use RViz (you need to add what you want to display by yourself) and control the robot by `cmd_vel` and `move_base_simple/goal`:
 
 ![ezgif-5-684a1e1e23.gif](https://s2.loli.net/2022/07/27/lBzdeRa1gmvwx9C.gif)
 
+### Note
+-  **THE GAIT AND GOAL ARE COMPLETELY DIFFERENT AND SEPARATED!**  You don't need to type stance while the robot is lying on the ground **with four foot touching the ground**; it's completely wrong since the robot is already in the stance gait.
+-  The target_trajectories_publisher is for demonstration. You can combine the trajectory publisher and gait command into a very simple node to add gamepad and keyboard input for different gaits and different stance heights and to start/stop controller (by ros service).
 
 ## Framework
 The system framework diagram is shown below. 
