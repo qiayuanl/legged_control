@@ -24,14 +24,14 @@ Wbc::Wbc(const std::string& task_file, LeggedInterface& legged_interface,
   num_decision_vars_ = info_.generalizedCoordinatesNum + 3 * info_.numThreeDofContacts + info_.actuatedDofNum;
   centroidal_dynamics_.setPinocchioInterface(pino_interface_);
   mapping_.setPinocchioInterface(pino_interface_);
-  measured_q_ = vector_t(info_.generalizedCoordinatesNum);
-  measured_v_ = vector_t(info_.generalizedCoordinatesNum);
+  q_measured_ = vector_t(info_.generalizedCoordinatesNum);
+  v_measured_ = vector_t(info_.generalizedCoordinatesNum);
   ee_kinematics_->setPinocchioInterface(pino_interface_);
 
   loadTasksSetting(task_file, verbose);
 }
 
-vector_t Wbc::update(const vector_t& state_desired, const vector_t& input_desired, vector_t& measured_rbd_state,
+vector_t Wbc::update(const vector_t& state_desired, const vector_t& input_desired, vector_t& rbd_state_measured,
                      size_t mode)
 {
   state_desired_ = state_desired;
@@ -43,26 +43,26 @@ vector_t Wbc::update(const vector_t& state_desired, const vector_t& input_desire
     if (flag)
       num_contacts_++;
 
-  measured_q_.head<3>() = measured_rbd_state.segment<3>(3);
-  measured_q_.segment<3>(3) = measured_rbd_state.head<3>();
-  measured_q_.tail(info_.actuatedDofNum) = measured_rbd_state.segment(6, info_.actuatedDofNum);
+  q_measured_.head<3>() = rbd_state_measured.segment<3>(3);
+  q_measured_.segment<3>(3) = rbd_state_measured.head<3>();
+  q_measured_.tail(info_.actuatedDofNum) = rbd_state_measured.segment(6, info_.actuatedDofNum);
 
-  measured_v_.head<3>() = measured_rbd_state.segment<3>(info_.generalizedCoordinatesNum + 3);
-  measured_v_.segment<3>(3) = getEulerAnglesZyxDerivativesFromGlobalAngularVelocity<scalar_t>(
-      measured_q_.segment<3>(3), measured_rbd_state.segment<3>(info_.generalizedCoordinatesNum));
-  measured_v_.tail(info_.actuatedDofNum) =
-      measured_rbd_state.segment(info_.generalizedCoordinatesNum + 6, info_.actuatedDofNum);
+  v_measured_.head<3>() = rbd_state_measured.segment<3>(info_.generalizedCoordinatesNum + 3);
+  v_measured_.segment<3>(3) = getEulerAnglesZyxDerivativesFromGlobalAngularVelocity<scalar_t>(
+      q_measured_.segment<3>(3), rbd_state_measured.segment<3>(info_.generalizedCoordinatesNum));
+  v_measured_.tail(info_.actuatedDofNum) =
+      rbd_state_measured.segment(info_.generalizedCoordinatesNum + 6, info_.actuatedDofNum);
 
   const auto& model = pino_interface_.getModel();
   auto& data = pino_interface_.getData();
 
   // For floating base EoM task
-  pinocchio::forwardKinematics(model, data, measured_q_, measured_v_);
+  pinocchio::forwardKinematics(model, data, q_measured_, v_measured_);
   pinocchio::computeJointJacobians(model, data);
   pinocchio::updateFramePlacements(model, data);
-  pinocchio::crba(model, data, measured_q_);
+  pinocchio::crba(model, data, q_measured_);
   data.M.triangularView<Eigen::StrictlyLower>() = data.M.transpose().triangularView<Eigen::StrictlyLower>();
-  pinocchio::nonLinearEffects(model, data, measured_q_, measured_v_);
+  pinocchio::nonLinearEffects(model, data, q_measured_, v_measured_);
   j_ = matrix_t(3 * info_.numThreeDofContacts, info_.generalizedCoordinatesNum);
   for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
   {
@@ -73,7 +73,7 @@ vector_t Wbc::update(const vector_t& state_desired, const vector_t& input_desire
   }
 
   // For not contact motion task
-  pinocchio::computeJointJacobiansTimeVariation(model, data, measured_q_, measured_v_);
+  pinocchio::computeJointJacobiansTimeVariation(model, data, q_measured_, v_measured_);
   dj_ = matrix_t(3 * info_.numThreeDofContacts, info_.generalizedCoordinatesNum);
   for (size_t i = 0; i < info_.numThreeDofContacts; ++i)
   {
@@ -85,7 +85,7 @@ vector_t Wbc::update(const vector_t& state_desired, const vector_t& input_desire
   }
 
   // For base acceleration task
-  updateCentroidalDynamics(pino_interface_, info_, measured_q_);
+  updateCentroidalDynamics(pino_interface_, info_, q_measured_);
 
   Task task_0 = formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateFrictionConeTask() +
                 formulateNoContactMotionTask();
@@ -138,7 +138,7 @@ Task Wbc::formulateNoContactMotionTask()
     if (contact_flag_[i])
     {
       a.block(3 * j, 0, 3, info_.generalizedCoordinatesNum) = j_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum);
-      b.segment(3 * j, 3) = -dj_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum) * measured_v_;
+      b.segment(3 * j, 3) = -dj_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum) * v_measured_;
       j++;
     }
 
@@ -184,7 +184,7 @@ Task Wbc::formulateBaseAccelTask()
   vector_t b = a_base_inv * momentum_rate;
 
   const vector3_t angular_velocity = getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(
-      measured_q_.segment<3>(3), measured_v_.segment<3>(3));
+      q_measured_.segment<3>(3), v_measured_.segment<3>(3));
   b.segment<3>(3) -= a_base_inv.block<3, 3>(3, 3) * angular_velocity.cross(a_base.block<3, 3>(3, 3) * angular_velocity);
 
   return Task(a, b, matrix_t(), vector_t());
@@ -213,7 +213,7 @@ Task Wbc::formulateSwingLegTask()
     {
       vector3_t accel = swing_kp_ * (pos_desired[i] - pos_measured[i]) + swing_kd_ * (vel_desired[i] - vel_measured[i]);
       a.block(3 * j, 0, 3, info_.generalizedCoordinatesNum) = j_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum);
-      b.segment(3 * j, 3) = accel - dj_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum) * measured_v_;
+      b.segment(3 * j, 3) = accel - dj_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum) * v_measured_;
       j++;
     }
 
