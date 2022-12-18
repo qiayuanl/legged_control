@@ -67,7 +67,6 @@ if (cmake_clang_tools_FOUND)
     )
 endif (cmake_clang_tools_FOUND)
 
-
 #############
 ## Install ##
 #############
