@@ -1,13 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(legged_gazebo)
 
-## Use C++14
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-## By adding -Wall and -Werror, the compiler does not ignore warnings anymore,
-## enforcing cleaner code.
-add_definitions(-Wall -Werror)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED
@@ -42,7 +36,7 @@ include_directories(
 
 ## Declare a cpp library
 add_library(legged_hw_sim
-        src/legged_hw_sim.cpp
+        src/LeggedHWSim.cpp
         )
 
 add_dependencies(legged_hw_sim
@@ -53,6 +47,20 @@ target_link_libraries(legged_hw_sim
         ${catkin_LIBRARIES}
         ${GAZEBO_LIBRARIES}
         )
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if (cmake_clang_tools_FOUND)
+    message(STATUS "Run clang tooling for target legged_hw_sim")
+    add_clang_tooling(
+            TARGETS legged_hw_sim
+            SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+            CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+            CF_WERROR
+    )
+endif (cmake_clang_tools_FOUND)
 
 #############
 ## Install ##

@@ -44,59 +44,53 @@
 #include <hardware_interface/imu_sensor_interface.h>
 #include <hardware_interface/joint_command_interface.h>
 
-#include <legged_common/hardware_interface/hybrid_joint_interface.h>
-#include <legged_common/hardware_interface/contact_sensor_interface.h>
+#include <legged_common/hardware_interface/ContactSensorInterface.h>
+#include <legged_common/hardware_interface/HybridJointInterface.h>
 
-namespace legged
-{
-struct HybridJointData
-{
+namespace legged {
+struct HybridJointData {
   hardware_interface::JointHandle joint_;
-  double pos_des_, vel_des_, kp_, kd_, ff_;
+  double posDes_{}, velDes_{}, kp_{}, kd_{}, ff_{};
 };
 
-struct HybridJointCommand
-{
+struct HybridJointCommand {
   ros::Time stamp_;
-  double pos_des_, vel_des_, kp_, kd_, ff_;
+  double posDes_{}, velDes_{}, kp_{}, kd_{}, ff_{};
 };
 
-struct ImuData
-{
-  gazebo::physics::LinkPtr link_prt;
-  double ori[4];
-  double ori_cov[9];
-  double angular_vel[3];
-  double angular_vel_cov[9];
-  double linear_acc[3];
-  double linear_acc_cov[9];
+struct ImuData {
+  gazebo::physics::LinkPtr linkPrt_;
+  double ori_[4];            // NOLINT(modernize-avoid-c-arrays)
+  double oriCov_[9];         // NOLINT(modernize-avoid-c-arrays)
+  double angularVel_[3];     // NOLINT(modernize-avoid-c-arrays)
+  double angularVelCov_[9];  // NOLINT(modernize-avoid-c-arrays)
+  double linearAcc_[3];      // NOLINT(modernize-avoid-c-arrays)
+  double linearAccCov_[9];   // NOLINT(modernize-avoid-c-arrays)
 };
 
-class QuadHWSim : public gazebo_ros_control::DefaultRobotHWSim
-{
-public:
+class LeggedHWSim : public gazebo_ros_control::DefaultRobotHWSim {
+ public:
   bool initSim(const std::string& robot_namespace, ros::NodeHandle model_nh, gazebo::physics::ModelPtr parent_model,
-               const urdf::Model* urdf_model,
-               std::vector<transmission_interface::TransmissionInfo> transmissions) override;
+               const urdf::Model* urdf_model, std::vector<transmission_interface::TransmissionInfo> transmissions) override;
   void readSim(ros::Time time, ros::Duration period) override;
   void writeSim(ros::Time time, ros::Duration period) override;
 
-private:
+ private:
   void parseImu(XmlRpc::XmlRpcValue& imu_datas, const gazebo::physics::ModelPtr& parent_model);
-  void parseContacts(XmlRpc::XmlRpcValue& contact_datas);
+  void parseContacts(XmlRpc::XmlRpcValue& contact_names);
 
-  HybridJointInterface hybrid_joint_interface_;
-  ContactSensorInterface contact_sensor_interface_;
-  hardware_interface::ImuSensorInterface imu_sensor_interface_;
+  HybridJointInterface hybridJointInterface_;
+  ContactSensorInterface contactSensorInterface_;
+  hardware_interface::ImuSensorInterface imuSensorInterface_;
 
-  gazebo::physics::ContactManager* contact_manager_;
+  gazebo::physics::ContactManager* contactManager_{};
 
-  std::list<HybridJointData> hybrid_joint_datas_;
-  std::list<ImuData> imu_datas_;
-  std::unordered_map<std::string, std::deque<HybridJointCommand> > cmd_buffer_;
+  std::list<HybridJointData> hybridJointDatas_;
+  std::list<ImuData> imuDatas_;
+  std::unordered_map<std::string, std::deque<HybridJointCommand> > cmdBuffer_;
   std::unordered_map<std::string, bool> name2contact_;
 
-  double delay_;
+  double delay_{};
 };
 
 }  // namespace legged

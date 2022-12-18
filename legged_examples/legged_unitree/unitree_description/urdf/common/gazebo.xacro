@@ -5,7 +5,7 @@
         <plugin name="gazebo_ros_control" filename="liblegged_hw_sim.so">
             <robotNamespace>/</robotNamespace>
             <robotParam>legged_robot_description</robotParam>
-            <robotSimType>legged_gazebo/QuadHWSim</robotSimType>
+            <robotSimType>legged_gazebo/LeggedHWSim</robotSimType>
         </plugin>
     </gazebo>
 
