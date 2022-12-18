@@ -1,13 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(unitree_hw)
 
-## Use C++14
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-## By adding -Wall and -Werror, the compiler does not ignore warnings anymore,
-## enforcing cleaner code.
-add_definitions(-Wall -Werror -Wno-inconsistent-missing-override)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(catkin REQUIRED
         COMPONENTS
@@ -39,7 +33,7 @@ set(EXTRA_LIBS libunitree_legged_sdk_amd64.so lcm)
 ## Declare cpp executables
 add_executable(${PROJECT_NAME}
         src/${PROJECT_NAME}.cpp
-        src/hardware_interface.cpp
+        src/UnitreeHW.cpp
         )
 
 ## Specify libraries to link executable targets against
@@ -47,6 +41,21 @@ target_link_libraries(${PROJECT_NAME}
         ${catkin_LIBRARIES}
         ${EXTRA_LIBS}
         )
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if (cmake_clang_tools_FOUND)
+    message(STATUS "Run clang tooling for target " ${PROJECT_NAME})
+    add_clang_tooling(
+            TARGETS ${PROJECT_NAME}
+            SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include/unitree_hw
+            CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/unitree_hw
+            CF_WERROR
+    )
+
+endif (cmake_clang_tools_FOUND)
 
 #############
 ## Install ##

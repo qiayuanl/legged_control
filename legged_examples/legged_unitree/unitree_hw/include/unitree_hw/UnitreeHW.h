@@ -5,34 +5,30 @@
 
 #pragma once
 
-#include "unitree_legged_sdk/udp.h"
 #include "unitree_legged_sdk/safety.h"
+#include "unitree_legged_sdk/udp.h"
 
-#include <legged_hw/hardware_interface.h>
+#include <legged_hw/LeggedHW.h>
 
-namespace legged
-{
-const std::vector<std::string> CONTACT_SENSOR_NAMES = { "RF_FOOT", "LF_FOOT", "RH_FOOT", "LH_FOOT" };
+namespace legged {
+const std::vector<std::string> CONTACT_SENSOR_NAMES = {"RF_FOOT", "LF_FOOT", "RH_FOOT", "LH_FOOT"};
 
-struct UnitreeMotorData
-{
-  double pos_, vel_, tau_;                   // state
-  double pos_des_, vel_des_, kp_, kd_, ff_;  // command
+struct UnitreeMotorData {
+  double pos_, vel_, tau_;                 // state
+  double posDes_, velDes_, kp_, kd_, ff_;  // command
 };
 
-struct UnitreeImuData
-{
-  double ori[4];
-  double ori_cov[9];
-  double angular_vel[3];
-  double angular_vel_cov[9];
-  double linear_acc[3];
-  double linear_acc_cov[9];
+struct UnitreeImuData {
+  double ori_[4];            // NOLINT(modernize-avoid-c-arrays)
+  double oriCov_[9];         // NOLINT(modernize-avoid-c-arrays)
+  double angularVel_[3];     // NOLINT(modernize-avoid-c-arrays)
+  double angularVelCov_[9];  // NOLINT(modernize-avoid-c-arrays)
+  double linearAcc_[3];      // NOLINT(modernize-avoid-c-arrays)
+  double linearAccCov_[9];   // NOLINT(modernize-avoid-c-arrays)
 };
 
-class UnitreeHW : public LeggedHW
-{
-public:
+class UnitreeHW : public LeggedHW {
+ public:
   UnitreeHW() = default;
   /** \brief Get necessary params from param server. Init hardware_interface.
    *
@@ -64,7 +60,7 @@ public:
    */
   void write(const ros::Time& time, const ros::Duration& period) override;
 
-private:
+ private:
   bool setupJoints();
 
   bool setupImu();
@@ -73,15 +69,15 @@ private:
 
   std::shared_ptr<UNITREE_LEGGED_SDK::UDP> udp_;
   std::shared_ptr<UNITREE_LEGGED_SDK::Safety> safety_;
-  UNITREE_LEGGED_SDK::LowState low_state_{};
-  UNITREE_LEGGED_SDK::LowCmd low_cmd_{};
+  UNITREE_LEGGED_SDK::LowState lowState_{};
+  UNITREE_LEGGED_SDK::LowCmd lowCmd_{};
 
-  UnitreeMotorData joint_data_[12]{};
-  UnitreeImuData imu_data_{};
-  bool contact_state_[4]{};
+  UnitreeMotorData jointData_[12]{};  // NOLINT(modernize-avoid-c-arrays)
+  UnitreeImuData imuData_{};
+  bool contactState_[4]{};  // NOLINT(modernize-avoid-c-arrays)
 
-  int power_limit_{};
-  int contact_threshold_{};
+  int powerLimit_{};
+  int contactThreshold_{};
 };
 
 }  // namespace legged
