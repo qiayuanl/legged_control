@@ -2,25 +2,23 @@
 // Created by qiayuan on 2022/7/24.
 //
 
-#include "legged_estimation/state_estimate_base.h"
+#include "legged_estimation/StateEstimateBase.h"
 
 #include <realtime_tools/realtime_buffer.h>
 
 #pragma once
-namespace legged
-{
+namespace legged {
 using namespace ocs2;
 
-class FromTopicStateEstimate : public StateEstimateBase
-{
-public:
+class FromTopicStateEstimate : public StateEstimateBase {
+ public:
   FromTopicStateEstimate(LeggedInterface& legged_interface, const std::vector<HybridJointHandle>& hybrid_joint_handles,
                          const std::vector<ContactSensorHandle>& contact_sensor_handles,
                          const hardware_interface::ImuSensorHandle& imu_sensor_handle);
 
   vector_t update(const ros::Time& time, const ros::Duration& period) override;
 
-private:
+ private:
   void callback(const nav_msgs::Odometry::ConstPtr& msg);
 
   ros::Subscriber sub_;
