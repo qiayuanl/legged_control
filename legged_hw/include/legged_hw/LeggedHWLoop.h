@@ -37,22 +37,21 @@
 
 #pragma once
 
-#include "legged_hw/hardware_interface.h"
+#include "legged_hw/LeggedHW.h"
 
 #include <chrono>
 #include <thread>
 
-#include <ros/ros.h>
 #include <controller_manager/controller_manager.h>
+#include <ros/ros.h>
 
-namespace legged
-{
-using namespace std::chrono;
-using clock = high_resolution_clock;
+namespace legged {
 
-class LeggedHWLoop
-{
-public:
+class LeggedHWLoop {  // NOLINT(cppcoreguidelines-special-member-functions)
+  using Clock = std::chrono::high_resolution_clock;
+  using Duration = std::chrono::duration<double>;
+
+ public:
   /** \brief Create controller manager. Load loop frequency. Start control loop which call @ref
    * legged::RmRobotHWLoop::update() in a frequency.
    *
@@ -72,19 +71,16 @@ public:
    */
   void update();
 
-private:
+ private:
   // Startup and shutdown of the internal node inside a roscpp program
   ros::NodeHandle nh_;
 
-  // Settings
-  double cycle_time_error_threshold_{};
-
   // Timing
-  std::thread loop_thread_;
-  std::atomic_bool loop_running_;
-  double loop_hz_{};
-  ros::Duration elapsed_time_;
-  clock::time_point last_time_;
+  double cycleTimeErrorThreshold_{}, loopHz_{};
+  std::thread loopThread_;
+  std::atomic_bool loopRunning_{};
+  ros::Duration elapsedTime_;
+  Clock::time_point lastTime_;
 
   /** ROS Controller Manager and Runner
 
@@ -92,9 +88,10 @@ private:
       stopping ros_control-based controllers. It also serializes execution of all
       running controllers in \ref update.
   **/
-  std::shared_ptr<controller_manager::ControllerManager> controller_manager_;
+  std::shared_ptr<controller_manager::ControllerManager> controllerManager_;
 
   // Abstract Hardware Interface for your robot
-  std::shared_ptr<LeggedHW> hardware_interface_;
+  std::shared_ptr<LeggedHW> hardwareInterface_;
 };
+
 }  // namespace legged

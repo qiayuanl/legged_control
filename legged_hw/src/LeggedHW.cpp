@@ -1,0 +1,33 @@
+
+//
+// Created by qiayuan on 1/24/22.
+//
+
+#include "legged_hw/LeggedHW.h"
+
+namespace legged {
+bool LeggedHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& /*robot_hw_nh*/) {
+  if (!loadUrdf(root_nh)) {
+    ROS_ERROR("Error occurred while setting up urdf");
+    return false;
+  }
+
+  registerInterface(&jointStateInterface_);
+  registerInterface(&hybridJointInterface_);
+  registerInterface(&imuSensorInterface_);
+  registerInterface(&contactSensorInterface_);
+
+  return true;
+}
+
+bool LeggedHW::loadUrdf(ros::NodeHandle& root_nh) {
+  std::string urdf_string;
+  if (urdfModel_ == nullptr) {
+    urdfModel_ = std::make_shared<urdf::Model>();
+  }
+  // get the urdf param on param server
+  root_nh.getParam("legged_robot_description", urdf_string);
+  return !urdf_string.empty() && urdfModel_->initString(urdf_string);
+}
+
+}  // namespace legged

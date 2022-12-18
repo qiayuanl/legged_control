@@ -1,13 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(legged_common)
 
-## Use C++14
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-## By adding -Wall and -Werror, the compiler does not ignore warnings anymore,
-## enforcing cleaner code.
-add_definitions(-Wall -Werror -Wno-enum-compare)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(catkin REQUIRED
         COMPONENTS
@@ -30,11 +24,23 @@ include_directories(
         ${catkin_INCLUDE_DIRS}
 )
 
-file(GLOB_RECURSE sources "src/*.cpp")
-
 add_library(${PROJECT_NAME} INTERFACE)
 
 target_include_directories(${PROJECT_NAME} INTERFACE include)
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if (cmake_clang_tools_FOUND)
+    message(STATUS "Run clang tooling for target " ${PROJECT_NAME})
+    add_clang_tooling(
+            TARGETS ${PROJECT_NAME}
+            SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+            CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+            CF_WERROR
+    )
+endif (cmake_clang_tools_FOUND)
 
 #############
 ## Install ##

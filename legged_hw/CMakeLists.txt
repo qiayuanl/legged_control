@@ -1,13 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(legged_hw)
 
-## Use C++14
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-## By adding -Wall and -Werror, the compiler does not ignore warnings anymore,
-## enforcing cleaner code.
-add_definitions(-Wall -Werror -Wno-inconsistent-missing-override)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(catkin REQUIRED
         COMPONENTS
@@ -39,13 +33,27 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-        src/hardware_interface.cpp
-        src/control_loop.cpp
+        src/LeggedHW.cpp
+        src/LeggedHWLoop.cpp
         )
 
 target_link_libraries(${PROJECT_NAME}
         ${catkin_LIBRARIES}
         )
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if (cmake_clang_tools_FOUND)
+    message(STATUS "Run clang tooling for target " ${PROJECT_NAME})
+    add_clang_tooling(
+            TARGETS ${PROJECT_NAME}
+            SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+            CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+            CF_WERROR CT_FIX
+    )
+endif (cmake_clang_tools_FOUND)
 
 #############
 ## Install ##
