@@ -49,10 +49,10 @@ class LeggedHW : public hardware_interface::RobotHW {
    *
    * Load urdf of robot from param server.
    *
-   * @param root_nh Root node-handle of a ROS node
+   * @param rootNh Root node-handle of a ROS node
    * @return True if successful.
    */
-  bool loadUrdf(ros::NodeHandle& root_nh);
+  bool loadUrdf(ros::NodeHandle& rootNh);
 };
 
 }  // namespace legged

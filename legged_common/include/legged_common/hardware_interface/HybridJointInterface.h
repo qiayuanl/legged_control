@@ -10,13 +10,13 @@ class HybridJointHandle : public hardware_interface::JointStateHandle {
  public:
   HybridJointHandle() = default;
 
-  HybridJointHandle(const JointStateHandle& js, double* pos_des, double* vel_des, double* kp, double* kd, double* ff)
-      : JointStateHandle(js), pos_des_(pos_des), vel_des_(vel_des), kp_(kp), kd_(kd), ff_(ff) {
-    if (pos_des_ == nullptr) {
+  HybridJointHandle(const JointStateHandle& js, double* posDes, double* velDes, double* kp, double* kd, double* ff)
+      : JointStateHandle(js), posDes_(posDes), velDes_(velDes), kp_(kp), kd_(kd), ff_(ff) {
+    if (posDes_ == nullptr) {
       throw hardware_interface::HardwareInterfaceException("Cannot create handle '" + js.getName() +
                                                            "'. Position desired data pointer is null.");
     }
-    if (vel_des_ == nullptr) {
+    if (velDes_ == nullptr) {
       throw hardware_interface::HardwareInterfaceException("Cannot create handle '" + js.getName() +
                                                            "'. Velocity desired data pointer is null.");
     }
@@ -32,12 +32,12 @@ class HybridJointHandle : public hardware_interface::JointStateHandle {
     }
   }
   void setPositionDesired(double cmd) {
-    assert(pos_des_);
-    *pos_des_ = cmd;
+    assert(posDes_);
+    *posDes_ = cmd;
   }
   void setVelocityDesired(double cmd) {
-    assert(vel_des_);
-    *vel_des_ = cmd;
+    assert(velDes_);
+    *velDes_ = cmd;
   }
   void setKp(double cmd) {
     assert(kp_);
@@ -59,12 +59,12 @@ class HybridJointHandle : public hardware_interface::JointStateHandle {
     setFeedforward(ff);
   }
   double getPositionDesired() {
-    assert(pos_des_);
-    return *pos_des_;
+    assert(posDes_);
+    return *posDes_;
   }
   double getVelocityDesired() {
-    assert(vel_des_);
-    return *vel_des_;
+    assert(velDes_);
+    return *velDes_;
   }
   double getKp() {
     assert(kp_);
@@ -80,8 +80,8 @@ class HybridJointHandle : public hardware_interface::JointStateHandle {
   }
 
  private:
-  double* pos_des_ = {nullptr};
-  double* vel_des_ = {nullptr};
+  double* posDes_ = {nullptr};
+  double* velDes_ = {nullptr};
   double* kp_ = {nullptr};
   double* kd_ = {nullptr};
   double* ff_ = {nullptr};

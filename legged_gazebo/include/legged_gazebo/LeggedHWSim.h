@@ -76,8 +76,8 @@ class LeggedHWSim : public gazebo_ros_control::DefaultRobotHWSim {
   void writeSim(ros::Time time, ros::Duration period) override;
 
  private:
-  void parseImu(XmlRpc::XmlRpcValue& imu_datas, const gazebo::physics::ModelPtr& parent_model);
-  void parseContacts(XmlRpc::XmlRpcValue& contact_names);
+  void parseImu(XmlRpc::XmlRpcValue& imuDatas, const gazebo::physics::ModelPtr& parentModel);
+  void parseContacts(XmlRpc::XmlRpcValue& contactNames);
 
   HybridJointInterface hybridJointInterface_;
   ContactSensorInterface contactSensorInterface_;

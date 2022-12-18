@@ -20,14 +20,14 @@ bool LeggedHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& /*robot_hw_nh*/) 
   return true;
 }
 
-bool LeggedHW::loadUrdf(ros::NodeHandle& root_nh) {
-  std::string urdf_string;
+bool LeggedHW::loadUrdf(ros::NodeHandle& rootNh) {
+  std::string urdfString;
   if (urdfModel_ == nullptr) {
     urdfModel_ = std::make_shared<urdf::Model>();
   }
   // get the urdf param on param server
-  root_nh.getParam("legged_robot_description", urdf_string);
-  return !urdf_string.empty() && urdfModel_->initString(urdf_string);
+  rootNh.getParam("legged_robot_description", urdfString);
+  return !urdfString.empty() && urdfModel_->initString(urdfString);
 }
 
 }  // namespace legged

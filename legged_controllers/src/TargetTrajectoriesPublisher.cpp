@@ -64,10 +64,10 @@ TargetTrajectories goalToTargetTrajectories(const vector_t& goal, const SystemOb
   return targetPoseToTargetTrajectories(targetPose, observation, targetReachingTime);
 }
 
-TargetTrajectories cmdVelToTargetTrajectories(const vector_t& cmd_vel, const SystemObservation& observation) {
+TargetTrajectories cmdVelToTargetTrajectories(const vector_t& cmdVel, const SystemObservation& observation) {
   const vector_t currentPose = observation.state.segment<6>(6);
   const Eigen::Matrix<scalar_t, 3, 1> zyx = currentPose.tail(3);
-  vector_t cmdVelRot = getRotationMatrixFromZyxEulerAngles(zyx) * cmd_vel.head(3);
+  vector_t cmdVelRot = getRotationMatrixFromZyxEulerAngles(zyx) * cmdVel.head(3);
 
   const scalar_t timeToTarget = TIME_TO_TARGET;
   const vector_t targetPose = [&]() {
@@ -75,7 +75,7 @@ TargetTrajectories cmdVelToTargetTrajectories(const vector_t& cmd_vel, const Sys
     target(0) = currentPose(0) + cmdVelRot(0) * timeToTarget;
     target(1) = currentPose(1) + cmdVelRot(1) * timeToTarget;
     target(2) = COM_HEIGHT;
-    target(3) = currentPose(3) + cmd_vel(3) * timeToTarget;
+    target(3) = currentPose(3) + cmdVel(3) * timeToTarget;
     target(4) = 0;
     target(5) = 0;
     return target;

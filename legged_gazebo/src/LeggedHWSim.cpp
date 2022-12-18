@@ -53,19 +53,19 @@ bool LeggedHWSim::initSim(const std::string& robot_namespace, ros::NodeHandle mo
   }
   // IMU interface
   registerInterface(&imuSensorInterface_);
-  XmlRpc::XmlRpcValue xml_rpc_value;
-  if (!model_nh.getParam("gazebo/imus", xml_rpc_value)) {
+  XmlRpc::XmlRpcValue xmlRpcValue;
+  if (!model_nh.getParam("gazebo/imus", xmlRpcValue)) {
     ROS_WARN("No imu specified");
   } else {
-    parseImu(xml_rpc_value, parent_model);
+    parseImu(xmlRpcValue, parent_model);
   }
   if (!model_nh.getParam("gazebo/delay", delay_)) {
     delay_ = 0.;
   }
-  if (!model_nh.getParam("gazebo/contacts", xml_rpc_value)) {
+  if (!model_nh.getParam("gazebo/contacts", xmlRpcValue)) {
     ROS_WARN("No contacts specified");
   } else {
-    parseContacts(xml_rpc_value);
+    parseContacts(xmlRpcValue);
   }
 
   contactManager_ = parent_model->GetWorld()->Physics()->GetContactManager();
@@ -104,13 +104,13 @@ void LeggedHWSim::readSim(ros::Time time, ros::Duration period) {
     if (static_cast<uint32_t>(contact->time.sec) != time.sec || static_cast<uint32_t>(contact->time.nsec) != (time - period).nsec) {
       continue;
     }
-    std::string link_name = contact->collision1->GetLink()->GetName();
-    if (name2contact_.find(link_name) != name2contact_.end()) {
-      name2contact_[link_name] = true;
+    std::string linkName = contact->collision1->GetLink()->GetName();
+    if (name2contact_.find(linkName) != name2contact_.end()) {
+      name2contact_[linkName] = true;
     }
-    link_name = contact->collision2->GetLink()->GetName();
-    if (name2contact_.find(link_name) != name2contact_.end()) {
-      name2contact_[link_name] = true;
+    linkName = contact->collision2->GetLink()->GetName();
+    if (name2contact_.find(linkName) != name2contact_.end()) {
+      name2contact_[linkName] = true;
     }
   }
 
@@ -143,9 +143,9 @@ void LeggedHWSim::writeSim(ros::Time time, ros::Duration period) {
   DefaultRobotHWSim::writeSim(time, period);
 }
 
-void LeggedHWSim::parseImu(XmlRpc::XmlRpcValue& imu_datas, const gazebo::physics::ModelPtr& parent_model) {
-  ROS_ASSERT(imu_datas.getType() == XmlRpc::XmlRpcValue::TypeStruct);
-  for (auto it = imu_datas.begin(); it != imu_datas.end(); ++it) {
+void LeggedHWSim::parseImu(XmlRpc::XmlRpcValue& imuDatas, const gazebo::physics::ModelPtr& parentModel) {
+  ROS_ASSERT(imuDatas.getType() == XmlRpc::XmlRpcValue::TypeStruct);
+  for (auto it = imuDatas.begin(); it != imuDatas.end(); ++it) {
     if (!it->second.hasMember("frame_id")) {
       ROS_ERROR_STREAM("Imu " << it->first << " has no associated frame id.");
       continue;
@@ -159,49 +159,49 @@ void LeggedHWSim::parseImu(XmlRpc::XmlRpcValue& imu_datas, const gazebo::physics
       ROS_ERROR_STREAM("Imu " << it->first << " has no associated linear acceleration covariance.");
       continue;
     }
-    XmlRpc::XmlRpcValue ori_cov = imu_datas[it->first]["orientation_covariance_diagonal"];
-    ROS_ASSERT(ori_cov.getType() == XmlRpc::XmlRpcValue::TypeArray);
-    ROS_ASSERT(ori_cov.size() == 3);
-    for (int i = 0; i < ori_cov.size(); ++i) {
-      ROS_ASSERT(ori_cov[i].getType() == XmlRpc::XmlRpcValue::TypeDouble);
+    XmlRpc::XmlRpcValue oriCov = imuDatas[it->first]["orientation_covariance_diagonal"];
+    ROS_ASSERT(oriCov.getType() == XmlRpc::XmlRpcValue::TypeArray);
+    ROS_ASSERT(oriCov.size() == 3);
+    for (int i = 0; i < oriCov.size(); ++i) {
+      ROS_ASSERT(oriCov[i].getType() == XmlRpc::XmlRpcValue::TypeDouble);
     }
-    XmlRpc::XmlRpcValue angular_cov = imu_datas[it->first]["angular_velocity_covariance"];
-    ROS_ASSERT(angular_cov.getType() == XmlRpc::XmlRpcValue::TypeArray);
-    ROS_ASSERT(angular_cov.size() == 3);
-    for (int i = 0; i < angular_cov.size(); ++i) {
-      ROS_ASSERT(angular_cov[i].getType() == XmlRpc::XmlRpcValue::TypeDouble);
+    XmlRpc::XmlRpcValue angularCov = imuDatas[it->first]["angular_velocity_covariance"];
+    ROS_ASSERT(angularCov.getType() == XmlRpc::XmlRpcValue::TypeArray);
+    ROS_ASSERT(angularCov.size() == 3);
+    for (int i = 0; i < angularCov.size(); ++i) {
+      ROS_ASSERT(angularCov[i].getType() == XmlRpc::XmlRpcValue::TypeDouble);
     }
-    XmlRpc::XmlRpcValue linear_cov = imu_datas[it->first]["linear_acceleration_covariance"];
-    ROS_ASSERT(linear_cov.getType() == XmlRpc::XmlRpcValue::TypeArray);
-    ROS_ASSERT(linear_cov.size() == 3);
-    for (int i = 0; i < linear_cov.size(); ++i) {
-      ROS_ASSERT(linear_cov[i].getType() == XmlRpc::XmlRpcValue::TypeDouble);
+    XmlRpc::XmlRpcValue linearCov = imuDatas[it->first]["linear_acceleration_covariance"];
+    ROS_ASSERT(linearCov.getType() == XmlRpc::XmlRpcValue::TypeArray);
+    ROS_ASSERT(linearCov.size() == 3);
+    for (int i = 0; i < linearCov.size(); ++i) {
+      ROS_ASSERT(linearCov[i].getType() == XmlRpc::XmlRpcValue::TypeDouble);
     }
 
-    std::string frame_id = imu_datas[it->first]["frame_id"];
-    gazebo::physics::LinkPtr link_ptr = parent_model->GetLink(frame_id);
-    ROS_ASSERT(link_ptr != nullptr);
-    imuDatas_.push_back((ImuData{.linkPrt_ = link_ptr,
-                                 .ori_ = {0., 0., 0., 0.},
-                                 .oriCov_ = {static_cast<double>(ori_cov[0]), 0., 0., 0., static_cast<double>(ori_cov[1]), 0., 0., 0.,
-                                             static_cast<double>(ori_cov[2])},
-                                 .angularVel_ = {0., 0., 0.},
-                                 .angularVelCov_ = {static_cast<double>(angular_cov[0]), 0., 0., 0., static_cast<double>(angular_cov[1]),
-                                                    0., 0., 0., static_cast<double>(angular_cov[2])},
-                                 .linearAcc_ = {0., 0., 0.},
-                                 .linearAccCov_ = {static_cast<double>(linear_cov[0]), 0., 0., 0., static_cast<double>(linear_cov[1]), 0.,
-                                                   0., 0., static_cast<double>(linear_cov[2])}}));
-    ImuData& imu_data = imuDatas_.back();
-    imuSensorInterface_.registerHandle(hardware_interface::ImuSensorHandle(it->first, frame_id, imu_data.ori_, imu_data.oriCov_,
-                                                                           imu_data.angularVel_, imu_data.angularVelCov_,
-                                                                           imu_data.linearAcc_, imu_data.linearAccCov_));
+    std::string frameId = imuDatas[it->first]["frame_id"];
+    gazebo::physics::LinkPtr linkPtr = parentModel->GetLink(frameId);
+    ROS_ASSERT(linkPtr != nullptr);
+    imuDatas_.push_back((ImuData{
+        .linkPrt_ = linkPtr,
+        .ori_ = {0., 0., 0., 0.},
+        .oriCov_ = {static_cast<double>(oriCov[0]), 0., 0., 0., static_cast<double>(oriCov[1]), 0., 0., 0., static_cast<double>(oriCov[2])},
+        .angularVel_ = {0., 0., 0.},
+        .angularVelCov_ = {static_cast<double>(angularCov[0]), 0., 0., 0., static_cast<double>(angularCov[1]), 0., 0., 0.,
+                           static_cast<double>(angularCov[2])},
+        .linearAcc_ = {0., 0., 0.},
+        .linearAccCov_ = {static_cast<double>(linearCov[0]), 0., 0., 0., static_cast<double>(linearCov[1]), 0., 0., 0.,
+                          static_cast<double>(linearCov[2])}}));
+    ImuData& imuData = imuDatas_.back();
+    imuSensorInterface_.registerHandle(hardware_interface::ImuSensorHandle(it->first, frameId, imuData.ori_, imuData.oriCov_,
+                                                                           imuData.angularVel_, imuData.angularVelCov_, imuData.linearAcc_,
+                                                                           imuData.linearAccCov_));
   }
 }
 
-void LeggedHWSim::parseContacts(XmlRpc::XmlRpcValue& contact_names) {
-  ROS_ASSERT(contact_names.getType() == XmlRpc::XmlRpcValue::TypeArray);
-  for (int i = 0; i < contact_names.size(); ++i) {  // NOLINT(modernize-loop-convert)
-    std::string name = contact_names[i];
+void LeggedHWSim::parseContacts(XmlRpc::XmlRpcValue& contactNames) {
+  ROS_ASSERT(contactNames.getType() == XmlRpc::XmlRpcValue::TypeArray);
+  for (int i = 0; i < contactNames.size(); ++i) {  // NOLINT(modernize-loop-convert)
+    std::string name = contactNames[i];
     name2contact_.insert(std::make_pair(name, false));
     contactSensorInterface_.registerHandle(ContactSensorHandle(name, &name2contact_[name]));
   }

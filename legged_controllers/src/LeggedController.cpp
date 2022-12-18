@@ -56,13 +56,13 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
   }
 
   auto* contactInterface = robot_hw->get<ContactSensorInterface>();
-  std::vector<ContactSensorHandle> contact_handles;
+  std::vector<ContactSensorHandle> contactHandles;
   for (const auto& name : leggedInterface_->modelSettings().contactNames3DoF) {
-    contact_handles.push_back(contactInterface->getHandle(name));
+    contactHandles.push_back(contactInterface->getHandle(name));
   }
 
   // State estimation
-  setupStateEstimate(*leggedInterface_, hybridJointHandles_, contact_handles,
+  setupStateEstimate(*leggedInterface_, hybridJointHandles_, contactHandles,
                      robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu"));
 
   // Whole body control

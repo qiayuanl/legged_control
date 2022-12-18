@@ -41,7 +41,7 @@
 int main(int argc, char** argv) {
   ros::init(argc, argv, "unitree_hw");
   ros::NodeHandle nh;
-  ros::NodeHandle robot_hw_nh("~");
+  ros::NodeHandle robotHwNh("~");
 
   // Run the hardware interface node
   // -------------------------------
@@ -54,14 +54,14 @@ int main(int argc, char** argv) {
 
   try {
     // Create the hardware interface specific to your robot
-    std::shared_ptr<legged::UnitreeHW> unitree_hw = std::make_shared<legged::UnitreeHW>();
+    std::shared_ptr<legged::UnitreeHW> unitreeHw = std::make_shared<legged::UnitreeHW>();
     // Initialise the hardware interface:
     // 1. retrieve configuration from rosparam
     // 2. initialize the hardware and interface it with ros_control
-    unitree_hw->init(nh, robot_hw_nh);
+    unitreeHw->init(nh, robotHwNh);
 
     // Start the control loop
-    legged::LeggedHWLoop control_loop(nh, unitree_hw);
+    legged::LeggedHWLoop controlLoop(nh, unitreeHw);
 
     // Wait until shutdown signal received
     ros::waitForShutdown();
