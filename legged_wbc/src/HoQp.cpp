@@ -1,0 +1,167 @@
+//
+// Created by qiayuan on 2022/6/28.
+//
+// Ref: https://github.com/bernhardpg/quadruped_locomotion
+//
+
+#include "legged_wbc/HoQp.h"
+
+#include <iostream>
+#include <qpOASES.hpp>
+#include <utility>
+
+namespace legged {
+
+HoQp::HoQp(Task task, HoQp::HoQpPtr higher_problem) : task_(std::move(task)), higherProblem_(std::move(higher_problem)) {
+  initVars();
+  formulateProblem();
+  solveProblem();
+  // For next problem
+  buildZMatrix();
+  stackSlackSolutions();
+}
+
+void HoQp::initVars() {
+  // Task variables
+  numSlackVars_ = task_.d_.rows();
+  hasEqConstraints_ = task_.a_.rows() > 0;
+  hasIneqConstraints_ = numSlackVars_ > 0;
+
+  // Pre-Task variables
+  if (higherProblem_ != nullptr) {
+    stackedZPrev_ = higherProblem_->getStackedZMatrix();
+    stackedTasksPrev_ = higherProblem_->getStackedTasks();
+    stackedSlackSolutionsPrev_ = higherProblem_->getStackedSlackSolutions();
+    xPrev_ = higherProblem_->getSolutions();
+    numPrevSlackVars_ = higherProblem_->getSlackedNumVars();
+
+    numDecisionVars_ = stackedZPrev_.cols();
+  } else {
+    numDecisionVars_ = std::max(task_.a_.cols(), task_.d_.cols());
+
+    stackedTasksPrev_ = Task(numDecisionVars_);
+    stackedZPrev_ = matrix_t::Identity(numDecisionVars_, numDecisionVars_);
+    stackedSlackSolutionsPrev_ = Eigen::VectorXd::Zero(0);
+    xPrev_ = Eigen::VectorXd::Zero(numDecisionVars_);
+    numPrevSlackVars_ = 0;
+  }
+
+  stackedTasks_ = task_ + stackedTasksPrev_;
+
+  // Init convenience matrices
+  eyeNvNv_ = matrix_t::Identity(numSlackVars_, numSlackVars_);
+  zeroNvNx_ = matrix_t::Zero(numSlackVars_, numDecisionVars_);
+}
+
+void HoQp::formulateProblem() {
+  buildHMatrix();
+  buildCVector();
+  buildDMatrix();
+  buildFVector();
+}
+
+void HoQp::buildHMatrix() {
+  matrix_t h = matrix_t::Zero(numDecisionVars_ + numSlackVars_, numDecisionVars_ + numSlackVars_);
+
+  matrix_t z_t_a_t_a_z(numDecisionVars_, numDecisionVars_);
+
+  if (hasEqConstraints_) {
+    // Make sure that all eigenvalues of A_t_A are non-negative, which could arise due to numerical issues
+    matrix_t a_curr_z_prev = task_.a_ * stackedZPrev_;
+    z_t_a_t_a_z = a_curr_z_prev.transpose() * a_curr_z_prev + 1e-12 * matrix_t::Identity(numDecisionVars_, numDecisionVars_);
+    // This way of splitting up the multiplication is about twice as fast as multiplying 4 matrices
+  } else {
+    z_t_a_t_a_z.setZero();
+  }
+
+  h << z_t_a_t_a_z, zeroNvNx_.transpose(), zeroNvNx_, eyeNvNv_;
+  h_ = h;
+}
+
+void HoQp::buildCVector() {
+  vector_t c = vector_t::Zero(numDecisionVars_ + numSlackVars_);
+  vector_t zero_vec = vector_t::Zero(numSlackVars_);
+
+  vector_t temp(numDecisionVars_);
+  if (hasEqConstraints_) {
+    temp = (task_.a_ * stackedZPrev_).transpose() * (task_.a_ * xPrev_ - task_.b_);
+  } else {
+    temp.setZero();
+  }
+
+  c << temp, zero_vec;
+  c_ = c;
+}
+
+void HoQp::buildDMatrix() {
+  matrix_t d(2 * numSlackVars_ + numPrevSlackVars_, numDecisionVars_ + numSlackVars_);
+  d.setZero();
+
+  matrix_t stacked_zero = matrix_t::Zero(numPrevSlackVars_, numSlackVars_);
+
+  matrix_t d_curr_z;
+  if (hasIneqConstraints_) {
+    d_curr_z = task_.d_ * stackedZPrev_;
+  } else {
+    d_curr_z = matrix_t::Zero(0, numDecisionVars_);
+  }
+
+  // NOTE: This is upside down compared to the paper,
+  // but more consistent with the rest of the algorithm
+  d << zeroNvNx_, -eyeNvNv_, stackedTasksPrev_.d_ * stackedZPrev_, stacked_zero, d_curr_z, -eyeNvNv_;
+
+  d_ = d;
+}
+
+void HoQp::buildFVector() {
+  vector_t f = vector_t::Zero(2 * numSlackVars_ + numPrevSlackVars_);
+
+  vector_t zero_vec = vector_t::Zero(numSlackVars_);
+
+  vector_t f_minus_d_x_prev;
+  if (hasIneqConstraints_) {
+    f_minus_d_x_prev = task_.f_ - task_.d_ * xPrev_;
+  } else {
+    f_minus_d_x_prev = vector_t::Zero(0);
+  }
+
+  f << zero_vec, stackedTasksPrev_.f_ - stackedTasksPrev_.d_ * xPrev_ + stackedSlackSolutionsPrev_, f_minus_d_x_prev;
+
+  f_ = f;
+}
+
+void HoQp::buildZMatrix() {
+  if (hasEqConstraints_) {
+    assert((task_.a_.cols() > 0));
+    stackedZ_ = stackedZPrev_ * (task_.a_ * stackedZPrev_).fullPivLu().kernel();
+  } else {
+    stackedZ_ = stackedZPrev_;
+  }
+}
+
+void HoQp::solveProblem() {
+  auto qp_problem = qpOASES::QProblem(numDecisionVars_ + numSlackVars_, f_.size());
+  qpOASES::Options options;
+  options.setToMPC();
+  options.printLevel = qpOASES::PL_LOW;
+  qp_problem.setOptions(options);
+  int n_wsr = 20;
+
+  qp_problem.init(h_.data(), c_.data(), d_.data(), nullptr, nullptr, nullptr, f_.data(), n_wsr);
+  vector_t qp_sol(numDecisionVars_ + numSlackVars_);
+
+  qp_problem.getPrimalSolution(qp_sol.data());
+
+  decisionVarsSolutions_ = qp_sol.head(numDecisionVars_);
+  slackVarsSolutions_ = qp_sol.tail(numSlackVars_);
+}
+
+void HoQp::stackSlackSolutions() {
+  if (higherProblem_ != nullptr) {
+    stackedSlackVars_ = Task::concatenateVectors(higherProblem_->getStackedSlackSolutions(), slackVarsSolutions_);
+  } else {
+    stackedSlackVars_ = slackVarsSolutions_;
+  }
+}
+
+}  // namespace legged

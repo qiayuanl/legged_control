@@ -29,7 +29,10 @@ class LeggedInterface : public RobotInterface {
 
   ~LeggedInterface() override = default;
 
+  virtual void setupOptimalControlProblem(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
+                                          bool verbose);
   const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
+
   const ModelSettings& modelSettings() const { return modelSettings_; }
   const mpc::Settings& mpcSettings() const { return mpcSettings_; }
   const ddp::Settings& ddpSettings() const { return ddpSettings_; }
@@ -43,8 +46,6 @@ class LeggedInterface : public RobotInterface {
   std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return referenceManagerPtr_; }
 
  protected:
-  virtual void setupOptimalControlProblem(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
-                                          bool verbose);
   virtual void setupModel(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile, bool verbose);
 
   std::shared_ptr<GaitSchedule> loadGaitSchedule(const std::string& file, bool verbose) const;

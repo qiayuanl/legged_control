@@ -3,7 +3,7 @@
 //
 #include <gtest/gtest.h>
 
-#include "legged_wbc/ho_qp.h"
+#include "legged_wbc/HoQp.h"
 
 using namespace legged;
 
