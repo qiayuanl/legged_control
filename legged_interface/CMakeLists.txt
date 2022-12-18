@@ -1,14 +1,17 @@
 cmake_minimum_required(VERSION 3.10)
 project(legged_interface)
 
-## Use C++14
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(catkin REQUIRED
         COMPONENTS
         roscpp
         ocs2_legged_robot
+        )
+
+find_package(Boost REQUIRED COMPONENTS
+        system
+        filesystem
         )
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -44,7 +47,7 @@ link_directories(
 )
 
 add_library(${PROJECT_NAME}
-        src/legged_interface.cpp
+        src/LeggedInterface.cpp
         )
 
 target_link_libraries(${PROJECT_NAME}
@@ -53,6 +56,20 @@ target_link_libraries(${PROJECT_NAME}
         )
 
 target_compile_options(${PROJECT_NAME} PUBLIC ${OCS2_CXX_FLAGS})
+
+#########################
+###   CLANG TOOLING   ###
+#########################
+find_package(cmake_clang_tools QUIET)
+if (cmake_clang_tools_FOUND)
+    message(STATUS "Run clang tooling for target " ${PROJECT_NAME})
+    add_clang_tooling(
+            TARGETS ${PROJECT_NAME}
+            SOURCE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include
+            CT_HEADER_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+            CF_WERROR
+    )
+endif (cmake_clang_tools_FOUND)
 
 #############
 ## Install ##
