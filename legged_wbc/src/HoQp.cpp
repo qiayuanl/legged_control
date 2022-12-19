@@ -61,8 +61,6 @@ void HoQp::formulateProblem() {
 }
 
 void HoQp::buildHMatrix() {
-  matrix_t h = matrix_t::Zero(numDecisionVars_ + numSlackVars_, numDecisionVars_ + numSlackVars_);
-
   matrix_t zTaTaz(numDecisionVars_, numDecisionVars_);
 
   if (hasEqConstraints_) {
@@ -74,8 +72,10 @@ void HoQp::buildHMatrix() {
     zTaTaz.setZero();
   }
 
-  h << zTaTaz, zeroNvNx_.transpose(), zeroNvNx_, eyeNvNv_;
-  h_ = h;
+  h_ = (matrix_t(numDecisionVars_ + numSlackVars_, numDecisionVars_ + numSlackVars_)  // clang-format off
+            << zTaTaz, zeroNvNx_.transpose(),
+                zeroNvNx_, eyeNvNv_)  // clang-format on
+           .finished();
 }
 
 void HoQp::buildCVector() {
@@ -89,14 +89,10 @@ void HoQp::buildCVector() {
     temp.setZero();
   }
 
-  c << temp, zeroVec;
-  c_ = c;
+  c_ = (vector_t(numDecisionVars_ + numSlackVars_) << temp, zeroVec).finished();
 }
 
 void HoQp::buildDMatrix() {
-  matrix_t d(2 * numSlackVars_ + numPrevSlackVars_, numDecisionVars_ + numSlackVars_);
-  d.setZero();
-
   matrix_t stackedZero = matrix_t::Zero(numPrevSlackVars_, numSlackVars_);
 
   matrix_t dCurrZ;
@@ -108,14 +104,14 @@ void HoQp::buildDMatrix() {
 
   // NOTE: This is upside down compared to the paper,
   // but more consistent with the rest of the algorithm
-  d << zeroNvNx_, -eyeNvNv_, stackedTasksPrev_.d_ * stackedZPrev_, stackedZero, dCurrZ, -eyeNvNv_;
-
-  d_ = d;
+  d_ = (matrix_t(2 * numSlackVars_ + numPrevSlackVars_, numDecisionVars_ + numSlackVars_)  // clang-format off
+            << zeroNvNx_, -eyeNvNv_,
+                stackedTasksPrev_.d_ * stackedZPrev_, stackedZero,
+                dCurrZ, -eyeNvNv_)  // clang-format on
+           .finished();
 }
 
 void HoQp::buildFVector() {
-  vector_t f = vector_t::Zero(2 * numSlackVars_ + numPrevSlackVars_);
-
   vector_t zeroVec = vector_t::Zero(numSlackVars_);
 
   vector_t fMinusDXPrev;
@@ -125,9 +121,9 @@ void HoQp::buildFVector() {
     fMinusDXPrev = vector_t::Zero(0);
   }
 
-  f << zeroVec, stackedTasksPrev_.f_ - stackedTasksPrev_.d_ * xPrev_ + stackedSlackSolutionsPrev_, fMinusDXPrev;
-
-  f_ = f;
+  f_ = (vector_t(2 * numSlackVars_ + numPrevSlackVars_) << zeroVec,
+        stackedTasksPrev_.f_ - stackedTasksPrev_.d_ * xPrev_ + stackedSlackSolutionsPrev_, fMinusDXPrev)
+           .finished();
 }
 
 void HoQp::buildZMatrix() {

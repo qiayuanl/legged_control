@@ -95,10 +95,8 @@ Task Wbc::formulateFloatingBaseEomTask() {
   s.block(0, 0, info_.actuatedDofNum, 6).setZero();
   s.block(0, 6, info_.actuatedDofNum, info_.actuatedDofNum).setIdentity();
 
-  matrix_t a(info_.generalizedCoordinatesNum, numDecisionVars_);
-  vector_t b(info_.generalizedCoordinatesNum);
-  a << data.M, -j_.transpose(), -s.transpose();
-  b = -data.nle;
+  matrix_t a = (matrix_t(info_.generalizedCoordinatesNum, numDecisionVars_) << data.M, -j_.transpose(), -s.transpose()).finished();
+  vector_t b = -data.nle;
 
   return {a, b, matrix_t(), vector_t()};
 }
@@ -147,8 +145,12 @@ Task Wbc::formulateFrictionConeTask() {
   vector_t b(a.rows());
   b.setZero();
 
-  matrix_t frictionPyramic(5, 3);
-  frictionPyramic << 0, 0, -1, 1, 0, -frictionCoeff_, -1, 0, -frictionCoeff_, 0, 1, -frictionCoeff_, 0, -1, -frictionCoeff_;
+  matrix_t frictionPyramic(5, 3);  // clang-format off
+  frictionPyramic << 0, 0, -1,
+                     1, 0, -frictionCoeff_,
+                    -1, 0, -frictionCoeff_,
+                     0, 1, -frictionCoeff_,
+                     0,-1, -frictionCoeff_;  // clang-format on
 
   matrix_t d(5 * numContacts_ + 3 * (info_.numThreeDofContacts - numContacts_), numDecisionVars_);
   d.setZero();
