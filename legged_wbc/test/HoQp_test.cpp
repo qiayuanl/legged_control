@@ -7,41 +7,36 @@
 
 using namespace legged;
 
-TEST(HoQP, twoTask)
-{
+TEST(HoQP, twoTask) {
   srand(0);
-  Task task_0, task_1;
-  task_0.a_ = matrix_t::Random(2, 4);
-  task_0.b_ = vector_t::Ones(2);
-  task_0.d_ = matrix_t::Random(2, 4);
-  task_0.f_ = vector_t::Ones(2);
-  task_1 = task_0;
-  task_1.a_ = matrix_t::Ones(2, 4);
-  std::shared_ptr<HoQp> ho_qp_0 = std::make_shared<HoQp>(task_0);
-  std::shared_ptr<HoQp> ho_qp_1 = std::make_shared<HoQp>(task_1, ho_qp_0);
+  Task task0, task1;
+  task0.a_ = matrix_t::Random(2, 4);
+  task0.b_ = vector_t::Ones(2);
+  task0.d_ = matrix_t::Random(2, 4);
+  task0.f_ = vector_t::Ones(2);
+  task1 = task0;
+  task1.a_ = matrix_t::Ones(2, 4);
+  std::shared_ptr<HoQp> hoQp0 = std::make_shared<HoQp>(task0);
+  std::shared_ptr<HoQp> hoQp1 = std::make_shared<HoQp>(task1, hoQp0);
 
-  vector_t x_0 = ho_qp_0->getSolutions(), x_1 = ho_qp_1->getSolutions();
-  vector_t slack_0 = ho_qp_0->getStackedSlackSolutions(), slack_1 = ho_qp_1->getStackedSlackSolutions();
+  vector_t x0 = hoQp0->getSolutions(), x_1 = hoQp1->getSolutions();
+  vector_t slack0 = hoQp0->getStackedSlackSolutions(), slack_1 = hoQp1->getStackedSlackSolutions();
 
-  std::cout << x_0.transpose() << std::endl;
+  std::cout << x0.transpose() << std::endl;
   std::cout << x_1.transpose() << std::endl;
-  std::cout << slack_0.transpose() << std::endl;
+  std::cout << slack0.transpose() << std::endl;
   std::cout << slack_1.transpose() << std::endl;
 
   scalar_t prec = 1e-6;
 
-  if (slack_0.isApprox(vector_t::Zero(slack_0.size())))
-    EXPECT_TRUE((task_0.a_ * x_0).isApprox(task_0.b_, prec));
-  if (slack_1.isApprox(vector_t::Zero(slack_1.size())))
-  {
-    EXPECT_TRUE((task_1.a_ * x_1).isApprox(task_1.b_, prec));
-    EXPECT_TRUE((task_0.a_ * x_1).isApprox(task_0.b_, prec));
+  if (slack0.isApprox(vector_t::Zero(slack0.size()))) EXPECT_TRUE((task0.a_ * x0).isApprox(task0.b_, prec));
+  if (slack_1.isApprox(vector_t::Zero(slack_1.size()))) {
+    EXPECT_TRUE((task1.a_ * x_1).isApprox(task1.b_, prec));
+    EXPECT_TRUE((task0.a_ * x_1).isApprox(task0.b_, prec));
   }
 
-  vector_t y = task_0.d_ * x_0;
-  for (int i = 0; i < y.size(); ++i)
-    EXPECT_TRUE(y[i] <= task_0.f_[i] + slack_0[i]);
-  y = task_1.d_ * x_1;
-  for (int i = 0; i < y.size(); ++i)
-    EXPECT_TRUE(y[i] <= task_1.f_[i] + slack_1[i]);
+  vector_t y = task0.d_ * x0;
+  for (int i = 0; i < y.size(); ++i) EXPECT_TRUE(y[i] <= task0.f_[i] + slack0[i]);
+  y = task1.d_ * x_1;
+  for (int i = 0; i < y.size(); ++i) EXPECT_TRUE(y[i] <= task1.f_[i] + slack_1[i]);
 }

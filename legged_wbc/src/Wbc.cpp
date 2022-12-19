@@ -80,12 +80,12 @@ vector_t Wbc::update(const vector_t& stateDesired, const vector_t& inputDesired,
   // For base acceleration task
   updateCentroidalDynamics(pinoInterface_, info_, qMeasured_);
 
-  Task task_0 = formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateFrictionConeTask() + formulateNoContactMotionTask();
-  Task task_1 = formulateBaseAccelTask() + formulateSwingLegTask();
-  Task task_2 = formulateContactForceTask();
-  HoQp ho_qp(task_2, std::make_shared<HoQp>(task_1, std::make_shared<HoQp>(task_0)));
+  Task task0 = formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateFrictionConeTask() + formulateNoContactMotionTask();
+  Task task1 = formulateBaseAccelTask() + formulateSwingLegTask();
+  Task task2 = formulateContactForceTask();
+  HoQp hoQp(task2, std::make_shared<HoQp>(task1, std::make_shared<HoQp>(task0)));
 
-  return ho_qp.getSolutions();
+  return hoQp.getSolutions();
 }
 
 Task Wbc::formulateFloatingBaseEomTask() {
@@ -146,15 +146,15 @@ Task Wbc::formulateFrictionConeTask() {
   vector_t b(a.rows());
   b.setZero();
 
-  matrix_t friction_pyramic(5, 3);
-  friction_pyramic << 0, 0, -1, 1, 0, -frictionCoeff_, -1, 0, -frictionCoeff_, 0, 1, -frictionCoeff_, 0, -1, -frictionCoeff_;
+  matrix_t frictionPyramic(5, 3);
+  frictionPyramic << 0, 0, -1, 1, 0, -frictionCoeff_, -1, 0, -frictionCoeff_, 0, 1, -frictionCoeff_, 0, -1, -frictionCoeff_;
 
   matrix_t d(5 * numContacts_ + 3 * (info_.numThreeDofContacts - numContacts_), numDecisionVars_);
   d.setZero();
   j = 0;
   for (size_t i = 0; i < info_.numThreeDofContacts; ++i) {
     if (contactFlag_[i]) {
-      d.block(5 * j++, info_.generalizedCoordinatesNum + 3 * i, 5, 3) = friction_pyramic;
+      d.block(5 * j++, info_.generalizedCoordinatesNum + 3 * i, 5, 3) = frictionPyramic;
     }
   }
   vector_t f = Eigen::VectorXd::Zero(d.rows());
@@ -167,29 +167,29 @@ Task Wbc::formulateBaseAccelTask() {
   a.setZero();
   a.block(0, 0, 6, 6) = matrix_t::Identity(6, 6);
 
-  const vector_t momentum_rate = info_.robotMass * centroidalDynamics_.getValue(0, stateDesired_, inputDesired_).head(6);
-  const Eigen::Matrix<scalar_t, 6, 6> a_base = getCentroidalMomentumMatrix(pinoInterface_).template leftCols<6>();
-  const auto a_base_inv = computeFloatingBaseCentroidalMomentumMatrixInverse(a_base);
-  vector_t b = a_base_inv * momentum_rate;
+  const vector_t momentumRate = info_.robotMass * centroidalDynamics_.getValue(0, stateDesired_, inputDesired_).head(6);
+  const Eigen::Matrix<scalar_t, 6, 6> aBase = getCentroidalMomentumMatrix(pinoInterface_).template leftCols<6>();
+  const auto aBaseInv = computeFloatingBaseCentroidalMomentumMatrixInverse(aBase);
+  vector_t b = aBaseInv * momentumRate;
 
-  const vector3_t angular_velocity =
+  const vector3_t angularVelocity =
       getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(qMeasured_.segment<3>(3), vMeasured_.segment<3>(3));
-  b.segment<3>(3) -= a_base_inv.block<3, 3>(3, 3) * angular_velocity.cross(a_base.block<3, 3>(3, 3) * angular_velocity);
+  b.segment<3>(3) -= aBaseInv.block<3, 3>(3, 3) * angularVelocity.cross(aBase.block<3, 3>(3, 3) * angularVelocity);
 
   return Task(a, b, matrix_t(), vector_t());
 }
 
 Task Wbc::formulateSwingLegTask() {
-  std::vector<vector3_t> pos_measured = eeKinematics_->getPosition(vector_t());
-  std::vector<vector3_t> vel_measured = eeKinematics_->getVelocity(vector_t(), vector_t());
-  vector_t q_desired = mapping_.getPinocchioJointPosition(stateDesired_);
-  vector_t v_desired = mapping_.getPinocchioJointVelocity(stateDesired_, inputDesired_);
+  std::vector<vector3_t> posMeasured = eeKinematics_->getPosition(vector_t());
+  std::vector<vector3_t> velMeasured = eeKinematics_->getVelocity(vector_t(), vector_t());
+  vector_t qDesired = mapping_.getPinocchioJointPosition(stateDesired_);
+  vector_t vDesired = mapping_.getPinocchioJointVelocity(stateDesired_, inputDesired_);
   const auto& model = pinoInterface_.getModel();
   auto& data = pinoInterface_.getData();
-  pinocchio::forwardKinematics(model, data, q_desired, v_desired);
+  pinocchio::forwardKinematics(model, data, qDesired, vDesired);
   pinocchio::updateFramePlacements(model, data);
-  std::vector<vector3_t> pos_desired = eeKinematics_->getPosition(vector_t());
-  std::vector<vector3_t> vel_desired = eeKinematics_->getVelocity(vector_t(), vector_t());
+  std::vector<vector3_t> posDesired = eeKinematics_->getPosition(vector_t());
+  std::vector<vector3_t> velDesired = eeKinematics_->getVelocity(vector_t(), vector_t());
 
   matrix_t a(3 * (info_.numThreeDofContacts - numContacts_), numDecisionVars_);
   vector_t b(a.rows());
@@ -198,7 +198,7 @@ Task Wbc::formulateSwingLegTask() {
   size_t j = 0;
   for (size_t i = 0; i < info_.numThreeDofContacts; ++i) {
     if (!contactFlag_[i]) {
-      vector3_t accel = swingKp_ * (pos_desired[i] - pos_measured[i]) + swingKd_ * (vel_desired[i] - vel_measured[i]);
+      vector3_t accel = swingKp_ * (posDesired[i] - posMeasured[i]) + swingKd_ * (velDesired[i] - velMeasured[i]);
       a.block(3 * j, 0, 3, info_.generalizedCoordinatesNum) = j_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum);
       b.segment(3 * j, 3) = accel - dj_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum) * vMeasured_;
       j++;

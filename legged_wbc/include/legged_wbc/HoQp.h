@@ -21,7 +21,7 @@ class HoQp {
 
   explicit HoQp(const Task& task) : HoQp(task, nullptr){};
 
-  HoQp(Task task, HoQpPtr higher_problem);
+  HoQp(Task task, HoQpPtr higherProblem);
 
   matrix_t getStackedZMatrix() const { return stackedZ_; }
 
