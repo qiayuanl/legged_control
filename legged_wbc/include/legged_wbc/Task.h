@@ -26,8 +26,8 @@ class Task {
       : Task(matrix_t::Zero(0, numDecisionVars), vector_t::Zero(0), matrix_t::Zero(0, numDecisionVars), vector_t::Zero(0)) {}
 
   Task operator+(const Task& rhs) const {
-    return Task(concatenateMatrices(a_, rhs.a_), concatenateVectors(b_, rhs.b_), concatenateMatrices(d_, rhs.d_),
-                concatenateVectors(f_, rhs.f_));
+    return {concatenateMatrices(a_, rhs.a_), concatenateVectors(b_, rhs.b_), concatenateMatrices(d_, rhs.d_),
+            concatenateVectors(f_, rhs.f_)};
   }
 
   matrix_t a_, d_;
