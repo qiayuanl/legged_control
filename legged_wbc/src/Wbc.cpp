@@ -99,7 +99,8 @@ Task Wbc::formulateFloatingBaseEomTask() {
   vector_t b(info_.generalizedCoordinatesNum);
   a << data.M, -j_.transpose(), -s.transpose();
   b = -data.nle;
-  return Task(a, b, matrix_t(), vector_t());
+
+  return {a, b, matrix_t(), vector_t()};
 }
 
 Task Wbc::formulateTorqueLimitsTask() {
@@ -114,7 +115,7 @@ Task Wbc::formulateTorqueLimitsTask() {
     f.segment<3>(3 * l) = torqueLimits_;
   }
 
-  return Task(matrix_t(), vector_t(), d, f);
+  return {matrix_t(), vector_t(), d, f};
 }
 
 Task Wbc::formulateNoContactMotionTask() {
@@ -131,7 +132,7 @@ Task Wbc::formulateNoContactMotionTask() {
     }
   }
 
-  return Task(a, b, matrix_t(), vector_t());
+  return {a, b, matrix_t(), vector_t()};
 }
 
 Task Wbc::formulateFrictionConeTask() {
@@ -159,7 +160,7 @@ Task Wbc::formulateFrictionConeTask() {
   }
   vector_t f = Eigen::VectorXd::Zero(d.rows());
 
-  return Task(a, b, d, f);
+  return {a, b, d, f};
 }
 
 Task Wbc::formulateBaseAccelTask() {
@@ -176,7 +177,7 @@ Task Wbc::formulateBaseAccelTask() {
       getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(qMeasured_.segment<3>(3), vMeasured_.segment<3>(3));
   b.segment<3>(3) -= aBaseInv.block<3, 3>(3, 3) * angularVelocity.cross(aBase.block<3, 3>(3, 3) * angularVelocity);
 
-  return Task(a, b, matrix_t(), vector_t());
+  return {a, b, matrix_t(), vector_t()};
 }
 
 Task Wbc::formulateSwingLegTask() {
@@ -205,7 +206,7 @@ Task Wbc::formulateSwingLegTask() {
     }
   }
 
-  return Task(a, b, matrix_t(), vector_t());
+  return {a, b, matrix_t(), vector_t()};
 }
 
 Task Wbc::formulateContactForceTask() {

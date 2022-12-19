@@ -97,4 +97,6 @@ if (CATKIN_ENABLE_TESTING)
             ${pinocchio_LIBRARIES}
             gtest_main
             )
+
+    target_compile_options(${PROJECT_NAME}_test PUBLIC ${FLAGS})
 endif (CATKIN_ENABLE_TESTING)
