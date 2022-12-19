@@ -86,7 +86,7 @@ TargetTrajectories cmdVelToTargetTrajectories(const vector_t& cmdVel, const Syst
   return targetPoseToTargetTrajectories(targetPose, observation, targetReachingTime);
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char** argv) {
   const std::string robotName = "legged_robot";
 
   // Initialize ros node
