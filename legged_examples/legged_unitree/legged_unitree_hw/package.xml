@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-    <name>unitree_hw</name>
+    <name>legged_unitree_hw</name>
     <version>0.0.0</version>
     <description>ROS control warped interface for Unitree Robots</description>
     <maintainer email="liaoqiayuan@gmail.com">Qiayuan Liao</maintainer>

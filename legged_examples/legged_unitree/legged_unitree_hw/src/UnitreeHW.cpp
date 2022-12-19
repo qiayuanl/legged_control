@@ -3,7 +3,7 @@
 // Created by qiayuan on 1/24/22.
 //
 
-#include "unitree_hw/UnitreeHW.h"
+#include "legged_unitree_hw/UnitreeHW.h"
 
 namespace legged {
 bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {

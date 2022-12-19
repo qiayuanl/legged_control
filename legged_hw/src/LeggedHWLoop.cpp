@@ -19,8 +19,7 @@ LeggedHWLoop::LeggedHWLoop(ros::NodeHandle& nh, std::shared_ptr<LeggedHW> hardwa
   error += static_cast<int>(!nhP.getParam("thread_priority", threadPriority));
   if (error > 0) {
     std::string error_message =
-        "could not retrieve one of the required parameters\n\tunitree_hw/loop_hz or unitree_hw/cycle_time_error_threshold or "
-        "unitree_hw/thread_priority";
+        "could not retrieve one of the required parameters: loop_hz or cycle_time_error_threshold or thread_priority";
     ROS_ERROR_STREAM(error_message);
     throw std::runtime_error(error_message);
   }

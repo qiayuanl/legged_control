@@ -71,10 +71,10 @@ catkin build legged_gazebo
 ```
 
 Build the hardware interface real robot. If you use your computer only for simulation, you **DO NOT** need to
-compile `unitree_hw` (TODO: add a legged prefix to the package name)
+compile `legged_unitree_hw` (TODO: add a legged prefix to the package name)
 
 ```
-catkin build unitree_hw
+catkin build legged_unitree_hw
 ```
 
 ## Quick Start
@@ -94,7 +94,7 @@ roslaunch legged_unitree_description empty_world.launch
 Or on the robot hardware:
 
 ```
-roslaunch unitree_hw unitree_hw.launch
+roslaunch legged_unitree_hw legged_unitree_hw.launch
 ```
 
 3. Load the controller:
@@ -233,7 +233,7 @@ generation of NUC, and the computing frequency of NMPC can be close to 200Hz.
 
 Deploying this framework to your robot is very simple, the steps are as follows:
 
-- Imitate the `UnitreeHW` class in legged_examples/legged_unitree/unitree_hw
+- Imitate the `UnitreeHW` class in legged_examples/legged_unitree/legged_unitree_hw
   , inherit `LeggedHW` and implement the `read()` and `write()` functions of the hardware interface;
 - Imitate the legged_examples/legged_unitree/legged_unitree_description, write the xarco of the robot and generate the
   URDF file, note that the names of the joint and link need to be the same as legged_unitree_description.
