@@ -5,7 +5,7 @@
 
     <arg name="task_file" default="$(find legged_controllers)/config/task.info"/>
     <arg name="reference_file" default="$(find legged_controllers)/config/reference.info"/>
-    <arg name="urdf_file" default="$(find unitree_description)/urdf/a1.urdf"/>
+    <arg name="urdf_file" default="$(find legged_unitree_description)/urdf/a1.urdf"/>
     <arg name="gait_file" default="$(find legged_controllers)/config/gait.info"/>
 
     <!-- make the files into global parameters -->

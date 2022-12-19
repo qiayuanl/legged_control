@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-    <name>unitree_description</name>
+    <name>legged_unitree_description</name>
     <version>0.0.0</version>
     <description>Unitree robot description files</description>
     <maintainer email="liaoqiayuan@gmail.com">Qiayuan Liao</maintainer>

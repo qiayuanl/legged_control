@@ -2,7 +2,7 @@
 
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <xacro:include filename="$(find unitree_description)/urdf/common/transmission.xacro"/>
+    <xacro:include filename="$(find legged_unitree_description)/urdf/common/transmission.xacro"/>
 
     <xacro:macro name="leg" params="prefix mirror mirror_dae front_hind front_hind_dae *origin">
 
@@ -37,7 +37,8 @@
                     <origin rpy="${pi} ${pi} 0" xyz="0 0 0"/>
                 </xacro:if>
                 <geometry>
-                    <mesh filename="package://unitree_description/meshes/$(arg robot_type)/hip.dae" scale="1 1 1"/>
+                    <mesh filename="package://legged_unitree_description/meshes/$(arg robot_type)/hip.dae"
+                          scale="1 1 1"/>
                 </geometry>
                 <material name="orange"/>
             </visual>
@@ -72,11 +73,11 @@
                 <origin rpy="0 0 0" xyz="0 0 0"/>
                 <geometry>
                     <xacro:if value="${mirror_dae == True}">
-                        <mesh filename="package://unitree_description/meshes/$(arg robot_type)/thigh.dae"
+                        <mesh filename="package://legged_unitree_description/meshes/$(arg robot_type)/thigh.dae"
                               scale="1 1 1"/>
                     </xacro:if>
                     <xacro:if value="${mirror_dae == False}">
-                        <mesh filename="package://unitree_description/meshes/$(arg robot_type)/thigh_mirror.dae"
+                        <mesh filename="package://legged_unitree_description/meshes/$(arg robot_type)/thigh_mirror.dae"
                               scale="1 1 1"/>
                     </xacro:if>
                 </geometry>
@@ -117,7 +118,8 @@
             <visual>
                 <origin rpy="0 0 0" xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="package://unitree_description/meshes/$(arg robot_type)/calf.dae" scale="1 1 1"/>
+                    <mesh filename="package://legged_unitree_description/meshes/$(arg robot_type)/calf.dae"
+                          scale="1 1 1"/>
                 </geometry>
                 <material name="orange"/>
             </visual>

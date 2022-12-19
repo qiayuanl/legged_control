@@ -3,7 +3,7 @@
 
     <rosparam file="$(find legged_gazebo)/config/default.yaml" command="load"/>
 
-    <param name="legged_robot_description" command="$(find xacro)/xacro $(find unitree_description)/urdf/robot.xacro
+    <param name="legged_robot_description" command="$(find xacro)/xacro $(find legged_unitree_description)/urdf/robot.xacro
        robot_type:=$(arg robot_type)
     "/>
 

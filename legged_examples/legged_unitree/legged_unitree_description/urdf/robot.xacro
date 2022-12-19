@@ -4,19 +4,19 @@
 
     <xacro:arg name="robot_type" default="a1"/>
 
-    <xacro:include filename="$(find unitree_description)/urdf/common/materials.xacro"/>
-    <xacro:include filename="$(find unitree_description)/urdf/common/leg.xacro"/>
-    <xacro:include filename="$(find unitree_description)/urdf/common/gazebo.xacro"/>
-    <xacro:include filename="$(find unitree_description)/urdf/common/imu.xacro"/>
+    <xacro:include filename="$(find legged_unitree_description)/urdf/common/materials.xacro"/>
+    <xacro:include filename="$(find legged_unitree_description)/urdf/common/leg.xacro"/>
+    <xacro:include filename="$(find legged_unitree_description)/urdf/common/gazebo.xacro"/>
+    <xacro:include filename="$(find legged_unitree_description)/urdf/common/imu.xacro"/>
 
-    <xacro:include filename="$(find unitree_description)/urdf/$(arg robot_type)/const.xacro"/>
+    <xacro:include filename="$(find legged_unitree_description)/urdf/$(arg robot_type)/const.xacro"/>
 
 
     <link name="base">
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="package://unitree_description/meshes/$(arg robot_type)/trunk.dae" scale="1 1 1"/>
+                <mesh filename="package://legged_unitree_description/meshes/$(arg robot_type)/trunk.dae" scale="1 1 1"/>
             </geometry>
         </visual>
         <collision>
