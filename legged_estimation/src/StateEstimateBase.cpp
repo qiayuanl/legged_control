@@ -9,15 +9,15 @@
 #include <utility>
 
 namespace legged {
-StateEstimateBase::StateEstimateBase(LeggedInterface& legged_interface, std::vector<HybridJointHandle> hybrid_joint_handles,
-                                     std::vector<ContactSensorHandle> contact_sensor_handles,
-                                     hardware_interface::ImuSensorHandle imu_sensor_handle)
-    : leggedInterface_(legged_interface),
-      generalizedCoordinatesNum_(legged_interface.getCentroidalModelInfo().generalizedCoordinatesNum),
+StateEstimateBase::StateEstimateBase(LeggedInterface& leggedInterface, std::vector<HybridJointHandle> hybridJointHandles,
+                                     std::vector<ContactSensorHandle> contactSensorHandles,
+                                     hardware_interface::ImuSensorHandle imuSensorHandle)
+    : leggedInterface_(leggedInterface),
+      generalizedCoordinatesNum_(leggedInterface.getCentroidalModelInfo().generalizedCoordinatesNum),
       rbdState_(2 * generalizedCoordinatesNum_),
-      hybridJointHandles_(std::move(hybrid_joint_handles)),
-      contactSensorHandles_(std::move(contact_sensor_handles)),
-      imuSensorHandle_(std::move(imu_sensor_handle)) {
+      hybridJointHandles_(std::move(hybridJointHandles)),
+      contactSensorHandles_(std::move(contactSensorHandles)),
+      imuSensorHandle_(std::move(imuSensorHandle)) {
   ros::NodeHandle nh;
   odomPub_.reset(new realtime_tools::RealtimePublisher<nav_msgs::Odometry>(nh, "odom", 10));
   odomPub_->msg_.header.frame_id = "odom";
@@ -28,22 +28,22 @@ StateEstimateBase::StateEstimateBase(LeggedInterface& legged_interface, std::vec
 }
 
 size_t StateEstimateBase::getMode() {
-  contact_flag_t contact_flag;
+  contact_flag_t contactFlag;
   for (size_t i = 0; i < contactSensorHandles_.size(); ++i) {
-    contact_flag[i] = contactSensorHandles_[i].isContact();
+    contactFlag[i] = contactSensorHandles_[i].isContact();
   }
 
-  return stanceLeg2ModeNumber(contact_flag);
+  return stanceLeg2ModeNumber(contactFlag);
 }
 
-void StateEstimateBase::updateAngular(const Eigen::Quaternion<scalar_t>& quat, const vector_t& angular_vel) {
+void StateEstimateBase::updateAngular(const Eigen::Quaternion<scalar_t>& quat, const vector_t& angularVel) {
   rbdState_.segment<3>(0) = quatToZyx(quat);
-  rbdState_.segment<3>(generalizedCoordinatesNum_) = angular_vel;
+  rbdState_.segment<3>(generalizedCoordinatesNum_) = angularVel;
 }
 
-void StateEstimateBase::updateLinear(const vector_t& pos, const vector_t& linear_vel) {
+void StateEstimateBase::updateLinear(const vector_t& pos, const vector_t& linearVel) {
   rbdState_.segment<3>(3) = pos;
-  rbdState_.segment<3>(generalizedCoordinatesNum_ + 3) = linear_vel;
+  rbdState_.segment<3>(generalizedCoordinatesNum_ + 3) = linearVel;
 }
 
 void StateEstimateBase::updateJointStates() {
@@ -54,8 +54,8 @@ void StateEstimateBase::updateJointStates() {
 }
 
 void StateEstimateBase::publishMsgs(const nav_msgs::Odometry& odom, const ros::Time& time) {
-  scalar_t publish_rate = 100;
-  if (lastPub_ + ros::Duration(1. / publish_rate) < time) {
+  scalar_t publishRate = 100;
+  if (lastPub_ + ros::Duration(1. / publishRate) < time) {
     if (odomPub_->trylock()) {
       odomPub_->msg_.header.stamp = time;
       odomPub_->msg_.pose = odom.pose;

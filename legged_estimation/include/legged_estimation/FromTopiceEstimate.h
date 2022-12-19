@@ -12,9 +12,9 @@ using namespace ocs2;
 
 class FromTopicStateEstimate : public StateEstimateBase {
  public:
-  FromTopicStateEstimate(LeggedInterface& legged_interface, const std::vector<HybridJointHandle>& hybrid_joint_handles,
-                         const std::vector<ContactSensorHandle>& contact_sensor_handles,
-                         const hardware_interface::ImuSensorHandle& imu_sensor_handle);
+  FromTopicStateEstimate(LeggedInterface& leggedInterface, const std::vector<HybridJointHandle>& hybridJointHandles,
+                         const std::vector<ContactSensorHandle>& contactSensorHandles,
+                         const hardware_interface::ImuSensorHandle& imuSensorHandle);
 
   vector_t update(const ros::Time& time, const ros::Duration& period) override;
 

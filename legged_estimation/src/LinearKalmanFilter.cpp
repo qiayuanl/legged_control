@@ -11,12 +11,12 @@
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
 
 namespace legged {
-KalmanFilterEstimate::KalmanFilterEstimate(LeggedInterface& legged_interface, const std::vector<HybridJointHandle>& hybrid_joint_handles,
-                                           const std::vector<ContactSensorHandle>& contact_sensor_handles,
-                                           const hardware_interface::ImuSensorHandle& imu_sensor_handle)
-    : StateEstimateBase(legged_interface, hybrid_joint_handles, contact_sensor_handles, imu_sensor_handle),
-      pinocchioEeKine_(legged_interface.getPinocchioInterface(), CentroidalModelPinocchioMapping(legged_interface.getCentroidalModelInfo()),
-                       legged_interface.modelSettings().contactNames3DoF),
+KalmanFilterEstimate::KalmanFilterEstimate(LeggedInterface& leggedInterface, const std::vector<HybridJointHandle>& hybridJointHandles,
+                                           const std::vector<ContactSensorHandle>& contactSensorHandles,
+                                           const hardware_interface::ImuSensorHandle& imuSensorHandle)
+    : StateEstimateBase(leggedInterface, hybridJointHandles, contactSensorHandles, imuSensorHandle),
+      pinocchioEeKine_(leggedInterface.getPinocchioInterface(), CentroidalModelPinocchioMapping(leggedInterface.getCentroidalModelInfo()),
+                       leggedInterface.modelSettings().contactNames3DoF),
       tfListener_(tfBuffer_),
       topicUpdated_(false) {
   xHat_.setZero();
@@ -59,12 +59,12 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   // Angular from IMU
   Eigen::Quaternion<scalar_t> quat(imuSensorHandle_.getOrientation()[3], imuSensorHandle_.getOrientation()[0],
                                    imuSensorHandle_.getOrientation()[1], imuSensorHandle_.getOrientation()[2]);
-  Eigen::Matrix<scalar_t, 3, 1> angular_vel_local(imuSensorHandle_.getAngularVelocity()[0], imuSensorHandle_.getAngularVelocity()[1],
-                                                  imuSensorHandle_.getAngularVelocity()[2]);
+  Eigen::Matrix<scalar_t, 3, 1> angularVelLocal(imuSensorHandle_.getAngularVelocity()[0], imuSensorHandle_.getAngularVelocity()[1],
+                                                imuSensorHandle_.getAngularVelocity()[2]);
   vector_t zyx = quatToZyx(quat);
-  Eigen::Matrix<scalar_t, 3, 1> angular_vel_global = getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(
-      zyx, getEulerAnglesZyxDerivativesFromLocalAngularVelocity<scalar_t>(zyx, angular_vel_local));
-  updateAngular(quat, angular_vel_global);
+  Eigen::Matrix<scalar_t, 3, 1> angularVelGlobal = getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(
+      zyx, getEulerAnglesZyxDerivativesFromLocalAngularVelocity<scalar_t>(zyx, angularVelLocal));
+  updateAngular(quat, angularVelGlobal);
 
   // Joint states
   updateJointStates();
@@ -79,69 +79,69 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
 
   const auto& model = leggedInterface_.getPinocchioInterface().getModel();
   auto& data = leggedInterface_.getPinocchioInterface().getData();
-  size_t actuated_dof_num = leggedInterface_.getCentroidalModelInfo().actuatedDofNum;
+  size_t actuatedDofNum = leggedInterface_.getCentroidalModelInfo().actuatedDofNum;
 
-  vector_t q_pino(generalizedCoordinatesNum_);
-  vector_t v_pino(generalizedCoordinatesNum_);
-  q_pino.setZero();
-  q_pino.segment<3>(3) = rbdState_.head<3>();  // Only set orientation, let position in origin.
-  q_pino.tail(actuated_dof_num) = rbdState_.segment(6, actuated_dof_num);
+  vector_t qPino(generalizedCoordinatesNum_);
+  vector_t vPino(generalizedCoordinatesNum_);
+  qPino.setZero();
+  qPino.segment<3>(3) = rbdState_.head<3>();  // Only set orientation, let position in origin.
+  qPino.tail(actuatedDofNum) = rbdState_.segment(6, actuatedDofNum);
 
-  v_pino.setZero();
-  v_pino.segment<3>(3) = getEulerAnglesZyxDerivativesFromGlobalAngularVelocity<scalar_t>(
-      q_pino.segment<3>(3),
+  vPino.setZero();
+  vPino.segment<3>(3) = getEulerAnglesZyxDerivativesFromGlobalAngularVelocity<scalar_t>(
+      qPino.segment<3>(3),
       rbdState_.segment<3>(
           leggedInterface_.getCentroidalModelInfo().generalizedCoordinatesNum));  // Only set angular velocity, let linear velocity be zero
-  v_pino.tail(actuated_dof_num) = rbdState_.segment(6 + generalizedCoordinatesNum_, actuated_dof_num);
+  vPino.tail(actuatedDofNum) = rbdState_.segment(6 + generalizedCoordinatesNum_, actuatedDofNum);
 
-  pinocchio::forwardKinematics(model, data, q_pino, v_pino);
+  pinocchio::forwardKinematics(model, data, qPino, vPino);
   pinocchio::updateFramePlacements(leggedInterface_.getPinocchioInterface().getModel(), leggedInterface_.getPinocchioInterface().getData());
   pinocchioEeKine_.setPinocchioInterface(leggedInterface_.getPinocchioInterface());
 
-  const auto ee_pos = pinocchioEeKine_.getPosition(vector_t());
-  const auto ee_vel = pinocchioEeKine_.getVelocity(vector_t(), vector_t());
+  const auto eePos = pinocchioEeKine_.getPosition(vector_t());
+  const auto eeVel = pinocchioEeKine_.getVelocity(vector_t(), vector_t());
 
-  scalar_t foot_radius = 0.015;
-  scalar_t imu_process_noise_position = 0.2;
-  scalar_t imu_process_noise_velocity = 0.2;
-  scalar_t foot_process_noise_position = 0.002;
-  scalar_t foot_sensor_noise_position = 0.005;
-  scalar_t foot_sensor_noise_velocity = 0.1;  // TODO(qiayuan): adjust the value
-  scalar_t foot_height_sensor_noise = 0.005;
+  scalar_t footRadius = 0.015;
+  scalar_t imuProcessNoisePosition = 0.2;
+  scalar_t imuProcessNoiseVelocity = 0.2;
+  scalar_t footProcessNoisePosition = 0.002;
+  scalar_t footSensorNoisePosition = 0.005;
+  scalar_t footSensorNoiseVelocity = 0.1;  // TODO(qiayuan): adjust the value
+  scalar_t footHeightSensorNoise = 0.005;
 
   Eigen::Matrix<scalar_t, 18, 18> q = Eigen::Matrix<scalar_t, 18, 18>::Identity();
-  q.block(0, 0, 3, 3) = q_.block(0, 0, 3, 3) * imu_process_noise_position;
-  q.block(3, 3, 3, 3) = q_.block(3, 3, 3, 3) * imu_process_noise_velocity;
-  q.block(6, 6, 12, 12) = q_.block(6, 6, 12, 12) * foot_process_noise_position;
+  q.block(0, 0, 3, 3) = q_.block(0, 0, 3, 3) * imuProcessNoisePosition;
+  q.block(3, 3, 3, 3) = q_.block(3, 3, 3, 3) * imuProcessNoiseVelocity;
+  q.block(6, 6, 12, 12) = q_.block(6, 6, 12, 12) * footProcessNoisePosition;
 
   Eigen::Matrix<scalar_t, 28, 28> r = Eigen::Matrix<scalar_t, 28, 28>::Identity();
-  r.block(0, 0, 12, 12) = r_.block(0, 0, 12, 12) * foot_sensor_noise_position;
-  r.block(12, 12, 12, 12) = r_.block(12, 12, 12, 12) * foot_sensor_noise_velocity;
-  r.block(24, 24, 4, 4) = r_.block(24, 24, 4, 4) * foot_height_sensor_noise;
+  r.block(0, 0, 12, 12) = r_.block(0, 0, 12, 12) * footSensorNoisePosition;
+  r.block(12, 12, 12, 12) = r_.block(12, 12, 12, 12) * footSensorNoiseVelocity;
+  r.block(24, 24, 4, 4) = r_.block(24, 24, 4, 4) * footHeightSensorNoise;
 
   for (int i = 0; i < 4; i++) {
     int i1 = 3 * i;
 
-    int q_index = 6 + i1;
-    int r_index1 = i1;
-    int r_index2 = 12 + i1;
-    int r_index3 = 24 + i;
-    bool is_contact = contactSensorHandles_[i].isContact();
+    int qIndex = 6 + i1;
+    int rIndex1 = i1;
+    int rIndex2 = 12 + i1;
+    int rIndex3 = 24 + i;
+    bool isContact = contactSensorHandles_[i].isContact();
 
     scalar_t high_suspect_number(100);
-    q.block(q_index, q_index, 3, 3) = (is_contact ? 1. : high_suspect_number) * q.block(q_index, q_index, 3, 3);
-    r.block(r_index1, r_index1, 3, 3) = 1. * r.block(r_index1, r_index1, 3, 3);
-    r.block(r_index2, r_index2, 3, 3) = (is_contact ? 1. : high_suspect_number) * r.block(r_index2, r_index2, 3, 3);
-    r(r_index3, r_index3) = (is_contact ? 1. : high_suspect_number) * r(r_index3, r_index3);
+    q.block(qIndex, qIndex, 3, 3) = (isContact ? 1. : high_suspect_number) * q.block(qIndex, qIndex, 3, 3);
+    r.block(rIndex1, rIndex1, 3, 3) = 1. * r.block(rIndex1, rIndex1, 3, 3);
+    r.block(rIndex2, rIndex2, 3, 3) = (isContact ? 1. : high_suspect_number) * r.block(rIndex2, rIndex2, 3, 3);
+    r(rIndex3, rIndex3) = (isContact ? 1. : high_suspect_number) * r(rIndex3, rIndex3);
 
-    ps_.segment(3 * i, 3) = -1. * ee_pos[i];
-    ps_.segment(3 * i, 3)[2] += foot_radius;
-    vs_.segment(3 * i, 3) = -1. * ee_vel[i];
+    ps_.segment(3 * i, 3) = -1. * eePos[i];
+    ps_.segment(3 * i, 3)[2] += footRadius;
+    vs_.segment(3 * i, 3) = -1. * eeVel[i];
   }
   Eigen::Matrix<scalar_t, 3, 1> g(0, 0, -9.81);
-  Eigen::Matrix<scalar_t, 3, 1> imu_accel(imuSensorHandle_.getLinearAcceleration()[0], imuSensorHandle_.getLinearAcceleration()[1],
-                                          imuSensorHandle_.getLinearAcceleration()[2]);
-  Eigen::Matrix<scalar_t, 3, 1> accel = getRotationMatrixFromZyxEulerAngles(quatToZyx(quat)) * imu_accel + g;
+  Eigen::Matrix<scalar_t, 3, 1> imuAccel(imuSensorHandle_.getLinearAcceleration()[0], imuSensorHandle_.getLinearAcceleration()[1],
+                                         imuSensorHandle_.getLinearAcceleration()[2]);
+  Eigen::Matrix<scalar_t, 3, 1> accel = getRotationMatrixFromZyxEulerAngles(quatToZyx(quat)) * imuAccel + g;
   Eigen::Matrix<scalar_t, 4, 1> pzs = Eigen::Matrix<scalar_t, 4, 1>::Zero();
 
   Eigen::Matrix<scalar_t, 28, 1> y;
@@ -149,16 +149,16 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   xHat_ = a_ * xHat_ + b_ * accel;
   Eigen::Matrix<scalar_t, 18, 18> at = a_.transpose();
   Eigen::Matrix<scalar_t, 18, 18> pm = a_ * p_ * at + q;
-  Eigen::Matrix<scalar_t, 18, 28> ct = c_.transpose();
-  Eigen::Matrix<scalar_t, 28, 1> y_model = c_ * xHat_;
-  Eigen::Matrix<scalar_t, 28, 1> ey = y - y_model;
-  Eigen::Matrix<scalar_t, 28, 28> s = c_ * pm * ct + r;
+  Eigen::Matrix<scalar_t, 18, 28> cT = c_.transpose();
+  Eigen::Matrix<scalar_t, 28, 1> yModel = c_ * xHat_;
+  Eigen::Matrix<scalar_t, 28, 1> ey = y - yModel;
+  Eigen::Matrix<scalar_t, 28, 28> s = c_ * pm * cT + r;
 
-  Eigen::Matrix<scalar_t, 28, 1> s_ey = s.lu().solve(ey);
-  xHat_ += pm * ct * s_ey;
+  Eigen::Matrix<scalar_t, 28, 1> sEy = s.lu().solve(ey);
+  xHat_ += pm * cT * sEy;
 
-  Eigen::Matrix<scalar_t, 28, 18> s_c = s.lu().solve(c_);
-  p_ = (Eigen::Matrix<scalar_t, 18, 18>::Identity() - pm * ct * s_c) * pm;
+  Eigen::Matrix<scalar_t, 28, 18> sC = s.lu().solve(c_);
+  p_ = (Eigen::Matrix<scalar_t, 18, 18>::Identity() - pm * cT * sC) * pm;
 
   Eigen::Matrix<scalar_t, 18, 18> pt = p_.transpose();
   p_ = (p_ + pt) / 2.0;
@@ -196,9 +196,9 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   odom.twist.twist.linear.x = twist.x();
   odom.twist.twist.linear.y = twist.y();
   odom.twist.twist.linear.z = twist.z();
-  odom.twist.twist.angular.x = angular_vel_local.x();
-  odom.twist.twist.angular.y = angular_vel_local.y();
-  odom.twist.twist.angular.z = angular_vel_local.z();
+  odom.twist.twist.angular.x = angularVelLocal.x();
+  odom.twist.twist.angular.y = angularVelLocal.y();
+  odom.twist.twist.angular.z = angularVelLocal.z();
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       odom.twist.covariance[i * 6 + j] = p_.block<3, 3>(3, 3)(i, j);
@@ -239,12 +239,12 @@ void KalmanFilterEstimate::updateFromTopic() {
     return;
   }
   tf2::Transform odom2base = world2odom_.inverse() * world2sensor * base2sensor.inverse();
-  //  vector3_t new_pos(odom2base.getOrigin().x(), odom2base.getOrigin().y(), odom2base.getOrigin().z());
-  vector3_t new_pos(odom2base.getOrigin().x(), odom2base.getOrigin().y(), xHat_(2));
-  vector_t delta_pos = new_pos - xHat_.segment<3>(0);
-  xHat_.segment<3>(0) = new_pos;
+  //  vector3_t newPos(odom2base.getOrigin().x(), odom2base.getOrigin().y(), odom2base.getOrigin().z());
+  vector3_t newPos(odom2base.getOrigin().x(), odom2base.getOrigin().y(), xHat_(2));
+  vector_t deltaPos = newPos - xHat_.segment<3>(0);
+  xHat_.segment<3>(0) = newPos;
   for (size_t i = 0; i < 4; ++i) {
-    xHat_.segment<3>(6 + i * 3) += delta_pos;
+    xHat_.segment<3>(6 + i * 3) += deltaPos;
   }
 }
 

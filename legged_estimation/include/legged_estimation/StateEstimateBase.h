@@ -20,14 +20,14 @@ using namespace legged_robot;
 
 class StateEstimateBase {
  public:
-  StateEstimateBase(LeggedInterface& legged_interface, std::vector<HybridJointHandle> hybrid_joint_handles,
-                    std::vector<ContactSensorHandle> contact_sensor_handles, hardware_interface::ImuSensorHandle imu_sensor_handle);
+  StateEstimateBase(LeggedInterface& leggedInterface, std::vector<HybridJointHandle> hybridJointHandles,
+                    std::vector<ContactSensorHandle> contactSensorHandles, hardware_interface::ImuSensorHandle imuSensorHandle);
   virtual vector_t update(const ros::Time& time, const ros::Duration& period) = 0;
   size_t getMode();
 
  protected:
-  void updateAngular(const Eigen::Quaternion<scalar_t>& quat, const vector_t& angular_vel);
-  void updateLinear(const vector_t& pos, const vector_t& linear_vel);
+  void updateAngular(const Eigen::Quaternion<scalar_t>& quat, const vector_t& angularVel);
+  void updateLinear(const vector_t& pos, const vector_t& linearVel);
   void updateJointStates();
   void publishMsgs(const nav_msgs::Odometry& odom, const ros::Time& time);
 

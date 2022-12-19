@@ -20,9 +20,9 @@ using namespace legged_robot;
 
 class KalmanFilterEstimate : public StateEstimateBase {
  public:
-  KalmanFilterEstimate(LeggedInterface& legged_interface, const std::vector<HybridJointHandle>& hybrid_joint_handles,
-                       const std::vector<ContactSensorHandle>& contact_sensor_handles,
-                       const hardware_interface::ImuSensorHandle& imu_sensor_handle);
+  KalmanFilterEstimate(LeggedInterface& leggedInterface, const std::vector<HybridJointHandle>& hybridJointHandles,
+                       const std::vector<ContactSensorHandle>& contactSensorHandles,
+                       const hardware_interface::ImuSensorHandle& imuSensorHandle);
   vector_t update(const ros::Time& time, const ros::Duration& period) override;
 
  private:

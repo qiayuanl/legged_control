@@ -5,11 +5,10 @@
 #include "legged_estimation/FromTopiceEstimate.h"
 
 namespace legged {
-FromTopicStateEstimate::FromTopicStateEstimate(LeggedInterface& legged_interface,
-                                               const std::vector<HybridJointHandle>& hybrid_joint_handles_,
-                                               const std::vector<ContactSensorHandle>& contact_sensor_handles,
-                                               const hardware_interface::ImuSensorHandle& imu_sensor_handle)
-    : StateEstimateBase(legged_interface, hybrid_joint_handles_, contact_sensor_handles, imu_sensor_handle) {
+FromTopicStateEstimate::FromTopicStateEstimate(LeggedInterface& leggedInterface, const std::vector<HybridJointHandle>& hybridJointHandles,
+                                               const std::vector<ContactSensorHandle>& contactSensorHandles,
+                                               const hardware_interface::ImuSensorHandle& imuSensorHandle)
+    : StateEstimateBase(leggedInterface, hybridJointHandles, contactSensorHandles, imuSensorHandle) {
   ros::NodeHandle nh;
   sub_ = nh.subscribe<nav_msgs::Odometry>("/ground_truth/state", 10, &FromTopicStateEstimate::callback, this);
 }
