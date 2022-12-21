@@ -200,21 +200,19 @@ void LeggedController::setupMrt() {
   setThreadPriority(leggedInterface_->sqpSettings().threadPriority, mpcThread_);
 }
 
-void LeggedController::setupStateEstimate(LeggedInterface& /*legged_interface*/,
-                                          const std::vector<HybridJointHandle>& /*hybrid_joint_handles*/,
-                                          const std::vector<ContactSensorHandle>& contact_sensor_handles,
-                                          const hardware_interface::ImuSensorHandle& imu_sensor_handle) {
-  stateEstimate_ =
-      std::make_shared<KalmanFilterEstimate>(*leggedInterface_, hybridJointHandles_, contact_sensor_handles, imu_sensor_handle);
+void LeggedController::setupStateEstimate(LeggedInterface& /*leggedInterface*/,
+                                          const std::vector<HybridJointHandle>& /*hybridJointHandles*/,
+                                          const std::vector<ContactSensorHandle>& contactSensorHandles,
+                                          const hardware_interface::ImuSensorHandle& imuSensorHandle) {
+  stateEstimate_ = std::make_shared<KalmanFilterEstimate>(*leggedInterface_, hybridJointHandles_, contactSensorHandles, imuSensorHandle);
   currentObservation_.time = 0;
 }
 
-void LeggedCheaterController::setupStateEstimate(LeggedInterface& /*legged_interface*/,
-                                                 const std::vector<HybridJointHandle>& /*hybrid_joint_handles*/,
-                                                 const std::vector<ContactSensorHandle>& contact_sensor_handles,
-                                                 const hardware_interface::ImuSensorHandle& imu_sensor_handle) {
-  stateEstimate_ =
-      std::make_shared<FromTopicStateEstimate>(*leggedInterface_, hybridJointHandles_, contact_sensor_handles, imu_sensor_handle);
+void LeggedCheaterController::setupStateEstimate(LeggedInterface& /*leggedInterface*/,
+                                                 const std::vector<HybridJointHandle>& /*hybridJointHandles*/,
+                                                 const std::vector<ContactSensorHandle>& contactSensorHandles,
+                                                 const hardware_interface::ImuSensorHandle& imuSensorHandle) {
+  stateEstimate_ = std::make_shared<FromTopicStateEstimate>(*leggedInterface_, hybridJointHandles_, contactSensorHandles, imuSensorHandle);
 }
 
 }  // namespace legged
