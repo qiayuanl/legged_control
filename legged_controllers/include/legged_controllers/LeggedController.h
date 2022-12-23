@@ -14,7 +14,7 @@
 
 #include <legged_estimation/StateEstimateBase.h>
 #include <legged_interface/LeggedInterface.h>
-#include <legged_wbc/Wbc.h>
+#include <legged_wbc/WbcBase.h>
 
 #include "legged_controllers/SafetyChecker.h"
 
@@ -42,7 +42,7 @@ class LeggedController : public controller_interface::MultiInterfaceController<H
                                   const hardware_interface::ImuSensorHandle& imuSensorHandle);
 
   std::shared_ptr<LeggedInterface> leggedInterface_;
-  std::shared_ptr<Wbc> wbc_;
+  std::shared_ptr<WbcBase> wbc_;
   std::shared_ptr<SafetyChecker> safetyChecker_;
 
   std::shared_ptr<MPC_BASE> mpc_;

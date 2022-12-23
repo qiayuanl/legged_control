@@ -3,7 +3,7 @@
 //
 #include <pinocchio/fwd.hpp>  // forward declarations must be included first.
 
-#include "legged_wbc/Wbc.h"
+#include "legged_wbc/WbcBase.h"
 
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
 #include <ocs2_centroidal_model/ModelHelperFunctions.h>
@@ -12,7 +12,8 @@
 #include <pinocchio/algorithm/rnea.hpp>
 
 namespace legged {
-Wbc::Wbc(const std::string& taskFile, LeggedInterface& leggedInterface, const PinocchioEndEffectorKinematics& eeKinematics, bool verbose)
+WbcBase::WbcBase(const std::string& taskFile, LeggedInterface& leggedInterface, const PinocchioEndEffectorKinematics& eeKinematics,
+                 bool verbose)
     : pinoInterface_(leggedInterface.getPinocchioInterface()),
       info_(leggedInterface.getCentroidalModelInfo()),
       centroidalDynamics_(info_),
@@ -28,7 +29,7 @@ Wbc::Wbc(const std::string& taskFile, LeggedInterface& leggedInterface, const Pi
   loadTasksSetting(taskFile, verbose);
 }
 
-vector_t Wbc::update(const vector_t& stateDesired, const vector_t& inputDesired, vector_t& rbdStateMeasured, size_t mode) {
+vector_t WbcBase::update(const vector_t& stateDesired, const vector_t& inputDesired, vector_t& rbdStateMeasured, size_t mode) {
   stateDesired_ = stateDesired;
   inputDesired_ = inputDesired;
 
@@ -80,15 +81,10 @@ vector_t Wbc::update(const vector_t& stateDesired, const vector_t& inputDesired,
   // For base acceleration task
   updateCentroidalDynamics(pinoInterface_, info_, qMeasured_);
 
-  Task task0 = formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateFrictionConeTask() + formulateNoContactMotionTask();
-  Task task1 = formulateBaseAccelTask() + formulateSwingLegTask();
-  Task task2 = formulateContactForceTask();
-  HoQp hoQp(task2, std::make_shared<HoQp>(task1, std::make_shared<HoQp>(task0)));
-
-  return hoQp.getSolutions();
+  return {};
 }
 
-Task Wbc::formulateFloatingBaseEomTask() {
+Task WbcBase::formulateFloatingBaseEomTask() {
   auto& data = pinoInterface_.getData();
 
   matrix_t s(info_.actuatedDofNum, info_.generalizedCoordinatesNum);
@@ -101,7 +97,7 @@ Task Wbc::formulateFloatingBaseEomTask() {
   return {a, b, matrix_t(), vector_t()};
 }
 
-Task Wbc::formulateTorqueLimitsTask() {
+Task WbcBase::formulateTorqueLimitsTask() {
   matrix_t d(2 * info_.actuatedDofNum, numDecisionVars_);
   d.setZero();
   matrix_t i = matrix_t::Identity(info_.actuatedDofNum, info_.actuatedDofNum);
@@ -116,7 +112,7 @@ Task Wbc::formulateTorqueLimitsTask() {
   return {matrix_t(), vector_t(), d, f};
 }
 
-Task Wbc::formulateNoContactMotionTask() {
+Task WbcBase::formulateNoContactMotionTask() {
   matrix_t a(3 * numContacts_, numDecisionVars_);
   vector_t b(a.rows());
   a.setZero();
@@ -133,7 +129,7 @@ Task Wbc::formulateNoContactMotionTask() {
   return {a, b, matrix_t(), vector_t()};
 }
 
-Task Wbc::formulateFrictionConeTask() {
+Task WbcBase::formulateFrictionConeTask() {
   matrix_t a(3 * (info_.numThreeDofContacts - numContacts_), numDecisionVars_);
   a.setZero();
   size_t j = 0;
@@ -165,7 +161,7 @@ Task Wbc::formulateFrictionConeTask() {
   return {a, b, d, f};
 }
 
-Task Wbc::formulateBaseAccelTask() {
+Task WbcBase::formulateBaseAccelTask() {
   matrix_t a(6, numDecisionVars_);
   a.setZero();
   a.block(0, 0, 6, 6) = matrix_t::Identity(6, 6);
@@ -182,7 +178,7 @@ Task Wbc::formulateBaseAccelTask() {
   return {a, b, matrix_t(), vector_t()};
 }
 
-Task Wbc::formulateSwingLegTask() {
+Task WbcBase::formulateSwingLegTask() {
   std::vector<vector3_t> posMeasured = eeKinematics_->getPosition(vector_t());
   std::vector<vector3_t> velMeasured = eeKinematics_->getVelocity(vector_t(), vector_t());
   vector_t qDesired = mapping_.getPinocchioJointPosition(stateDesired_);
@@ -211,7 +207,7 @@ Task Wbc::formulateSwingLegTask() {
   return {a, b, matrix_t(), vector_t()};
 }
 
-Task Wbc::formulateContactForceTask() {
+Task WbcBase::formulateContactForceTask() {
   matrix_t a(3 * info_.numThreeDofContacts, numDecisionVars_);
   vector_t b(a.rows());
   a.setZero();
@@ -224,7 +220,7 @@ Task Wbc::formulateContactForceTask() {
   return {a, b, matrix_t(), vector_t()};
 }
 
-void Wbc::loadTasksSetting(const std::string& taskFile, bool verbose) {
+void WbcBase::loadTasksSetting(const std::string& taskFile, bool verbose) {
   // Load task file
   torqueLimits_ = vector_t(info_.actuatedDofNum / 4);
   loadData::loadEigenMatrix(taskFile, "torqueLimitsTask", torqueLimits_);

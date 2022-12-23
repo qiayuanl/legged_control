@@ -43,7 +43,8 @@ link_directories(
 
 add_library(${PROJECT_NAME}
         src/HoQp.cpp
-        src/Wbc.cpp
+        src/WbcBase.cpp
+        src/HierarchicalWbc.cpp
         )
 
 target_link_libraries(${PROJECT_NAME}

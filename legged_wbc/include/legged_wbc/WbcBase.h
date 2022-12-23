@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "legged_wbc/HoQp.h"
+#include "legged_wbc/Task.h"
 
 #include <legged_interface/LeggedInterface.h>
 #include <ocs2_centroidal_model/PinocchioCentroidalDynamics.h>
@@ -16,12 +16,13 @@ using namespace ocs2;
 using namespace legged_robot;
 
 // Decision Variables: x = [\dot u^T, F^T, \tau^T]^T
-class Wbc {
+class WbcBase {
  public:
-  Wbc(const std::string& taskFile, LeggedInterface& leggedInterface, const PinocchioEndEffectorKinematics& eeKinematics, bool verbose);
-  vector_t update(const vector_t& stateDesired, const vector_t& inputDesired, vector_t& rbdStateMeasured, size_t mode);
+  WbcBase(const std::string& taskFile, LeggedInterface& leggedInterface, const PinocchioEndEffectorKinematics& eeKinematics, bool verbose);
 
- private:
+  virtual vector_t update(const vector_t& stateDesired, const vector_t& inputDesired, vector_t& rbdStateMeasured, size_t mode);
+
+ protected:
   void loadTasksSetting(const std::string& taskFile, bool verbose);
 
   Task formulateFloatingBaseEomTask();
@@ -32,6 +33,7 @@ class Wbc {
   Task formulateSwingLegTask();
   Task formulateContactForceTask();
 
+ private:
   size_t numDecisionVars_;
   PinocchioInterface& pinoInterface_;
   const CentroidalModelInfo& info_;
