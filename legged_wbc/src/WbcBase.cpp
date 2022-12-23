@@ -16,18 +16,18 @@ namespace legged {
 WbcBase::WbcBase(LeggedInterface& leggedInterface, const PinocchioEndEffectorKinematics& eeKinematics)
     : pinoInterface_(leggedInterface.getPinocchioInterface()),
       info_(leggedInterface.getCentroidalModelInfo()),
-      centroidalDynamics_(info_),
       mapping_(info_),
-      eeKinematics_(eeKinematics.clone()) {
+      eeKinematics_(eeKinematics.clone()),
+      inputLast_(vector_t::Zero(info_.inputDim)) {
   numDecisionVars_ = info_.generalizedCoordinatesNum + 3 * info_.numThreeDofContacts + info_.actuatedDofNum;
-  centroidalDynamics_.setPinocchioInterface(pinoInterface_);
   mapping_.setPinocchioInterface(pinoInterface_);
   qMeasured_ = vector_t(info_.generalizedCoordinatesNum);
   vMeasured_ = vector_t(info_.generalizedCoordinatesNum);
   eeKinematics_->setPinocchioInterface(pinoInterface_);
 }
 
-vector_t WbcBase::update(const vector_t& stateDesired, const vector_t& inputDesired, vector_t& rbdStateMeasured, size_t mode) {
+vector_t WbcBase::update(const vector_t& stateDesired, const vector_t& inputDesired, const vector_t& rbdStateMeasured, size_t mode,
+                         scalar_t /*period*/) {
   stateDesired_ = stateDesired;
   inputDesired_ = inputDesired;
 
@@ -156,19 +156,21 @@ Task WbcBase::formulateFrictionConeTask() {
   return {a, b, d, f};
 }
 
-Task WbcBase::formulateBaseAccelTask() {
+Task WbcBase::formulateBaseAccelTask(scalar_t period) {
   matrix_t a(6, numDecisionVars_);
   a.setZero();
   a.block(0, 0, 6, 6) = matrix_t::Identity(6, 6);
 
-  vector_t jointAccel = vector_t::Zero(info_.actuatedDofNum);  // TODO: finite differences
+  vector_t jointAccel = centroidal_model::getJointVelocities(inputDesired_ - inputLast_, info_) / period;
+  inputLast_ = inputDesired_;
 
   const auto& model = pinoInterface_.getModel();
   auto& data = pinoInterface_.getData();
   const auto qPinocchio = mapping_.getPinocchioJointPosition(stateDesired_);
-  const vector_t vPinocchio = mapping_.getPinocchioJointVelocity(stateDesired_, inputDesired_);
 
   updateCentroidalDynamics(pinoInterface_, info_, qPinocchio);
+
+  const vector_t vPinocchio = mapping_.getPinocchioJointVelocity(stateDesired_, inputDesired_);
 
   const auto& A = getCentroidalMomentumMatrix(pinoInterface_);
   const Matrix6 Ab = A.template leftCols<6>();

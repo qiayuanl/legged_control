@@ -8,8 +8,9 @@
 
 namespace legged {
 
-vector_t WeightedWbc::update(const vector_t& stateDesired, const vector_t& inputDesired, vector_t& rbdStateMeasured, size_t mode) {
-  WbcBase::update(stateDesired, inputDesired, rbdStateMeasured, mode);
+vector_t WeightedWbc::update(const vector_t& stateDesired, const vector_t& inputDesired, const vector_t& rbdStateMeasured, size_t mode,
+                             scalar_t period) {
+  WbcBase::update(stateDesired, inputDesired, rbdStateMeasured, mode, period);
 
   // Constraints
   Task constraints =
@@ -27,7 +28,7 @@ vector_t WeightedWbc::update(const vector_t& stateDesired, const vector_t& input
          constraints.f_;  // clang-format on
 
   // Cost
-  Task weighedTask = formulateSwingLegTask() * weightSwingLeg_ + formulateBaseAccelTask() * weightBaseAccel_ +
+  Task weighedTask = formulateSwingLegTask() * weightSwingLeg_ + formulateBaseAccelTask(period) * weightBaseAccel_ +
                      formulateContactForceTask() * weightContactForce_;
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> H = weighedTask.a_.transpose() * weighedTask.a_;
   vector_t g = -weighedTask.a_.transpose() * weighedTask.b_;

@@ -123,7 +123,7 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
   // Whole body control
   currentObservation_.input = optimizedInput;
 
-  vector_t x = wbc_->update(optimizedState, optimizedInput, measuredRbdState, plannedMode);
+  vector_t x = wbc_->update(optimizedState, optimizedInput, measuredRbdState, plannedMode, period.toSec());
 
   vector_t torque = x.tail(12);
 

@@ -7,11 +7,12 @@
 #include "legged_wbc/HoQp.h"
 
 namespace legged {
-vector_t HierarchicalWbc::update(const vector_t& stateDesired, const vector_t& inputDesired, vector_t& rbdStateMeasured, size_t mode) {
-  WbcBase::update(stateDesired, inputDesired, rbdStateMeasured, mode);
+vector_t HierarchicalWbc::update(const vector_t& stateDesired, const vector_t& inputDesired, const vector_t& rbdStateMeasured, size_t mode,
+                                 scalar_t period) {
+  WbcBase::update(stateDesired, inputDesired, rbdStateMeasured, mode, period);
 
   Task task0 = formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateFrictionConeTask() + formulateNoContactMotionTask();
-  Task task1 = formulateBaseAccelTask() + formulateSwingLegTask();
+  Task task1 = formulateBaseAccelTask(period) + formulateSwingLegTask();
   Task task2 = formulateContactForceTask();
   HoQp hoQp(task2, std::make_shared<HoQp>(task1, std::make_shared<HoQp>(task0)));
 

@@ -26,7 +26,8 @@ class WbcBase {
 
   virtual void loadTasksSetting(const std::string& taskFile, bool verbose);
 
-  virtual vector_t update(const vector_t& stateDesired, const vector_t& inputDesired, vector_t& rbdStateMeasured, size_t mode);
+  virtual vector_t update(const vector_t& stateDesired, const vector_t& inputDesired, const vector_t& rbdStateMeasured, size_t mode,
+                          scalar_t period);
 
  protected:
   size_t getNumDecisionVars() const { return numDecisionVars_; }
@@ -35,7 +36,7 @@ class WbcBase {
   Task formulateTorqueLimitsTask();
   Task formulateNoContactMotionTask();
   Task formulateFrictionConeTask();
-  Task formulateBaseAccelTask();
+  Task formulateBaseAccelTask(scalar_t period);
   Task formulateSwingLegTask();
   Task formulateContactForceTask();
 
@@ -43,11 +44,10 @@ class WbcBase {
   size_t numDecisionVars_;
   PinocchioInterface& pinoInterface_;
   const CentroidalModelInfo& info_;
-  PinocchioCentroidalDynamics centroidalDynamics_;
   CentroidalModelPinocchioMapping mapping_;
   std::unique_ptr<PinocchioEndEffectorKinematics> eeKinematics_;
 
-  vector_t stateDesired_, inputDesired_, qMeasured_, vMeasured_;
+  vector_t stateDesired_, inputDesired_, qMeasured_, vMeasured_, inputLast_;
   matrix_t j_, dj_;
   contact_flag_t contactFlag_{};
   size_t numContacts_{};

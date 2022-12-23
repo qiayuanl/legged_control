@@ -11,7 +11,8 @@ class HierarchicalWbc : public WbcBase {
  public:
   using WbcBase::WbcBase;
 
-  vector_t update(const vector_t& stateDesired, const vector_t& inputDesired, vector_t& rbdStateMeasured, size_t mode) override;
+  vector_t update(const vector_t& stateDesired, const vector_t& inputDesired, const vector_t& rbdStateMeasured, size_t mode,
+                  scalar_t period) override;
 };
 
 }  // namespace legged
