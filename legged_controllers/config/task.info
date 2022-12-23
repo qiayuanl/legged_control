@@ -240,3 +240,10 @@ swingLegTask
     kp                   350
     kd                   37
 }
+
+weight
+{
+    swingLeg        100
+    baseAccel       1
+    contactForce    0.01
+}

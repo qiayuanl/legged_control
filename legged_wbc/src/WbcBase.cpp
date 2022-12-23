@@ -12,8 +12,7 @@
 #include <pinocchio/algorithm/rnea.hpp>
 
 namespace legged {
-WbcBase::WbcBase(const std::string& taskFile, LeggedInterface& leggedInterface, const PinocchioEndEffectorKinematics& eeKinematics,
-                 bool verbose)
+WbcBase::WbcBase(LeggedInterface& leggedInterface, const PinocchioEndEffectorKinematics& eeKinematics)
     : pinoInterface_(leggedInterface.getPinocchioInterface()),
       info_(leggedInterface.getCentroidalModelInfo()),
       centroidalDynamics_(info_),
@@ -25,8 +24,6 @@ WbcBase::WbcBase(const std::string& taskFile, LeggedInterface& leggedInterface, 
   qMeasured_ = vector_t(info_.generalizedCoordinatesNum);
   vMeasured_ = vector_t(info_.generalizedCoordinatesNum);
   eeKinematics_->setPinocchioInterface(pinoInterface_);
-
-  loadTasksSetting(taskFile, verbose);
 }
 
 vector_t WbcBase::update(const vector_t& stateDesired, const vector_t& inputDesired, vector_t& rbdStateMeasured, size_t mode) {
@@ -225,7 +222,7 @@ void WbcBase::loadTasksSetting(const std::string& taskFile, bool verbose) {
   torqueLimits_ = vector_t(info_.actuatedDofNum / 4);
   loadData::loadEigenMatrix(taskFile, "torqueLimitsTask", torqueLimits_);
   if (verbose) {
-    std::cerr << "\n #### Torque Limits Task: \n";
+    std::cerr << "\n #### Torque Limits Task:";
     std::cerr << "\n #### =============================================================================\n";
     std::cerr << "\n #### HAA HFE KFE: " << torqueLimits_.transpose() << "\n";
     std::cerr << " #### =============================================================================\n";
@@ -234,7 +231,7 @@ void WbcBase::loadTasksSetting(const std::string& taskFile, bool verbose) {
   boost::property_tree::read_info(taskFile, pt);
   std::string prefix = "frictionConeTask.";
   if (verbose) {
-    std::cerr << "\n #### Friction Cone Task: ";
+    std::cerr << "\n #### Friction Cone Task:";
     std::cerr << "\n #### =============================================================================\n";
   }
   loadData::loadPtreeValue(pt, frictionCoeff_, prefix + "frictionCoefficient", verbose);
@@ -243,7 +240,7 @@ void WbcBase::loadTasksSetting(const std::string& taskFile, bool verbose) {
   }
   prefix = "swingLegTask.";
   if (verbose) {
-    std::cerr << "\n #### Swing Leg Task: ";
+    std::cerr << "\n #### Swing Leg Task:";
     std::cerr << "\n #### =============================================================================\n";
   }
   loadData::loadPtreeValue(pt, swingKp_, prefix + "kp", verbose);

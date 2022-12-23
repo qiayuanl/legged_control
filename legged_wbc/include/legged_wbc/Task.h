@@ -30,6 +30,13 @@ class Task {
             concatenateVectors(f_, rhs.f_)};
   }
 
+  Task operator*(scalar_t rhs) const {  // clang-format off
+    return {a_.cols() > 0 ? rhs * a_ : a_,
+            b_.cols() > 0 ? rhs * b_ : b_,
+            d_.cols() > 0 ? rhs * d_ : d_,
+            f_.cols() > 0 ? rhs * f_ : f_};  // clang-format on
+  }
+
   matrix_t a_, d_;
   vector_t b_, f_;
 

@@ -18,12 +18,14 @@ using namespace legged_robot;
 // Decision Variables: x = [\dot u^T, F^T, \tau^T]^T
 class WbcBase {
  public:
-  WbcBase(const std::string& taskFile, LeggedInterface& leggedInterface, const PinocchioEndEffectorKinematics& eeKinematics, bool verbose);
+  WbcBase(LeggedInterface& leggedInterface, const PinocchioEndEffectorKinematics& eeKinematics);
+
+  virtual void loadTasksSetting(const std::string& taskFile, bool verbose);
 
   virtual vector_t update(const vector_t& stateDesired, const vector_t& inputDesired, vector_t& rbdStateMeasured, size_t mode);
 
  protected:
-  void loadTasksSetting(const std::string& taskFile, bool verbose);
+  size_t getNumDecisionVars() const { return numDecisionVars_; }
 
   Task formulateFloatingBaseEomTask();
   Task formulateTorqueLimitsTask();

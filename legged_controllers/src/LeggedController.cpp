@@ -22,6 +22,7 @@
 #include <legged_estimation/FromTopiceEstimate.h>
 #include <legged_estimation/LinearKalmanFilter.h>
 #include <legged_wbc/HierarchicalWbc.h>
+#include <legged_wbc/WeightedWbc.h>
 #include <pluginlib/class_list_macros.hpp>
 
 namespace legged {
@@ -67,7 +68,8 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
                      robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu"));
 
   // Whole body control
-  wbc_ = std::make_shared<HierarchicalWbc>(taskFile, *leggedInterface_, eeKinematics, verbose);
+  wbc_ = std::make_shared<WeightedWbc>(*leggedInterface_, eeKinematics);
+  wbc_->loadTasksSetting(taskFile, verbose);
 
   // Safety Checker
   safetyChecker_ = std::make_shared<SafetyChecker>(leggedInterface_->getCentroidalModelInfo());
