@@ -7,6 +7,7 @@
 
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
 #include <ocs2_centroidal_model/ModelHelperFunctions.h>
+#include <pinocchio/algorithm/centroidal.hpp>
 #include <pinocchio/algorithm/crba.hpp>
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/rnea.hpp>
@@ -74,9 +75,6 @@ vector_t WbcBase::update(const vector_t& stateDesired, const vector_t& inputDesi
     pinocchio::getFrameJacobianTimeVariation(model, data, info_.endEffectorFrameIndices[i], pinocchio::LOCAL_WORLD_ALIGNED, jac);
     dj_.block(3 * i, 0, 3, info_.generalizedCoordinatesNum) = jac.template topRows<3>();
   }
-
-  // For base acceleration task
-  updateCentroidalDynamics(pinoInterface_, info_, qMeasured_);
 
   return {};
 }
@@ -163,14 +161,26 @@ Task WbcBase::formulateBaseAccelTask() {
   a.setZero();
   a.block(0, 0, 6, 6) = matrix_t::Identity(6, 6);
 
-  const vector_t momentumRate = info_.robotMass * centroidalDynamics_.getValue(0, stateDesired_, inputDesired_).head(6);
-  const Eigen::Matrix<scalar_t, 6, 6> aBase = getCentroidalMomentumMatrix(pinoInterface_).template leftCols<6>();
-  const auto aBaseInv = computeFloatingBaseCentroidalMomentumMatrixInverse(aBase);
-  vector_t b = aBaseInv * momentumRate;
+  vector_t jointAccel = vector_t::Zero(info_.actuatedDofNum);  // TODO: finite differences
 
-  const vector3_t angularVelocity =
-      getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(qMeasured_.segment<3>(3), vMeasured_.segment<3>(3));
-  b.segment<3>(3) -= aBaseInv.block<3, 3>(3, 3) * angularVelocity.cross(aBase.block<3, 3>(3, 3) * angularVelocity);
+  const auto& model = pinoInterface_.getModel();
+  auto& data = pinoInterface_.getData();
+  const auto qPinocchio = mapping_.getPinocchioJointPosition(stateDesired_);
+  const vector_t vPinocchio = mapping_.getPinocchioJointVelocity(stateDesired_, inputDesired_);
+
+  updateCentroidalDynamics(pinoInterface_, info_, qPinocchio);
+
+  const auto& A = getCentroidalMomentumMatrix(pinoInterface_);
+  const Matrix6 Ab = A.template leftCols<6>();
+  const auto AbInv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
+  const auto Aj = A.rightCols(info_.actuatedDofNum);
+
+  const auto ADot = pinocchio::dccrba(model, data, qPinocchio, vPinocchio);
+  Vector6 centroidalMomentumRate = info_.robotMass * getNormalizedCentroidalMomentumRate(pinoInterface_, info_, inputDesired_);
+  centroidalMomentumRate.noalias() -= ADot * vPinocchio;
+  centroidalMomentumRate.noalias() -= Aj * jointAccel;
+
+  const CentroidalModelRbdConversions::Vector6 b = AbInv * centroidalMomentumRate;
 
   return {a, b, matrix_t(), vector_t()};
 }

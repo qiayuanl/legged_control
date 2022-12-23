@@ -7,6 +7,7 @@
 #include "legged_wbc/Task.h"
 
 #include <legged_interface/LeggedInterface.h>
+#include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
 #include <ocs2_centroidal_model/PinocchioCentroidalDynamics.h>
 #include <ocs2_legged_robot/gait/MotionPhaseDefinition.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -17,6 +18,9 @@ using namespace legged_robot;
 
 // Decision Variables: x = [\dot u^T, F^T, \tau^T]^T
 class WbcBase {
+  using Vector6 = Eigen::Matrix<scalar_t, 6, 1>;
+  using Matrix6 = Eigen::Matrix<scalar_t, 6, 6>;
+
  public:
   WbcBase(LeggedInterface& leggedInterface, const PinocchioEndEffectorKinematics& eeKinematics);
 
