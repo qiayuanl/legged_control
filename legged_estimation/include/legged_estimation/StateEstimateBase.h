@@ -12,16 +12,18 @@
 #include <hardware_interface/imu_sensor_interface.h>
 #include <legged_common/hardware_interface/ContactSensorInterface.h>
 #include <legged_common/hardware_interface/HybridJointInterface.h>
-#include <legged_interface/LeggedInterface.h>
+#include <ocs2_centroidal_model/CentroidalModelInfo.h>
+#include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 
 namespace legged {
+
 using namespace ocs2;
-using namespace legged_robot;
 
 class StateEstimateBase {
  public:
-  StateEstimateBase(LeggedInterface& leggedInterface, std::vector<HybridJointHandle> hybridJointHandles,
-                    std::vector<ContactSensorHandle> contactSensorHandles, hardware_interface::ImuSensorHandle imuSensorHandle);
+  StateEstimateBase(PinocchioInterface& pinocchioInterface, CentroidalModelInfo info, const PinocchioEndEffectorKinematics& eeKinematics,
+                    std::vector<HybridJointHandle> hybridJointHandles, std::vector<ContactSensorHandle> contactSensorHandles,
+                    hardware_interface::ImuSensorHandle imuSensorHandle);
   virtual vector_t update(const ros::Time& time, const ros::Duration& period) = 0;
   size_t getMode();
 
@@ -31,7 +33,10 @@ class StateEstimateBase {
   void updateJointStates();
   void publishMsgs(const nav_msgs::Odometry& odom, const ros::Time& time);
 
-  LeggedInterface& leggedInterface_;
+  PinocchioInterface& pinoInterface_;
+  CentroidalModelInfo info_;
+  std::unique_ptr<PinocchioEndEffectorKinematics> eeKinematics_;
+
   size_t generalizedCoordinatesNum_;
   vector_t rbdState_;
 

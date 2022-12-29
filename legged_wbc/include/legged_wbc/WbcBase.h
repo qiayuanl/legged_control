@@ -6,7 +6,6 @@
 
 #include "legged_wbc/Task.h"
 
-#include <legged_interface/LeggedInterface.h>
 #include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
 #include <ocs2_centroidal_model/PinocchioCentroidalDynamics.h>
 #include <ocs2_legged_robot/gait/MotionPhaseDefinition.h>
@@ -22,7 +21,7 @@ class WbcBase {
   using Matrix6 = Eigen::Matrix<scalar_t, 6, 6>;
 
  public:
-  WbcBase(LeggedInterface& leggedInterface, const PinocchioEndEffectorKinematics& eeKinematics);
+  WbcBase(PinocchioInterface& pinocchioInterface, CentroidalModelInfo info, const PinocchioEndEffectorKinematics& eeKinematics);
 
   virtual void loadTasksSetting(const std::string& taskFile, bool verbose);
 
@@ -43,9 +42,10 @@ class WbcBase {
  private:
   size_t numDecisionVars_;
   PinocchioInterface& pinoInterface_;
-  const CentroidalModelInfo& info_;
-  CentroidalModelPinocchioMapping mapping_;
+  CentroidalModelInfo info_;
+
   std::unique_ptr<PinocchioEndEffectorKinematics> eeKinematics_;
+  CentroidalModelPinocchioMapping mapping_;
 
   vector_t stateDesired_, inputDesired_, qMeasured_, vMeasured_, inputLast_;
   matrix_t j_, dj_;

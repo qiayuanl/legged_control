@@ -16,11 +16,11 @@
 
 namespace legged {
 using namespace ocs2;
-using namespace legged_robot;
 
 class KalmanFilterEstimate : public StateEstimateBase {
  public:
-  KalmanFilterEstimate(LeggedInterface& leggedInterface, const std::vector<HybridJointHandle>& hybridJointHandles,
+  KalmanFilterEstimate(PinocchioInterface& pinocchioInterface, CentroidalModelInfo info, const PinocchioEndEffectorKinematics& eeKinematics,
+                       const std::vector<HybridJointHandle>& hybridJointHandles,
                        const std::vector<ContactSensorHandle>& contactSensorHandles,
                        const hardware_interface::ImuSensorHandle& imuSensorHandle);
   vector_t update(const ros::Time& time, const ros::Duration& period) override;
@@ -29,8 +29,6 @@ class KalmanFilterEstimate : public StateEstimateBase {
   void updateFromTopic();
 
   void callback(const nav_msgs::Odometry::ConstPtr& msg);
-
-  PinocchioEndEffectorKinematics pinocchioEeKine_;
 
   Eigen::Matrix<scalar_t, 18, 1> xHat_;
   Eigen::Matrix<scalar_t, 12, 1> ps_;

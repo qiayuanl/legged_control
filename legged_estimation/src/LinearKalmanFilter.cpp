@@ -2,21 +2,28 @@
 // Created by qiayuan on 2022/7/24.
 //
 
-#include <pinocchio/algorithm/frames.hpp>
-#include <pinocchio/algorithm/kinematics.hpp>
+#include <utility>
+
+#include <pinocchio/fwd.hpp>
 
 #include "legged_estimation/LinearKalmanFilter.h"
 
+#include <ocs2_legged_robot/common/Types.h>
 #include <ocs2_robotic_tools/common/RotationDerivativesTransforms.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
+#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/kinematics.hpp>
 
 namespace legged {
-KalmanFilterEstimate::KalmanFilterEstimate(LeggedInterface& leggedInterface, const std::vector<HybridJointHandle>& hybridJointHandles,
+
+using namespace legged_robot;
+
+KalmanFilterEstimate::KalmanFilterEstimate(PinocchioInterface& pinocchioInterface, CentroidalModelInfo info,
+                                           const PinocchioEndEffectorKinematics& eeKinematics,
+                                           const std::vector<HybridJointHandle>& hybridJointHandles,
                                            const std::vector<ContactSensorHandle>& contactSensorHandles,
                                            const hardware_interface::ImuSensorHandle& imuSensorHandle)
-    : StateEstimateBase(leggedInterface, hybridJointHandles, contactSensorHandles, imuSensorHandle),
-      pinocchioEeKine_(leggedInterface.getPinocchioInterface(), CentroidalModelPinocchioMapping(leggedInterface.getCentroidalModelInfo()),
-                       leggedInterface.modelSettings().contactNames3DoF),
+    : StateEstimateBase(pinocchioInterface, std::move(info), eeKinematics, hybridJointHandles, contactSensorHandles, imuSensorHandle),
       tfListener_(tfBuffer_),
       topicUpdated_(false) {
   xHat_.setZero();
@@ -77,9 +84,9 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   q_.block(3, 3, 3, 3) = (dt * 9.81f / 20.f) * Eigen::Matrix<scalar_t, 3, 3>::Identity();
   q_.block(6, 6, 12, 12) = dt * Eigen::Matrix<scalar_t, 12, 12>::Identity();
 
-  const auto& model = leggedInterface_.getPinocchioInterface().getModel();
-  auto& data = leggedInterface_.getPinocchioInterface().getData();
-  size_t actuatedDofNum = leggedInterface_.getCentroidalModelInfo().actuatedDofNum;
+  const auto& model = pinoInterface_.getModel();
+  auto& data = pinoInterface_.getData();
+  size_t actuatedDofNum = info_.actuatedDofNum;
 
   vector_t qPino(generalizedCoordinatesNum_);
   vector_t vPino(generalizedCoordinatesNum_);
@@ -90,16 +97,15 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   vPino.setZero();
   vPino.segment<3>(3) = getEulerAnglesZyxDerivativesFromGlobalAngularVelocity<scalar_t>(
       qPino.segment<3>(3),
-      rbdState_.segment<3>(
-          leggedInterface_.getCentroidalModelInfo().generalizedCoordinatesNum));  // Only set angular velocity, let linear velocity be zero
+      rbdState_.segment<3>(info_.generalizedCoordinatesNum));  // Only set angular velocity, let linear velocity be zero
   vPino.tail(actuatedDofNum) = rbdState_.segment(6 + generalizedCoordinatesNum_, actuatedDofNum);
 
   pinocchio::forwardKinematics(model, data, qPino, vPino);
-  pinocchio::updateFramePlacements(leggedInterface_.getPinocchioInterface().getModel(), leggedInterface_.getPinocchioInterface().getData());
-  pinocchioEeKine_.setPinocchioInterface(leggedInterface_.getPinocchioInterface());
+  pinocchio::updateFramePlacements(pinoInterface_.getModel(), pinoInterface_.getData());
+  eeKinematics_->setPinocchioInterface(pinoInterface_);
 
-  const auto eePos = pinocchioEeKine_.getPosition(vector_t());
-  const auto eeVel = pinocchioEeKine_.getVelocity(vector_t(), vector_t());
+  const auto eePos = eeKinematics_->getPosition(vector_t());
+  const auto eeVel = eeKinematics_->getVelocity(vector_t(), vector_t());
 
   scalar_t footRadius = 0.015;
   scalar_t imuProcessNoisePosition = 0.2;

@@ -21,7 +21,6 @@
 #include <angles/angles.h>
 #include <legged_estimation/FromTopiceEstimate.h>
 #include <legged_estimation/LinearKalmanFilter.h>
-#include <legged_wbc/HierarchicalWbc.h>
 #include <legged_wbc/WeightedWbc.h>
 #include <pluginlib/class_list_macros.hpp>
 
@@ -44,10 +43,10 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
   // Visualization
   ros::NodeHandle nh;
   CentroidalModelPinocchioMapping pinocchioMapping(leggedInterface_->getCentroidalModelInfo());
-  PinocchioEndEffectorKinematics eeKinematics(leggedInterface_->getPinocchioInterface(), pinocchioMapping,
-                                              leggedInterface_->modelSettings().contactNames3DoF);
+  eeKinematicsPtr_ = std::make_shared<PinocchioEndEffectorKinematics>(leggedInterface_->getPinocchioInterface(), pinocchioMapping,
+                                                                      leggedInterface_->modelSettings().contactNames3DoF);
   visualizer_ = std::make_shared<LeggedRobotVisualizer>(leggedInterface_->getPinocchioInterface(),
-                                                        leggedInterface_->getCentroidalModelInfo(), eeKinematics, nh);
+                                                        leggedInterface_->getCentroidalModelInfo(), *eeKinematicsPtr_, nh);
 
   // Hardware interface
   auto* hybridJointInterface = robot_hw->get<HybridJointInterface>();
@@ -68,7 +67,8 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
                      robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu"));
 
   // Whole body control
-  wbc_ = std::make_shared<WeightedWbc>(*leggedInterface_, eeKinematics);
+  wbc_ = std::make_shared<WeightedWbc>(leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(),
+                                       *eeKinematicsPtr_);
   wbc_->loadTasksSetting(taskFile, verbose);
 
   // Safety Checker
@@ -207,7 +207,9 @@ void LeggedController::setupStateEstimate(LeggedInterface& /*leggedInterface*/,
                                           const std::vector<HybridJointHandle>& /*hybridJointHandles*/,
                                           const std::vector<ContactSensorHandle>& contactSensorHandles,
                                           const hardware_interface::ImuSensorHandle& imuSensorHandle) {
-  stateEstimate_ = std::make_shared<KalmanFilterEstimate>(*leggedInterface_, hybridJointHandles_, contactSensorHandles, imuSensorHandle);
+  stateEstimate_ =
+      std::make_shared<KalmanFilterEstimate>(leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(),
+                                             *eeKinematicsPtr_, hybridJointHandles_, contactSensorHandles, imuSensorHandle);
   currentObservation_.time = 0;
 }
 
@@ -215,7 +217,9 @@ void LeggedCheaterController::setupStateEstimate(LeggedInterface& /*leggedInterf
                                                  const std::vector<HybridJointHandle>& /*hybridJointHandles*/,
                                                  const std::vector<ContactSensorHandle>& contactSensorHandles,
                                                  const hardware_interface::ImuSensorHandle& imuSensorHandle) {
-  stateEstimate_ = std::make_shared<FromTopicStateEstimate>(*leggedInterface_, hybridJointHandles_, contactSensorHandles, imuSensorHandle);
+  stateEstimate_ =
+      std::make_shared<FromTopicStateEstimate>(leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(),
+                                               *eeKinematicsPtr_, hybridJointHandles_, contactSensorHandles, imuSensorHandle);
 }
 
 }  // namespace legged

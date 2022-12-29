@@ -11,14 +11,15 @@
 #include <pinocchio/algorithm/crba.hpp>
 #include <pinocchio/algorithm/frames.hpp>
 #include <pinocchio/algorithm/rnea.hpp>
+#include <utility>
 
 namespace legged {
-WbcBase::WbcBase(LeggedInterface& leggedInterface, const PinocchioEndEffectorKinematics& eeKinematics)
-    : pinoInterface_(leggedInterface.getPinocchioInterface()),
-      info_(leggedInterface.getCentroidalModelInfo()),
+WbcBase::WbcBase(PinocchioInterface& pinocchioInterface, CentroidalModelInfo info, const PinocchioEndEffectorKinematics& eeKinematics)
+    : pinoInterface_(pinocchioInterface),
+      info_(std::move(info)),
       mapping_(info_),
-      eeKinematics_(eeKinematics.clone()),
-      inputLast_(vector_t::Zero(info_.inputDim)) {
+      inputLast_(vector_t::Zero(info_.inputDim)),
+      eeKinematics_(eeKinematics.clone()) {
   numDecisionVars_ = info_.generalizedCoordinatesNum + 3 * info_.numThreeDofContacts + info_.actuatedDofNum;
   mapping_.setPinocchioInterface(pinoInterface_);
   qMeasured_ = vector_t(info_.generalizedCoordinatesNum);

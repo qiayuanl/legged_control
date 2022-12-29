@@ -42,6 +42,8 @@ class LeggedController : public controller_interface::MultiInterfaceController<H
                                   const hardware_interface::ImuSensorHandle& imuSensorHandle);
 
   std::shared_ptr<LeggedInterface> leggedInterface_;
+  std::shared_ptr<PinocchioEndEffectorKinematics> eeKinematicsPtr_;
+
   std::shared_ptr<WbcBase> wbc_;
   std::shared_ptr<SafetyChecker> safetyChecker_;
 
