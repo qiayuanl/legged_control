@@ -1,6 +1,8 @@
 //
 // Created by qiayuan on 2022/7/16.
 //
+#include <memory>
+
 #include <pinocchio/fwd.hpp>  // forward declarations must be included first.
 
 #include <pinocchio/algorithm/frames.hpp>
@@ -60,7 +62,7 @@ LeggedInterface::LeggedInterface(const std::string& taskFile, const std::string&
   mpcSettings_ = mpc::loadSettings(taskFile, "mpc", verbose);
   rolloutSettings_ = rollout::loadSettings(taskFile, "rollout", verbose);
   ddpSettings_ = ddp::loadSettings(taskFile, "ddp", verbose);
-  sqpSettings_ = multiple_shooting::loadSettings(taskFile, "multiple_shooting", verbose);
+  sqpSettings_ = sqp::loadSettings(taskFile, "sqp", verbose);
 }
 
 /******************************************************************************************************/
@@ -75,19 +77,19 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 
   // Swing trajectory planner
-  std::unique_ptr<SwingTrajectoryPlanner> swingTrajectoryPlanner(new SwingTrajectoryPlanner(
-      loadSwingTrajectorySettings(taskFile, "swing_trajectory_config", verbose), centroidalModelInfo_.numThreeDofContacts));
+  auto swingTrajectoryPlanner =
+      std::make_unique<SwingTrajectoryPlanner>(loadSwingTrajectorySettings(taskFile, "swing_trajectory_config", verbose), 4);
 
   // Mode schedule manager
   referenceManagerPtr_ =
       std::make_shared<SwitchedModelReferenceManager>(loadGaitSchedule(referenceFile, verbose), std::move(swingTrajectoryPlanner));
 
   // Optimal control problem
-  problemPtr_.reset(new OptimalControlProblem);
+  problemPtr_ = std::make_unique<OptimalControlProblem>();
 
   // Dynamics
   std::unique_ptr<SystemDynamicsBase> dynamicsPtr;
-  dynamicsPtr.reset(new LeggedRobotDynamicsAD(*pinocchioInterfacePtr_, centroidalModelInfo_, "dynamics", modelSettings_));
+  dynamicsPtr = std::make_unique<LeggedRobotDynamicsAD>(*pinocchioInterfacePtr_, centroidalModelInfo_, "dynamics", modelSettings_);
   problemPtr_->dynamicsPtr = std::move(dynamicsPtr);
 
   // Cost terms
@@ -126,15 +128,15 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
   }
 
   // Pre-computation
-  problemPtr_->preComputationPtr.reset(new LeggedRobotPreComputation(*pinocchioInterfacePtr_, centroidalModelInfo_,
-                                                                     *referenceManagerPtr_->getSwingTrajectoryPlanner(), modelSettings_));
+  problemPtr_->preComputationPtr = std::make_unique<LeggedRobotPreComputation>(
+      *pinocchioInterfacePtr_, centroidalModelInfo_, *referenceManagerPtr_->getSwingTrajectoryPlanner(), modelSettings_);
 
   // Rollout
-  rolloutPtr_.reset(new TimeTriggeredRollout(*problemPtr_->dynamicsPtr, rolloutSettings_));
+  rolloutPtr_ = std::make_unique<TimeTriggeredRollout>(*problemPtr_->dynamicsPtr, rolloutSettings_);
 
   // Initialization
   constexpr bool extendNormalizedNomentum = true;
-  initializerPtr_.reset(new LeggedRobotInitializer(centroidalModelInfo_, *referenceManagerPtr_, extendNormalizedNomentum));
+  initializerPtr_ = std::make_unique<LeggedRobotInitializer>(centroidalModelInfo_, *referenceManagerPtr_, extendNormalizedNomentum);
 }
 
 /******************************************************************************************************/
@@ -143,7 +145,8 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
 void LeggedInterface::setupModel(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
                                  bool /*verbose*/) {
   // PinocchioInterface
-  pinocchioInterfacePtr_.reset(new PinocchioInterface(centroidal_model::createPinocchioInterface(urdfFile, modelSettings_.jointNames)));
+  pinocchioInterfacePtr_ =
+      std::make_unique<PinocchioInterface>(centroidal_model::createPinocchioInterface(urdfFile, modelSettings_.jointNames));
 
   // CentroidalModelInfo
   centroidalModelInfo_ = centroidal_model::createCentroidalModelInfo(
@@ -216,19 +219,19 @@ matrix_t LeggedInterface::initializeInputCostWeight(const std::string& taskFile,
 /******************************************************************************************************/
 std::unique_ptr<StateInputCost> LeggedInterface::getBaseTrackingCost(const std::string& taskFile, const CentroidalModelInfo& info,
                                                                      bool verbose) {
-  matrix_t q(info.stateDim, info.stateDim);
-  loadData::loadEigenMatrix(taskFile, "Q", q);
-  matrix_t r = initializeInputCostWeight(taskFile, info);
+  matrix_t Q(info.stateDim, info.stateDim);
+  loadData::loadEigenMatrix(taskFile, "Q", Q);
+  matrix_t R = initializeInputCostWeight(taskFile, info);
 
   if (verbose) {
     std::cerr << "\n #### Base Tracking Cost Coefficients: ";
     std::cerr << "\n #### =============================================================================\n";
-    std::cerr << "Q:\n" << q << "\n";
-    std::cerr << "R:\n" << r << "\n";
+    std::cerr << "Q:\n" << Q << "\n";
+    std::cerr << "R:\n" << R << "\n";
     std::cerr << " #### =============================================================================\n";
   }
 
-  return std::unique_ptr<StateInputCost>(new LeggedRobotStateInputQuadraticCost(std::move(q), std::move(r), info, *referenceManagerPtr_));
+  return std::make_unique<LeggedRobotStateInputQuadraticCost>(std::move(Q), std::move(R), info, *referenceManagerPtr_);
 }
 
 /******************************************************************************************************/
@@ -261,12 +264,11 @@ std::pair<scalar_t, RelaxedBarrierPenalty::Config> LeggedInterface::loadFriction
 std::unique_ptr<StateInputCost> LeggedInterface::getFrictionConeConstraint(size_t contactPointIndex, scalar_t frictionCoefficient,
                                                                            const RelaxedBarrierPenalty::Config& barrierPenaltyConfig) {
   FrictionConeConstraint::Config frictionConeConConfig(frictionCoefficient);
-  std::unique_ptr<FrictionConeConstraint> frictionConeConstraintPtr(
-      new FrictionConeConstraint(*referenceManagerPtr_, frictionConeConConfig, contactPointIndex, centroidalModelInfo_));
+  auto frictionConeConstraintPtr =
+      std::make_unique<FrictionConeConstraint>(*referenceManagerPtr_, frictionConeConConfig, contactPointIndex, centroidalModelInfo_);
+  auto penalty = std::make_unique<RelaxedBarrierPenalty>(barrierPenaltyConfig);
 
-  std::unique_ptr<PenaltyBase> penalty(new RelaxedBarrierPenalty(barrierPenaltyConfig));
-
-  return std::unique_ptr<StateInputCost>(new StateInputSoftConstraint(std::move(frictionConeConstraintPtr), std::move(penalty)));
+  return std::make_unique<StateInputSoftConstraint>(std::move(frictionConeConstraintPtr), std::move(penalty));
 }
 
 /******************************************************************************************************/

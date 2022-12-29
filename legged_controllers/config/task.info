@@ -66,8 +66,8 @@ ddp
 }
 
 
-; multiple_shooting settings
-multiple_shooting
+; Multiple_Shooting SQP settings
+sqp
 {
   nThreads                              3
   dt                                    0.015

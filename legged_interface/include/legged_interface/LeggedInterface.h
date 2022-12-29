@@ -14,7 +14,7 @@
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 #include <ocs2_robotic_tools/end_effector/EndEffectorKinematics.h>
-#include <ocs2_sqp/MultipleShootingSettings.h>
+#include <ocs2_sqp/SqpSettings.h>
 
 #include <ocs2_legged_robot/common/ModelSettings.h>
 #include <ocs2_legged_robot/reference_manager/SwitchedModelReferenceManager.h>
@@ -35,8 +35,8 @@ class LeggedInterface : public RobotInterface {
 
   const ModelSettings& modelSettings() const { return modelSettings_; }
   const mpc::Settings& mpcSettings() const { return mpcSettings_; }
+  const sqp::Settings& sqpSettings() { return sqpSettings_; }
   const ddp::Settings& ddpSettings() const { return ddpSettings_; }
-  const multiple_shooting::Settings& sqpSettings() { return sqpSettings_; }
   const vector_t& getInitialState() const { return initialState_; }
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
   PinocchioInterface& getPinocchioInterface() { return *pinocchioInterfacePtr_; }
@@ -63,7 +63,7 @@ class LeggedInterface : public RobotInterface {
   ModelSettings modelSettings_;
   mpc::Settings mpcSettings_;
   ddp::Settings ddpSettings_;
-  multiple_shooting::Settings sqpSettings_;
+  sqp::Settings sqpSettings_;
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
   CentroidalModelInfo centroidalModelInfo_;
