@@ -262,15 +262,15 @@
       <material name="orange"/>
     </visual>
     <collision>
-      <origin rpy="0 1.5707963267948966 0" xyz="0 0 -0.1"/>
+      <origin rpy="0 1.6707963267948966 0" xyz="-0.015 0 -0.1"/>
       <geometry>
-        <box size="0.2 0.0245 0.034"/>
+        <box size="0.2 0.03 0.034"/>
       </geometry>
     </collision>
     <collision>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0.008 0"/>
       <geometry>
-        <cylinder length="0.032" radius="0.041"/>
+        <cylinder length="0.04" radius="0.041"/>
       </geometry>
     </collision>
     <inertial>
@@ -409,15 +409,15 @@
       <material name="orange"/>
     </visual>
     <collision>
-      <origin rpy="0 1.5707963267948966 0" xyz="0 0 -0.1"/>
+      <origin rpy="0 1.6707963267948966 0" xyz="-0.015 0 -0.1"/>
       <geometry>
-        <box size="0.2 0.0245 0.034"/>
+        <box size="0.2 0.03 0.034"/>
       </geometry>
     </collision>
     <collision>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 -0.008 0"/>
       <geometry>
-        <cylinder length="0.032" radius="0.041"/>
+        <cylinder length="0.04" radius="0.041"/>
       </geometry>
     </collision>
     <inertial>
@@ -556,15 +556,15 @@
       <material name="orange"/>
     </visual>
     <collision>
-      <origin rpy="0 1.5707963267948966 0" xyz="0 0 -0.1"/>
+      <origin rpy="0 1.6707963267948966 0" xyz="-0.015 0 -0.1"/>
       <geometry>
-        <box size="0.2 0.0245 0.034"/>
+        <box size="0.2 0.03 0.034"/>
       </geometry>
     </collision>
     <collision>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0.008 0"/>
       <geometry>
-        <cylinder length="0.032" radius="0.041"/>
+        <cylinder length="0.04" radius="0.041"/>
       </geometry>
     </collision>
     <inertial>
@@ -703,15 +703,15 @@
       <material name="orange"/>
     </visual>
     <collision>
-      <origin rpy="0 1.5707963267948966 0" xyz="0 0 -0.1"/>
+      <origin rpy="0 1.6707963267948966 0" xyz="-0.015 0 -0.1"/>
       <geometry>
-        <box size="0.2 0.0245 0.034"/>
+        <box size="0.2 0.03 0.034"/>
       </geometry>
     </collision>
     <collision>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 -0.008 0"/>
       <geometry>
-        <cylinder length="0.032" radius="0.041"/>
+        <cylinder length="0.04" radius="0.041"/>
       </geometry>
     </collision>
     <inertial>

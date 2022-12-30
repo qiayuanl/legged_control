@@ -84,13 +84,13 @@
                 <material name="orange"/>
             </visual>
             <collision>
-                <origin rpy="0 ${pi/2.0} 0" xyz="0 0 ${-thigh_length/2.0}"/>
+                <origin rpy="0 ${pi/2.0+0.1} 0" xyz="${thigh_x_offset} 0 ${-thigh_length/2.0}"/>
                 <geometry>
                     <box size="${thigh_length} ${thigh_width} ${thigh_height}"/>
                 </geometry>
             </collision>
             <collision>
-                <origin rpy="${pi/2.0} 0 0" xyz="0 0 0"/>
+                <origin rpy="${pi/2.0} 0 0" xyz="0 ${mirror*thigh_shoulder_y_offset} 0"/>
                 <geometry>
                     <cylinder length="${thigh_shoulder_length}" radius="${thigh_shoulder_radius}"/>
                 </geometry>
