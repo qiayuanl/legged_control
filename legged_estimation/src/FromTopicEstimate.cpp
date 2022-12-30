@@ -7,12 +7,13 @@
 #include "legged_estimation/FromTopiceEstimate.h"
 
 namespace legged {
-FromTopicStateEstimate::FromTopicStateEstimate(PinocchioInterface& pinocchioInterface, CentroidalModelInfo info,
+FromTopicStateEstimate::FromTopicStateEstimate(std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr, CentroidalModelInfo info,
                                                const PinocchioEndEffectorKinematics& eeKinematics,
                                                const std::vector<HybridJointHandle>& hybridJointHandles,
                                                const std::vector<ContactSensorHandle>& contactSensorHandles,
                                                const hardware_interface::ImuSensorHandle& imuSensorHandle)
-    : StateEstimateBase(pinocchioInterface, std::move(info), eeKinematics, hybridJointHandles, contactSensorHandles, imuSensorHandle) {
+    : StateEstimateBase(std::move(pinocchioInterfacePtr), std::move(info), eeKinematics, hybridJointHandles, contactSensorHandles,
+                        imuSensorHandle) {
   ros::NodeHandle nh;
   sub_ = nh.subscribe<nav_msgs::Odometry>("/ground_truth/state", 10, &FromTopicStateEstimate::callback, this);
 }

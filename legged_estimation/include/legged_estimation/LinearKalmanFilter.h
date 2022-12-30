@@ -19,8 +19,8 @@ using namespace ocs2;
 
 class KalmanFilterEstimate : public StateEstimateBase {
  public:
-  KalmanFilterEstimate(PinocchioInterface& pinocchioInterface, CentroidalModelInfo info, const PinocchioEndEffectorKinematics& eeKinematics,
-                       const std::vector<HybridJointHandle>& hybridJointHandles,
+  KalmanFilterEstimate(std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr, CentroidalModelInfo info,
+                       const PinocchioEndEffectorKinematics& eeKinematics, const std::vector<HybridJointHandle>& hybridJointHandles,
                        const std::vector<ContactSensorHandle>& contactSensorHandles,
                        const hardware_interface::ImuSensorHandle& imuSensorHandle);
   vector_t update(const ros::Time& time, const ros::Duration& period) override;

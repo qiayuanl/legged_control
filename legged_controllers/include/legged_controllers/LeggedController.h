@@ -37,8 +37,7 @@ class LeggedController : public controller_interface::MultiInterfaceController<H
                                     bool verbose);
   virtual void setupMpc();
   virtual void setupMrt();
-  virtual void setupStateEstimate(LeggedInterface& leggedInterface, const std::vector<HybridJointHandle>& hybridJointHandles,
-                                  const std::vector<ContactSensorHandle>& contactSensorHandles,
+  virtual void setupStateEstimate(const std::string& urdfFile, const std::vector<ContactSensorHandle>& contactSensorHandles,
                                   const hardware_interface::ImuSensorHandle& imuSensorHandle);
 
   std::shared_ptr<LeggedInterface> leggedInterface_;
@@ -65,8 +64,7 @@ class LeggedController : public controller_interface::MultiInterfaceController<H
 
 class LeggedCheaterController : public LeggedController {
  protected:
-  void setupStateEstimate(LeggedInterface& leggedInterface, const std::vector<HybridJointHandle>& hybridJointHandles,
-                          const std::vector<ContactSensorHandle>& contactSensorHandles,
+  void setupStateEstimate(const std::string& urdfFile, const std::vector<ContactSensorHandle>& contactSensorHandles,
                           const hardware_interface::ImuSensorHandle& imuSensorHandle) override;
 };
 

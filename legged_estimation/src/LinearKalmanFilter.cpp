@@ -16,14 +16,13 @@
 
 namespace legged {
 
-using namespace legged_robot;
-
-KalmanFilterEstimate::KalmanFilterEstimate(PinocchioInterface& pinocchioInterface, CentroidalModelInfo info,
+KalmanFilterEstimate::KalmanFilterEstimate(std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr, CentroidalModelInfo info,
                                            const PinocchioEndEffectorKinematics& eeKinematics,
                                            const std::vector<HybridJointHandle>& hybridJointHandles,
                                            const std::vector<ContactSensorHandle>& contactSensorHandles,
                                            const hardware_interface::ImuSensorHandle& imuSensorHandle)
-    : StateEstimateBase(pinocchioInterface, std::move(info), eeKinematics, hybridJointHandles, contactSensorHandles, imuSensorHandle),
+    : StateEstimateBase(std::move(pinocchioInterfacePtr), std::move(info), eeKinematics, hybridJointHandles, contactSensorHandles,
+                        imuSensorHandle),
       tfListener_(tfBuffer_),
       topicUpdated_(false) {
   xHat_.setZero();
@@ -58,6 +57,8 @@ KalmanFilterEstimate::KalmanFilterEstimate(PinocchioInterface& pinocchioInterfac
   q_.setIdentity();
   r_.setIdentity();
 
+  eeKinematics_->setPinocchioInterface(*pinocchioInterfacePtr_);
+
   world2odom_.setRotation(tf2::Quaternion::getIdentity());
   sub_ = ros::NodeHandle().subscribe<nav_msgs::Odometry>("/tracking_camera/odom/sample", 10, &KalmanFilterEstimate::callback, this);
 }
@@ -84,8 +85,8 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   q_.block(3, 3, 3, 3) = (dt * 9.81f / 20.f) * Eigen::Matrix<scalar_t, 3, 3>::Identity();
   q_.block(6, 6, 12, 12) = dt * Eigen::Matrix<scalar_t, 12, 12>::Identity();
 
-  const auto& model = pinoInterface_.getModel();
-  auto& data = pinoInterface_.getData();
+  const auto& model = pinocchioInterfacePtr_->getModel();
+  auto& data = pinocchioInterfacePtr_->getData();
   size_t actuatedDofNum = info_.actuatedDofNum;
 
   vector_t qPino(generalizedCoordinatesNum_);
@@ -101,8 +102,7 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   vPino.tail(actuatedDofNum) = rbdState_.segment(6 + generalizedCoordinatesNum_, actuatedDofNum);
 
   pinocchio::forwardKinematics(model, data, qPino, vPino);
-  pinocchio::updateFramePlacements(pinoInterface_.getModel(), pinoInterface_.getData());
-  eeKinematics_->setPinocchioInterface(pinoInterface_);
+  pinocchio::updateFramePlacements(model, data);
 
   const auto eePos = eeKinematics_->getPosition(vector_t());
   const auto eeVel = eeKinematics_->getVelocity(vector_t(), vector_t());

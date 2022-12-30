@@ -4,18 +4,18 @@
 
 #include "legged_estimation/StateEstimateBase.h"
 
+#include <ocs2_centroidal_model/FactoryFunctions.h>
 #include <ocs2_legged_robot/common/Types.h>
 #include <ocs2_legged_robot/gait/MotionPhaseDefinition.h>
-#include <utility>
 
 namespace legged {
 using namespace legged_robot;
 
-StateEstimateBase::StateEstimateBase(PinocchioInterface& pinocchioInterface, CentroidalModelInfo info,
+StateEstimateBase::StateEstimateBase(std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr, CentroidalModelInfo info,
                                      const PinocchioEndEffectorKinematics& eeKinematics, std::vector<HybridJointHandle> hybridJointHandles,
                                      std::vector<ContactSensorHandle> contactSensorHandles,
                                      hardware_interface::ImuSensorHandle imuSensorHandle)
-    : pinoInterface_(pinocchioInterface),
+    : pinocchioInterfacePtr_(std::move(pinocchioInterfacePtr)),
       info_(std::move(info)),
       eeKinematics_(eeKinematics.clone()),
       generalizedCoordinatesNum_(info_.generalizedCoordinatesNum),

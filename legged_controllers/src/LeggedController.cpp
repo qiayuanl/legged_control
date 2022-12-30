@@ -63,8 +63,7 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
   }
 
   // State estimation
-  setupStateEstimate(*leggedInterface_, hybridJointHandles_, contactHandles,
-                     robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu"));
+  setupStateEstimate(urdfFile, contactHandles, robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu"));
 
   // Whole body control
   wbc_ = std::make_shared<WeightedWbc>(leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(),
@@ -203,22 +202,18 @@ void LeggedController::setupMrt() {
   setThreadPriority(leggedInterface_->sqpSettings().threadPriority, mpcThread_);
 }
 
-void LeggedController::setupStateEstimate(LeggedInterface& /*leggedInterface*/,
-                                          const std::vector<HybridJointHandle>& /*hybridJointHandles*/,
-                                          const std::vector<ContactSensorHandle>& contactSensorHandles,
+void LeggedController::setupStateEstimate(const std::string& urdfFile, const std::vector<ContactSensorHandle>& contactSensorHandles,
                                           const hardware_interface::ImuSensorHandle& imuSensorHandle) {
   stateEstimate_ =
-      std::make_shared<KalmanFilterEstimate>(leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(),
+      std::make_shared<KalmanFilterEstimate>(urdfFile, leggedInterface_->modelSettings(), leggedInterface_->getCentroidalModelInfo(),
                                              *eeKinematicsPtr_, hybridJointHandles_, contactSensorHandles, imuSensorHandle);
   currentObservation_.time = 0;
 }
 
-void LeggedCheaterController::setupStateEstimate(LeggedInterface& /*leggedInterface*/,
-                                                 const std::vector<HybridJointHandle>& /*hybridJointHandles*/,
-                                                 const std::vector<ContactSensorHandle>& contactSensorHandles,
+void LeggedCheaterController::setupStateEstimate(const std::string& urdfFile, const std::vector<ContactSensorHandle>& contactSensorHandles,
                                                  const hardware_interface::ImuSensorHandle& imuSensorHandle) {
   stateEstimate_ =
-      std::make_shared<FromTopicStateEstimate>(leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(),
+      std::make_shared<FromTopicStateEstimate>(urdfFile, leggedInterface_->modelSettings(), leggedInterface_->getCentroidalModelInfo(),
                                                *eeKinematicsPtr_, hybridJointHandles_, contactSensorHandles, imuSensorHandle);
 }
 
