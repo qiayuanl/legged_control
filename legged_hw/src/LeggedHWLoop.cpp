@@ -41,6 +41,8 @@ LeggedHWLoop::LeggedHWLoop(ros::NodeHandle& nh, std::shared_ptr<LeggedHW> hardwa
         "Failed to set threads priority (one possible reason could be that the user and the group permissions "
         "are not set properly.).\n");
   }
+
+  loopRunning_ = true;
 }
 
 void LeggedHWLoop::update() {
