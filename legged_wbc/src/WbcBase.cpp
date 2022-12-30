@@ -14,17 +14,18 @@
 #include <utility>
 
 namespace legged {
-WbcBase::WbcBase(PinocchioInterface& pinocchioInterface, CentroidalModelInfo info, const PinocchioEndEffectorKinematics& eeKinematics)
-    : pinoInterface_(pinocchioInterface),
+WbcBase::WbcBase(std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr, CentroidalModelInfo info,
+                 const PinocchioEndEffectorKinematics& eeKinematics)
+    : pinocchioInterfacePtr_(std::move(pinocchioInterfacePtr)),
       info_(std::move(info)),
       mapping_(info_),
       inputLast_(vector_t::Zero(info_.inputDim)),
       eeKinematics_(eeKinematics.clone()) {
   numDecisionVars_ = info_.generalizedCoordinatesNum + 3 * info_.numThreeDofContacts + info_.actuatedDofNum;
-  mapping_.setPinocchioInterface(pinoInterface_);
+  mapping_.setPinocchioInterface(*pinocchioInterfacePtr_);
+  eeKinematics_->setPinocchioInterface(*pinocchioInterfacePtr_);
   qMeasured_ = vector_t(info_.generalizedCoordinatesNum);
   vMeasured_ = vector_t(info_.generalizedCoordinatesNum);
-  eeKinematics_->setPinocchioInterface(pinoInterface_);
 }
 
 vector_t WbcBase::update(const vector_t& stateDesired, const vector_t& inputDesired, const vector_t& rbdStateMeasured, size_t mode,
@@ -49,8 +50,8 @@ vector_t WbcBase::update(const vector_t& stateDesired, const vector_t& inputDesi
       qMeasured_.segment<3>(3), rbdStateMeasured.segment<3>(info_.generalizedCoordinatesNum));
   vMeasured_.tail(info_.actuatedDofNum) = rbdStateMeasured.segment(info_.generalizedCoordinatesNum + 6, info_.actuatedDofNum);
 
-  const auto& model = pinoInterface_.getModel();
-  auto& data = pinoInterface_.getData();
+  const auto& model = pinocchioInterfacePtr_->getModel();
+  auto& data = pinocchioInterfacePtr_->getData();
 
   // For floating base EoM task
   pinocchio::forwardKinematics(model, data, qMeasured_, vMeasured_);
@@ -81,7 +82,7 @@ vector_t WbcBase::update(const vector_t& stateDesired, const vector_t& inputDesi
 }
 
 Task WbcBase::formulateFloatingBaseEomTask() {
-  auto& data = pinoInterface_.getData();
+  auto& data = pinocchioInterfacePtr_->getData();
 
   matrix_t s(info_.actuatedDofNum, info_.generalizedCoordinatesNum);
   s.block(0, 0, info_.actuatedDofNum, 6).setZero();
@@ -165,21 +166,21 @@ Task WbcBase::formulateBaseAccelTask(scalar_t period) {
   vector_t jointAccel = centroidal_model::getJointVelocities(inputDesired_ - inputLast_, info_) / period;
   inputLast_ = inputDesired_;
 
-  const auto& model = pinoInterface_.getModel();
-  auto& data = pinoInterface_.getData();
+  const auto& model = pinocchioInterfacePtr_->getModel();
+  auto& data = pinocchioInterfacePtr_->getData();
   const auto qPinocchio = mapping_.getPinocchioJointPosition(stateDesired_);
 
-  updateCentroidalDynamics(pinoInterface_, info_, qPinocchio);
+  updateCentroidalDynamics(*pinocchioInterfacePtr_, info_, qPinocchio);
 
   const vector_t vPinocchio = mapping_.getPinocchioJointVelocity(stateDesired_, inputDesired_);
 
-  const auto& A = getCentroidalMomentumMatrix(pinoInterface_);
+  const auto& A = getCentroidalMomentumMatrix(*pinocchioInterfacePtr_);
   const Matrix6 Ab = A.template leftCols<6>();
   const auto AbInv = computeFloatingBaseCentroidalMomentumMatrixInverse(Ab);
   const auto Aj = A.rightCols(info_.actuatedDofNum);
 
   const auto ADot = pinocchio::dccrba(model, data, qPinocchio, vPinocchio);
-  Vector6 centroidalMomentumRate = info_.robotMass * getNormalizedCentroidalMomentumRate(pinoInterface_, info_, inputDesired_);
+  Vector6 centroidalMomentumRate = info_.robotMass * getNormalizedCentroidalMomentumRate(*pinocchioInterfacePtr_, info_, inputDesired_);
   centroidalMomentumRate.noalias() -= ADot * vPinocchio;
   centroidalMomentumRate.noalias() -= Aj * jointAccel;
 
@@ -193,8 +194,8 @@ Task WbcBase::formulateSwingLegTask() {
   std::vector<vector3_t> velMeasured = eeKinematics_->getVelocity(vector_t(), vector_t());
   vector_t qDesired = mapping_.getPinocchioJointPosition(stateDesired_);
   vector_t vDesired = mapping_.getPinocchioJointVelocity(stateDesired_, inputDesired_);
-  const auto& model = pinoInterface_.getModel();
-  auto& data = pinoInterface_.getData();
+  const auto& model = pinocchioInterfacePtr_->getModel();
+  auto& data = pinocchioInterfacePtr_->getData();
   pinocchio::forwardKinematics(model, data, qDesired, vDesired);
   pinocchio::updateFramePlacements(model, data);
   std::vector<vector3_t> posDesired = eeKinematics_->getPosition(vector_t());

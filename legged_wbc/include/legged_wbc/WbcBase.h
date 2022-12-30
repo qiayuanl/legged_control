@@ -21,7 +21,8 @@ class WbcBase {
   using Matrix6 = Eigen::Matrix<scalar_t, 6, 6>;
 
  public:
-  WbcBase(PinocchioInterface& pinocchioInterface, CentroidalModelInfo info, const PinocchioEndEffectorKinematics& eeKinematics);
+  WbcBase(std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr, CentroidalModelInfo info,
+          const PinocchioEndEffectorKinematics& eeKinematics);
 
   virtual void loadTasksSetting(const std::string& taskFile, bool verbose);
 
@@ -41,7 +42,7 @@ class WbcBase {
 
  private:
   size_t numDecisionVars_;
-  PinocchioInterface& pinoInterface_;
+  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
   CentroidalModelInfo info_;
 
   std::unique_ptr<PinocchioEndEffectorKinematics> eeKinematics_;
