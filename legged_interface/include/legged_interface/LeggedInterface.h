@@ -31,17 +31,21 @@ class LeggedInterface : public RobotInterface {
 
   virtual void setupOptimalControlProblem(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
                                           bool verbose);
+
   const OptimalControlProblem& getOptimalControlProblem() const override { return *problemPtr_; }
 
   const ModelSettings& modelSettings() const { return modelSettings_; }
-  const mpc::Settings& mpcSettings() const { return mpcSettings_; }
-  const sqp::Settings& sqpSettings() { return sqpSettings_; }
   const ddp::Settings& ddpSettings() const { return ddpSettings_; }
+  const mpc::Settings& mpcSettings() const { return mpcSettings_; }
+  const rollout::Settings& rolloutSettings() const { return rolloutSettings_; }
+  const sqp::Settings& sqpSettings() { return sqpSettings_; }
+
   const vector_t& getInitialState() const { return initialState_; }
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
   PinocchioInterface& getPinocchioInterface() { return *pinocchioInterfacePtr_; }
-  const CentroidalModelInfo& getCentroidalModelInfo() const { return centroidalModelInfo_; }
+  CentroidalModelInfo& getCentroidalModelInfo() { return centroidalModelInfo_; }
   std::shared_ptr<SwitchedModelReferenceManager> getSwitchedModelReferenceManagerPtr() const { return referenceManagerPtr_; }
+
   const Initializer& getInitializer() const override { return *initializerPtr_; }
   std::shared_ptr<ReferenceManagerInterface> getReferenceManagerPtr() const override { return referenceManagerPtr_; }
 
@@ -58,6 +62,7 @@ class LeggedInterface : public RobotInterface {
                                                             const RelaxedBarrierPenalty::Config& barrierPenaltyConfig);
   std::unique_ptr<StateInputConstraint> getZeroVelocityConstraint(const EndEffectorKinematics<scalar_t>& eeKinematics,
                                                                   size_t contactPointIndex);
+  std::unique_ptr<Initializer>& getInitializerPtr() { return initializerPtr_; }
 
  private:
   ModelSettings modelSettings_;
