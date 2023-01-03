@@ -65,9 +65,10 @@ LeggedInterface::LeggedInterface(const std::string& taskFile, const std::string&
   // load setting from loading file
   modelSettings_ = loadModelSettings(taskFile, "model_settings", verbose);
   mpcSettings_ = mpc::loadSettings(taskFile, "mpc", verbose);
-  rolloutSettings_ = rollout::loadSettings(taskFile, "rollout", verbose);
   ddpSettings_ = ddp::loadSettings(taskFile, "ddp", verbose);
   sqpSettings_ = sqp::loadSettings(taskFile, "sqp", verbose);
+  ipmSettings_ = ipm::loadSettings(taskFile, "ipm", verbose);
+  rolloutSettings_ = rollout::loadSettings(taskFile, "rollout", verbose);
 }
 
 /******************************************************************************************************/

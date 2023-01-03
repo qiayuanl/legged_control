@@ -9,6 +9,7 @@
 #include <ocs2_core/initialization/Initializer.h>
 #include <ocs2_core/penalties/Penalties.h>
 #include <ocs2_ddp/DDP_Settings.h>
+#include <ocs2_ipm/IpmSettings.h>
 #include <ocs2_mpc/MPC_Settings.h>
 #include <ocs2_oc/rollout/TimeTriggeredRollout.h>
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
@@ -40,6 +41,7 @@ class LeggedInterface : public RobotInterface {
   const mpc::Settings& mpcSettings() const { return mpcSettings_; }
   const rollout::Settings& rolloutSettings() const { return rolloutSettings_; }
   const sqp::Settings& sqpSettings() { return sqpSettings_; }
+  const ipm::Settings& ipmSettings() { return ipmSettings_; }
 
   const vector_t& getInitialState() const { return initialState_; }
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
@@ -71,6 +73,7 @@ class LeggedInterface : public RobotInterface {
   mpc::Settings mpcSettings_;
   ddp::Settings ddpSettings_;
   sqp::Settings sqpSettings_;
+  ipm::Settings ipmSettings_;
   const bool useHardFrictionConeConstraint_;
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
