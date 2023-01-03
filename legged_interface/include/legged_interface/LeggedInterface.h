@@ -1,3 +1,5 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "misc-non-private-member-variables-in-classes"
 //
 // Created by qiayuan on 2022/7/16.
 //
@@ -46,7 +48,7 @@ class LeggedInterface : public RobotInterface {
   const vector_t& getInitialState() const { return initialState_; }
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
   PinocchioInterface& getPinocchioInterface() { return *pinocchioInterfacePtr_; }
-  CentroidalModelInfo& getCentroidalModelInfo() { return centroidalModelInfo_; }
+  const CentroidalModelInfo& getCentroidalModelInfo() const { return centroidalModelInfo_; }
   std::shared_ptr<SwitchedModelReferenceManager> getSwitchedModelReferenceManagerPtr() const { return referenceManagerPtr_; }
 
   const Initializer& getInitializer() const override { return *initializerPtr_; }
@@ -54,6 +56,10 @@ class LeggedInterface : public RobotInterface {
 
  protected:
   virtual void setupModel(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile, bool verbose);
+  virtual void setupReferenceManager(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
+                                     bool verbose);
+  virtual void setupPreComputation(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
+                                   bool verbose);
 
   std::shared_ptr<GaitSchedule> loadGaitSchedule(const std::string& file, bool verbose) const;
 
@@ -64,11 +70,10 @@ class LeggedInterface : public RobotInterface {
   std::unique_ptr<StateInputConstraint> getFrictionConeConstraint(size_t contactPointIndex, scalar_t frictionCoefficient);
   std::unique_ptr<StateInputCost> getFrictionConeSoftConstraint(size_t contactPointIndex, scalar_t frictionCoefficient,
                                                                 const RelaxedBarrierPenalty::Config& barrierPenaltyConfig);
+  std::unique_ptr<EndEffectorKinematics<scalar_t>> getEeKinematicsPtr(const std::string& footName);
   std::unique_ptr<StateInputConstraint> getZeroVelocityConstraint(const EndEffectorKinematics<scalar_t>& eeKinematics,
                                                                   size_t contactPointIndex);
-  std::unique_ptr<Initializer>& getInitializerPtr() { return initializerPtr_; }
 
- private:
   ModelSettings modelSettings_;
   mpc::Settings mpcSettings_;
   ddp::Settings ddpSettings_;
@@ -90,3 +95,5 @@ class LeggedInterface : public RobotInterface {
 };
 
 }  // namespace legged
+
+#pragma clang diagnostic pop

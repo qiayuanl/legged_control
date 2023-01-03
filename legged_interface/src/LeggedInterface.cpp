@@ -82,13 +82,7 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
   initialState_.setZero(centroidalModelInfo_.stateDim);
   loadData::loadEigenMatrix(taskFile, "initialState", initialState_);
 
-  // Swing trajectory planner
-  auto swingTrajectoryPlanner =
-      std::make_unique<SwingTrajectoryPlanner>(loadSwingTrajectorySettings(taskFile, "swing_trajectory_config", verbose), 4);
-
-  // Mode schedule manager
-  referenceManagerPtr_ =
-      std::make_shared<SwitchedModelReferenceManager>(loadGaitSchedule(referenceFile, verbose), std::move(swingTrajectoryPlanner));
+  setupReferenceManager(taskFile, urdfFile, referenceFile, verbose);
 
   // Optimal control problem
   problemPtr_ = std::make_unique<OptimalControlProblem>();
@@ -109,19 +103,7 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
 
   for (size_t i = 0; i < centroidalModelInfo_.numThreeDofContacts; i++) {
     const std::string& footName = modelSettings_.contactNames3DoF[i];
-
-    std::unique_ptr<EndEffectorKinematics<scalar_t>> eeKinematicsPtr;
-
-    const auto infoCppAd = centroidalModelInfo_.toCppAd();
-    const CentroidalModelPinocchioMappingCppAd pinocchioMappingCppAd(infoCppAd);
-    auto velocityUpdateCallback = [&infoCppAd](const ad_vector_t& state, PinocchioInterfaceCppAd& pinocchioInterfaceAd) {
-      const ad_vector_t q = centroidal_model::getGeneralizedCoordinates(state, infoCppAd);
-      updateCentroidalDynamics(pinocchioInterfaceAd, infoCppAd, q);
-    };
-    eeKinematicsPtr.reset(new PinocchioEndEffectorKinematicsCppAd(*pinocchioInterfacePtr_, pinocchioMappingCppAd, {footName},
-                                                                  centroidalModelInfo_.stateDim, centroidalModelInfo_.inputDim,
-                                                                  velocityUpdateCallback, footName, modelSettings_.modelFolderCppAd,
-                                                                  modelSettings_.recompileLibrariesCppAd, modelSettings_.verboseCppAd));
+    std::unique_ptr<EndEffectorKinematics<scalar_t>> eeKinematicsPtr = getEeKinematicsPtr(footName);
 
     if (useHardFrictionConeConstraint_) {
       problemPtr_->inequalityConstraintPtr->add(footName + "_frictionCone", getFrictionConeConstraint(i, frictionCoefficient));
@@ -137,9 +119,7 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
         std::unique_ptr<StateInputConstraint>(new NormalVelocityConstraintCppAd(*referenceManagerPtr_, *eeKinematicsPtr, i)));
   }
 
-  // Pre-computation
-  problemPtr_->preComputationPtr = std::make_unique<LeggedRobotPreComputation>(
-      *pinocchioInterfacePtr_, centroidalModelInfo_, *referenceManagerPtr_->getSwingTrajectoryPlanner(), modelSettings_);
+  setupPreComputation(taskFile, urdfFile, referenceFile, verbose);
 
   // Rollout
   rolloutPtr_ = std::make_unique<TimeTriggeredRollout>(*problemPtr_->dynamicsPtr, rolloutSettings_);
@@ -163,6 +143,26 @@ void LeggedInterface::setupModel(const std::string& taskFile, const std::string&
       *pinocchioInterfacePtr_, centroidal_model::loadCentroidalType(taskFile),
       centroidal_model::loadDefaultJointState(pinocchioInterfacePtr_->getModel().nq - 6, referenceFile), modelSettings_.contactNames3DoF,
       modelSettings_.contactNames6DoF);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void LeggedInterface::setupReferenceManager(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
+                                            bool verbose) {
+  auto swingTrajectoryPlanner =
+      std::make_unique<SwingTrajectoryPlanner>(loadSwingTrajectorySettings(taskFile, "swing_trajectory_config", verbose), 4);
+  referenceManagerPtr_ =
+      std::make_shared<SwitchedModelReferenceManager>(loadGaitSchedule(referenceFile, verbose), std::move(swingTrajectoryPlanner));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void LeggedInterface::setupPreComputation(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
+                                          bool verbose) {
+  problemPtr_->preComputationPtr = std::make_unique<LeggedRobotPreComputation>(
+      *pinocchioInterfacePtr_, centroidalModelInfo_, *referenceManagerPtr_->getSwingTrajectoryPlanner(), modelSettings_);
 }
 
 /******************************************************************************************************/
@@ -283,6 +283,26 @@ std::unique_ptr<StateInputCost> LeggedInterface::getFrictionConeSoftConstraint(s
                                                                                const RelaxedBarrierPenalty::Config& barrierPenaltyConfig) {
   return std::make_unique<StateInputSoftConstraint>(getFrictionConeConstraint(contactPointIndex, frictionCoefficient),
                                                     std::make_unique<RelaxedBarrierPenalty>(barrierPenaltyConfig));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::unique_ptr<EndEffectorKinematics<scalar_t>> LeggedInterface::getEeKinematicsPtr(const std::string& footName) {
+  std::unique_ptr<EndEffectorKinematics<scalar_t>> eeKinematicsPtr;
+
+  const auto infoCppAd = centroidalModelInfo_.toCppAd();
+  const CentroidalModelPinocchioMappingCppAd pinocchioMappingCppAd(infoCppAd);
+  auto velocityUpdateCallback = [&infoCppAd](const ad_vector_t& state, PinocchioInterfaceCppAd& pinocchioInterfaceAd) {
+    const ad_vector_t q = centroidal_model::getGeneralizedCoordinates(state, infoCppAd);
+    updateCentroidalDynamics(pinocchioInterfaceAd, infoCppAd, q);
+  };
+  eeKinematicsPtr.reset(new PinocchioEndEffectorKinematicsCppAd(*pinocchioInterfacePtr_, pinocchioMappingCppAd, {footName},
+                                                                centroidalModelInfo_.stateDim, centroidalModelInfo_.inputDim,
+                                                                velocityUpdateCallback, footName, modelSettings_.modelFolderCppAd,
+                                                                modelSettings_.recompileLibrariesCppAd, modelSettings_.verboseCppAd));
+
+  return eeKinematicsPtr;
 }
 
 /******************************************************************************************************/
