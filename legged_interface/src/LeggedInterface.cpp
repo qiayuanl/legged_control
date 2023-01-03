@@ -32,7 +32,9 @@
 #include <boost/filesystem/path.hpp>
 
 namespace legged {
-LeggedInterface::LeggedInterface(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile, bool verbose) {
+LeggedInterface::LeggedInterface(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
+                                 bool useHardFrictionConeConstraint)
+    : useHardFrictionConeConstraint_(useHardFrictionConeConstraint) {
   // check that task file exists
   boost::filesystem::path taskFilePath(taskFile);
   if (boost::filesystem::exists(taskFilePath)) {
@@ -56,6 +58,9 @@ LeggedInterface::LeggedInterface(const std::string& taskFile, const std::string&
   } else {
     throw std::invalid_argument("[LeggedInterface] targetCommand file not found: " + referenceFilePath.string());
   }
+
+  bool verbose = false;
+  loadData::loadCppDataType(taskFile, "legged_robot_interface.verbose", verbose);
 
   // load setting from loading file
   modelSettings_ = loadModelSettings(taskFile, "model_settings", verbose);
@@ -117,8 +122,12 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
                                                                   velocityUpdateCallback, footName, modelSettings_.modelFolderCppAd,
                                                                   modelSettings_.recompileLibrariesCppAd, modelSettings_.verboseCppAd));
 
-    problemPtr_->softConstraintPtr->add(footName + "_frictionCone",
-                                        getFrictionConeConstraint(i, frictionCoefficient, barrierPenaltyConfig));
+    if (useHardFrictionConeConstraint_) {
+      problemPtr_->inequalityConstraintPtr->add(footName + "_frictionCone", getFrictionConeConstraint(i, frictionCoefficient));
+    } else {
+      problemPtr_->softConstraintPtr->add(footName + "_frictionCone",
+                                          getFrictionConeSoftConstraint(i, frictionCoefficient, barrierPenaltyConfig));
+    }
     problemPtr_->equalityConstraintPtr->add(footName + "_zeroForce", std::unique_ptr<StateInputConstraint>(new ZeroForceConstraint(
                                                                          *referenceManagerPtr_, i, centroidalModelInfo_)));
     problemPtr_->equalityConstraintPtr->add(footName + "_zeroVelocity", getZeroVelocityConstraint(*eeKinematicsPtr, i));
@@ -261,14 +270,18 @@ std::pair<scalar_t, RelaxedBarrierPenalty::Config> LeggedInterface::loadFriction
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<StateInputCost> LeggedInterface::getFrictionConeConstraint(size_t contactPointIndex, scalar_t frictionCoefficient,
-                                                                           const RelaxedBarrierPenalty::Config& barrierPenaltyConfig) {
+std::unique_ptr<StateInputConstraint> LeggedInterface::getFrictionConeConstraint(size_t contactPointIndex, scalar_t frictionCoefficient) {
   FrictionConeConstraint::Config frictionConeConConfig(frictionCoefficient);
-  auto frictionConeConstraintPtr =
-      std::make_unique<FrictionConeConstraint>(*referenceManagerPtr_, frictionConeConConfig, contactPointIndex, centroidalModelInfo_);
-  auto penalty = std::make_unique<RelaxedBarrierPenalty>(barrierPenaltyConfig);
+  return std::make_unique<FrictionConeConstraint>(*referenceManagerPtr_, frictionConeConConfig, contactPointIndex, centroidalModelInfo_);
+}
 
-  return std::make_unique<StateInputSoftConstraint>(std::move(frictionConeConstraintPtr), std::move(penalty));
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::unique_ptr<StateInputCost> LeggedInterface::getFrictionConeSoftConstraint(size_t contactPointIndex, scalar_t frictionCoefficient,
+                                                                               const RelaxedBarrierPenalty::Config& barrierPenaltyConfig) {
+  return std::make_unique<StateInputSoftConstraint>(getFrictionConeConstraint(contactPointIndex, frictionCoefficient),
+                                                    std::make_unique<RelaxedBarrierPenalty>(barrierPenaltyConfig));
 }
 
 /******************************************************************************************************/

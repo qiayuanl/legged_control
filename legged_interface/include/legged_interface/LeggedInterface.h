@@ -25,7 +25,8 @@ using namespace legged_robot;
 
 class LeggedInterface : public RobotInterface {
  public:
-  LeggedInterface(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile, bool verbose);
+  LeggedInterface(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
+                  bool useHardFrictionConeConstraint = true);
 
   ~LeggedInterface() override = default;
 
@@ -58,8 +59,9 @@ class LeggedInterface : public RobotInterface {
   matrix_t initializeInputCostWeight(const std::string& taskFile, const CentroidalModelInfo& info);
 
   static std::pair<scalar_t, RelaxedBarrierPenalty::Config> loadFrictionConeSettings(const std::string& taskFile, bool verbose);
-  std::unique_ptr<StateInputCost> getFrictionConeConstraint(size_t contactPointIndex, scalar_t frictionCoefficient,
-                                                            const RelaxedBarrierPenalty::Config& barrierPenaltyConfig);
+  std::unique_ptr<StateInputConstraint> getFrictionConeConstraint(size_t contactPointIndex, scalar_t frictionCoefficient);
+  std::unique_ptr<StateInputCost> getFrictionConeSoftConstraint(size_t contactPointIndex, scalar_t frictionCoefficient,
+                                                                const RelaxedBarrierPenalty::Config& barrierPenaltyConfig);
   std::unique_ptr<StateInputConstraint> getZeroVelocityConstraint(const EndEffectorKinematics<scalar_t>& eeKinematics,
                                                                   size_t contactPointIndex);
   std::unique_ptr<Initializer>& getInitializerPtr() { return initializerPtr_; }
@@ -69,6 +71,7 @@ class LeggedInterface : public RobotInterface {
   mpc::Settings mpcSettings_;
   ddp::Settings ddpSettings_;
   sqp::Settings sqpSettings_;
+  const bool useHardFrictionConeConstraint_;
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
   CentroidalModelInfo centroidalModelInfo_;

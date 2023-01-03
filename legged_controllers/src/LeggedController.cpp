@@ -157,7 +157,7 @@ LeggedController::~LeggedController() {
 
 void LeggedController::setupLeggedInterface(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
                                             bool verbose) {
-  leggedInterface_ = std::make_shared<LeggedInterface>(taskFile, urdfFile, referenceFile, verbose);
+  leggedInterface_ = std::make_shared<LeggedInterface>(taskFile, urdfFile, referenceFile);
   leggedInterface_->setupOptimalControlProblem(taskFile, urdfFile, referenceFile, verbose);
 }
 
