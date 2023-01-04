@@ -103,7 +103,7 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
 
   for (size_t i = 0; i < centroidalModelInfo_.numThreeDofContacts; i++) {
     const std::string& footName = modelSettings_.contactNames3DoF[i];
-    std::unique_ptr<EndEffectorKinematics<scalar_t>> eeKinematicsPtr = getEeKinematicsPtr(footName);
+    std::unique_ptr<EndEffectorKinematics<scalar_t>> eeKinematicsPtr = getEeKinematicsPtr({footName}, footName);
 
     if (useHardFrictionConeConstraint_) {
       problemPtr_->inequalityConstraintPtr->add(footName + "_frictionCone", getFrictionConeConstraint(i, frictionCoefficient));
@@ -288,7 +288,8 @@ std::unique_ptr<StateInputCost> LeggedInterface::getFrictionConeSoftConstraint(s
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-std::unique_ptr<EndEffectorKinematics<scalar_t>> LeggedInterface::getEeKinematicsPtr(const std::string& footName) {
+std::unique_ptr<EndEffectorKinematics<scalar_t>> LeggedInterface::getEeKinematicsPtr(const std::vector<std::string>& footNames,
+                                                                                     const std::string& modelName) {
   std::unique_ptr<EndEffectorKinematics<scalar_t>> eeKinematicsPtr;
 
   const auto infoCppAd = centroidalModelInfo_.toCppAd();
@@ -297,9 +298,9 @@ std::unique_ptr<EndEffectorKinematics<scalar_t>> LeggedInterface::getEeKinematic
     const ad_vector_t q = centroidal_model::getGeneralizedCoordinates(state, infoCppAd);
     updateCentroidalDynamics(pinocchioInterfaceAd, infoCppAd, q);
   };
-  eeKinematicsPtr.reset(new PinocchioEndEffectorKinematicsCppAd(*pinocchioInterfacePtr_, pinocchioMappingCppAd, {footName},
+  eeKinematicsPtr.reset(new PinocchioEndEffectorKinematicsCppAd(*pinocchioInterfacePtr_, pinocchioMappingCppAd, footNames,
                                                                 centroidalModelInfo_.stateDim, centroidalModelInfo_.inputDim,
-                                                                velocityUpdateCallback, footName, modelSettings_.modelFolderCppAd,
+                                                                velocityUpdateCallback, modelName, modelSettings_.modelFolderCppAd,
                                                                 modelSettings_.recompileLibrariesCppAd, modelSettings_.verboseCppAd));
 
   return eeKinematicsPtr;
