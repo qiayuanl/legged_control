@@ -83,7 +83,10 @@ TargetTrajectories cmdVelToTargetTrajectories(const vector_t& cmdVel, const Syst
 
   // target reaching duration
   const scalar_t targetReachingTime = observation.time + timeToTarget;
-  return targetPoseToTargetTrajectories(targetPose, observation, targetReachingTime);
+  auto trajectories = targetPoseToTargetTrajectories(targetPose, observation, targetReachingTime);
+  trajectories.stateTrajectory[0].head(3) = cmdVelRot;
+  trajectories.stateTrajectory[1].head(3) = cmdVelRot;
+  return trajectories;
 }
 
 int main(int argc, char** argv) {
