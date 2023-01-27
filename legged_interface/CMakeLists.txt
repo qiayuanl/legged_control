@@ -47,6 +47,8 @@ link_directories(
 )
 
 add_library(${PROJECT_NAME}
+        src/constraint/NormalVelocityConstraintCppAd.cpp
+        src/LeggedRobotPreComputation.cpp
         src/LeggedInterface.cpp
         )
 
