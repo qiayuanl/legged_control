@@ -2,7 +2,6 @@
 // Created by qiayuan on 2022/6/24.
 //
 
-#include <pinocchio/algorithm/jacobian.hpp>
 #include <pinocchio/fwd.hpp>  // forward declarations must be included first.
 
 #include "legged_controllers/LeggedController.h"
@@ -153,6 +152,10 @@ LeggedController::~LeggedController() {
   if (mpcThread_.joinable()) {
     mpcThread_.join();
   }
+  std::cerr << "########################################################################";
+  std::cerr << "\n### MPC Benchmarking";
+  std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
 }
 
 void LeggedController::setupLeggedInterface(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
@@ -183,6 +186,7 @@ void LeggedController::setupMpc() {
 void LeggedController::setupMrt() {
   mpcMrtInterface_ = std::make_shared<MPC_MRT_Interface>(*mpc_);
   mpcMrtInterface_->initRollout(&leggedInterface_->getRollout());
+  mpcTimer_.reset();
 
   controllerRunning_ = true;
   mpcThread_ = std::thread([&]() {
@@ -191,7 +195,9 @@ void LeggedController::setupMrt() {
         executeAndSleep(
             [&]() {
               if (mpcRunning_) {
+                mpcTimer_.startTimer();
                 mpcMrtInterface_->advanceMpc();
+                mpcTimer_.endTimer();
               }
             },
             leggedInterface_->mpcSettings().mpcDesiredFrequency_);

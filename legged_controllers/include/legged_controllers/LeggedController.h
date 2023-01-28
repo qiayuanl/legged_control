@@ -9,6 +9,7 @@
 #include <legged_common/hardware_interface/ContactSensorInterface.h>
 
 #include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
+#include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_legged_robot_ros/visualization/LeggedRobotVisualizer.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
 
@@ -56,6 +57,8 @@ class LeggedController : public controller_interface::MultiInterfaceController<H
 
   SystemObservation currentObservation_;
   std::vector<HybridJointHandle> hybridJointHandles_;
+
+  benchmark::RepeatedTimer mpcTimer_;
 
  private:
   std::thread mpcThread_;
