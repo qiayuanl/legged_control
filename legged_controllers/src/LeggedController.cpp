@@ -123,7 +123,9 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
   // Whole body control
   currentObservation_.input = optimizedInput;
 
+  wbcTimer_.startTimer();
   vector_t x = wbc_->update(optimizedState, optimizedInput, measuredRbdState, plannedMode, period.toSec());
+  wbcTimer_.endTimer();
 
   vector_t torque = x.tail(12);
 
@@ -155,7 +157,11 @@ LeggedController::~LeggedController() {
   std::cerr << "########################################################################";
   std::cerr << "\n### MPC Benchmarking";
   std::cerr << "\n###   Maximum : " << mpcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
-  std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms].";
+  std::cerr << "\n###   Average : " << mpcTimer_.getAverageInMilliseconds() << "[ms]." << std::endl;
+  std::cerr << "########################################################################";
+  std::cerr << "\n### WBC Benchmarking";
+  std::cerr << "\n###   Maximum : " << wbcTimer_.getMaxIntervalInMilliseconds() << "[ms].";
+  std::cerr << "\n###   Average : " << wbcTimer_.getAverageInMilliseconds() << "[ms].";
 }
 
 void LeggedController::setupLeggedInterface(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,

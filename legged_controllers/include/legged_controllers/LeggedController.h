@@ -59,6 +59,7 @@ class LeggedController : public controller_interface::MultiInterfaceController<H
   std::vector<HybridJointHandle> hybridJointHandles_;
 
   benchmark::RepeatedTimer mpcTimer_;
+  benchmark::RepeatedTimer wbcTimer_;
 
  private:
   std::thread mpcThread_;
