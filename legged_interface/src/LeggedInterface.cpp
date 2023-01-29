@@ -356,15 +356,15 @@ std::unique_ptr<StateCost> LeggedInterface::getSelfCollisionConstraint(const Pin
   loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionObjectPairs", collisionObjectPairs, verbose);
   loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionLinkPairs", collisionLinkPairs, verbose);
 
-  PinocchioGeometryInterface geometryInterface(pinocchioInterface, collisionLinkPairs, collisionObjectPairs);
+  geometryInterfacePtr_ = std::make_unique<PinocchioGeometryInterface>(pinocchioInterface, collisionLinkPairs, collisionObjectPairs);
   if (verbose) {
     std::cerr << " #### =============================================================================\n";
-    const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
+    const size_t numCollisionPairs = geometryInterfacePtr_->getNumCollisionPairs();
     std::cerr << "SelfCollision: Testing for " << numCollisionPairs << " collision pairs\n";
   }
 
   std::unique_ptr<StateConstraint> constraint = std::make_unique<LeggedSelfCollisionConstraint>(
-      CentroidalModelPinocchioMapping(centroidalModelInfo_), std::move(geometryInterface), minimumDistance);
+      CentroidalModelPinocchioMapping(centroidalModelInfo_), *geometryInterfacePtr_, minimumDistance);
 
   auto penalty = std::make_unique<RelaxedBarrierPenalty>(RelaxedBarrierPenalty::Config{mu, delta});
 

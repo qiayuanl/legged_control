@@ -15,7 +15,7 @@ using namespace legged_robot;
 
 class LeggedSelfCollisionConstraint final : public SelfCollisionConstraint {
  public:
-  LeggedSelfCollisionConstraint(const PinocchioStateInputMapping<scalar_t>& mapping, PinocchioGeometryInterface pinocchioGeometryInterface,
+  LeggedSelfCollisionConstraint(const CentroidalModelPinocchioMapping& mapping, PinocchioGeometryInterface pinocchioGeometryInterface,
                                 scalar_t minimumDistance)
       : SelfCollisionConstraint(mapping, std::move(pinocchioGeometryInterface), minimumDistance) {}
   ~LeggedSelfCollisionConstraint() override = default;

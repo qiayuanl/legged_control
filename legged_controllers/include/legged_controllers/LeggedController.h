@@ -18,6 +18,7 @@
 #include <legged_wbc/WbcBase.h>
 
 #include "legged_controllers/SafetyChecker.h"
+#include "legged_controllers/visualization/LeggedSelfCollisionVisualization.h"
 
 namespace legged {
 using namespace ocs2;
@@ -52,18 +53,18 @@ class LeggedController : public controller_interface::MultiInterfaceController<H
   std::shared_ptr<CentroidalModelRbdConversions> rbdConversions_;
   std::shared_ptr<StateEstimateBase> stateEstimate_;
 
-  std::shared_ptr<LeggedRobotVisualizer> visualizer_;
+  std::shared_ptr<LeggedRobotVisualizer> robotVisualizer_;
+  std::shared_ptr<LeggedSelfCollisionVisualization> selfCollisionVisualization_;
   ros::Publisher observationPublisher_;
 
   SystemObservation currentObservation_;
   std::vector<HybridJointHandle> hybridJointHandles_;
 
-  benchmark::RepeatedTimer mpcTimer_;
-  benchmark::RepeatedTimer wbcTimer_;
-
  private:
   std::thread mpcThread_;
   std::atomic_bool controllerRunning_{}, mpcRunning_{};
+  benchmark::RepeatedTimer mpcTimer_;
+  benchmark::RepeatedTimer wbcTimer_;
 };
 
 class LeggedCheaterController : public LeggedController {

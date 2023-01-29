@@ -17,6 +17,7 @@
 #include <ocs2_pinocchio_interface/PinocchioInterface.h>
 #include <ocs2_robotic_tools/common/RobotInterface.h>
 #include <ocs2_robotic_tools/end_effector/EndEffectorKinematics.h>
+#include <ocs2_self_collision/PinocchioGeometryInterface.h>
 #include <ocs2_sqp/SqpSettings.h>
 
 #include <ocs2_legged_robot/common/ModelSettings.h>
@@ -49,6 +50,7 @@ class LeggedInterface : public RobotInterface {
   const RolloutBase& getRollout() const { return *rolloutPtr_; }
   PinocchioInterface& getPinocchioInterface() { return *pinocchioInterfacePtr_; }
   const CentroidalModelInfo& getCentroidalModelInfo() const { return centroidalModelInfo_; }
+  PinocchioGeometryInterface& getGeometryInterface() { return *geometryInterfacePtr_; }
   std::shared_ptr<SwitchedModelReferenceManager> getSwitchedModelReferenceManagerPtr() const { return referenceManagerPtr_; }
 
   const Initializer& getInitializer() const override { return *initializerPtr_; }
@@ -86,6 +88,7 @@ class LeggedInterface : public RobotInterface {
 
   std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
   CentroidalModelInfo centroidalModelInfo_;
+  std::unique_ptr<PinocchioGeometryInterface> geometryInterfacePtr_;
 
   std::unique_ptr<OptimalControlProblem> problemPtr_;
   std::shared_ptr<SwitchedModelReferenceManager> referenceManagerPtr_;
