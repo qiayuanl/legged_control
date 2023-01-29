@@ -51,7 +51,7 @@ class LeggedRobotPreComputation : public PreComputation {
                             const SwingTrajectoryPlanner& swingTrajectoryPlanner, ModelSettings settings);
   ~LeggedRobotPreComputation() override = default;
 
-  LeggedRobotPreComputation* clone() const override;
+  LeggedRobotPreComputation* clone() const override { return new LeggedRobotPreComputation(*this); }
 
   void request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) override;
 
@@ -61,12 +61,13 @@ class LeggedRobotPreComputation : public PreComputation {
   const PinocchioInterface& getPinocchioInterface() const { return pinocchioInterface_; }
 
  protected:
-  LeggedRobotPreComputation(const LeggedRobotPreComputation& other) = default;
+  LeggedRobotPreComputation(const LeggedRobotPreComputation& other);
 
  private:
   PinocchioInterface pinocchioInterface_;
   CentroidalModelInfo info_;
   const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
+  std::unique_ptr<CentroidalModelPinocchioMapping> mappingPtr_;
   const ModelSettings settings_;
 
   std::vector<EndEffectorLinearConstraint::Config> eeNormalVelConConfigs_;

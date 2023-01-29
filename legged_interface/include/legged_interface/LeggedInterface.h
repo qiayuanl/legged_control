@@ -74,6 +74,8 @@ class LeggedInterface : public RobotInterface {
                                                                       const std::string& modelName);
   std::unique_ptr<StateInputConstraint> getZeroVelocityConstraint(const EndEffectorKinematics<scalar_t>& eeKinematics,
                                                                   size_t contactPointIndex);
+  std::unique_ptr<StateCost> getSelfCollisionConstraint(const PinocchioInterface& pinocchioInterface, const std::string& taskFile,
+                                                        const std::string& prefix, bool verbose);
 
   ModelSettings modelSettings_;
   mpc::Settings mpcSettings_;

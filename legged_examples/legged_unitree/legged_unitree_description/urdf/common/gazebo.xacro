@@ -43,7 +43,7 @@
     <gazebo reference="LF_thigh">
         <mu1>0.2</mu1>
         <mu2>0.2</mu2>
-        <self_collide>1</self_collide>
+        <self_collide>0</self_collide>
         <material>Gazebo/DarkGrey</material>
         <kp value="1000000.0"/>
         <kd value="1.0"/>
@@ -71,7 +71,7 @@
     <gazebo reference="RF_thigh">
         <mu1>0.2</mu1>
         <mu2>0.2</mu2>
-        <self_collide>1</self_collide>
+        <self_collide>0</self_collide>
         <material>Gazebo/DarkGrey</material>
         <kp value="1000000.0"/>
         <kd value="1.0"/>
@@ -99,7 +99,7 @@
     <gazebo reference="LH_thigh">
         <mu1>0.2</mu1>
         <mu2>0.2</mu2>
-        <self_collide>1</self_collide>
+        <self_collide>0</self_collide>
         <material>Gazebo/DarkGrey</material>
         <kp value="1000000.0"/>
         <kd value="1.0"/>
@@ -127,7 +127,7 @@
     <gazebo reference="RH_thigh">
         <mu1>0.2</mu1>
         <mu2>0.2</mu2>
-        <self_collide>1</self_collide>
+        <self_collide>0</self_collide>
         <material>Gazebo/DarkGrey</material>
         <kp value="1000000.0"/>
         <kd value="1.0"/>

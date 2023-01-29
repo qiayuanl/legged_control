@@ -1,7 +1,6 @@
 //
 // Created by qiayuan on 2022/7/16.
 //
-#include <memory>
 
 #include <pinocchio/fwd.hpp>  // forward declarations must be included first.
 
@@ -10,13 +9,17 @@
 
 #include "legged_interface/LeggedInterface.h"
 #include "legged_interface/LeggedRobotPreComputation.h"
+#include "legged_interface/constraint/LeggedSelfCollisionConstraint.h"
 #include "legged_interface/constraint/NormalVelocityConstraintCppAd.h"
 
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
 #include <ocs2_centroidal_model/FactoryFunctions.h>
 #include <ocs2_centroidal_model/ModelHelperFunctions.h>
+#include <ocs2_core/misc/LoadData.h>
+#include <ocs2_core/misc/LoadStdVectorOfPair.h>
 #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
+#include <ocs2_core/soft_constraint/StateSoftConstraint.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 
@@ -118,6 +121,10 @@ void LeggedInterface::setupOptimalControlProblem(const std::string& taskFile, co
         footName + "_normalVelocity",
         std::unique_ptr<StateInputConstraint>(new NormalVelocityConstraintCppAd(*referenceManagerPtr_, *eeKinematicsPtr, i)));
   }
+
+  // Self-collision avoidance constraint
+  problemPtr_->stateSoftConstraintPtr->add("selfCollision",
+                                           getSelfCollisionConstraint(*pinocchioInterfacePtr_, taskFile, "selfCollision", verbose));
 
   setupPreComputation(taskFile, urdfFile, referenceFile, verbose);
 
@@ -323,6 +330,45 @@ std::unique_ptr<StateInputConstraint> LeggedInterface::getZeroVelocityConstraint
   };
   return std::unique_ptr<StateInputConstraint>(new ZeroVelocityConstraintCppAd(*referenceManagerPtr_, eeKinematics, contactPointIndex,
                                                                                eeZeroVelConConfig(modelSettings_.positionErrorGain)));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::unique_ptr<StateCost> LeggedInterface::getSelfCollisionConstraint(const PinocchioInterface& pinocchioInterface,
+                                                                       const std::string& taskFile, const std::string& prefix,
+                                                                       bool verbose) {
+  std::vector<std::pair<size_t, size_t>> collisionObjectPairs;
+  std::vector<std::pair<std::string, std::string>> collisionLinkPairs;
+  scalar_t mu = 1e-2;
+  scalar_t delta = 1e-3;
+  scalar_t minimumDistance = 0.0;
+
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(taskFile, pt);
+  if (verbose) {
+    std::cerr << "\n #### SelfCollision Settings: ";
+    std::cerr << "\n #### =============================================================================\n";
+  }
+  loadData::loadPtreeValue(pt, mu, prefix + ".mu", verbose);
+  loadData::loadPtreeValue(pt, delta, prefix + ".delta", verbose);
+  loadData::loadPtreeValue(pt, minimumDistance, prefix + ".minimumDistance", verbose);
+  loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionObjectPairs", collisionObjectPairs, verbose);
+  loadData::loadStdVectorOfPair(taskFile, prefix + ".collisionLinkPairs", collisionLinkPairs, verbose);
+
+  PinocchioGeometryInterface geometryInterface(pinocchioInterface, collisionLinkPairs, collisionObjectPairs);
+  if (verbose) {
+    std::cerr << " #### =============================================================================\n";
+    const size_t numCollisionPairs = geometryInterface.getNumCollisionPairs();
+    std::cerr << "SelfCollision: Testing for " << numCollisionPairs << " collision pairs\n";
+  }
+
+  std::unique_ptr<StateConstraint> constraint = std::make_unique<LeggedSelfCollisionConstraint>(
+      CentroidalModelPinocchioMapping(centroidalModelInfo_), std::move(geometryInterface), minimumDistance);
+
+  auto penalty = std::make_unique<RelaxedBarrierPenalty>(RelaxedBarrierPenalty::Config{mu, delta});
+
+  return std::make_unique<StateSoftConstraint>(std::move(constraint), std::move(penalty));
 }
 
 }  // namespace legged

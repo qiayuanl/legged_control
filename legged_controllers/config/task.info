@@ -161,16 +161,16 @@ initialState
    (11,0) 0.0     ; theta_base_x
 
    ;; Leg Joint Positions: [LF, LH, RF, RH] ;;
-   (12,0) -0.05   ; LF_HAA
+   (12,0) -0.20   ; LF_HAA
    (13,0)  0.72   ; LF_HFE
    (14,0) -1.44   ; LF_KFE
-   (15,0) -0.05   ; LH_HAA
+   (15,0) -0.20   ; LH_HAA
    (16,0)  0.72   ; LH_HFE
    (17,0) -1.44   ; LH_KFE
-   (18,0)  0.05   ; RF_HAA
+   (18,0)  0.20   ; RF_HAA
    (19,0)  0.72   ; RF_HFE
    (20,0) -1.44   ; RF_KFE
-   (21,0)  0.05   ; RH_HAA
+   (21,0)  0.20   ; RH_HAA
    (22,0)  0.72   ; RH_HFE
    (23,0) -1.44   ; RH_KFE
 }
@@ -254,8 +254,34 @@ frictionConeSoftConstraint
   delta                  5.0
 }
 
-; Whole body control
+selfCollision
+{
+  ; Self Collision raw object pairs
+  collisionObjectPairs
+  {
+  }
 
+  ; Self Collision pairs
+  collisionLinkPairs
+  {
+    [0] "LF_calf, RF_calf"
+    [1] "LH_calf, RH_calf"
+    [2] "LF_calf, LH_calf"
+    [3] "RF_calf, RH_calf"
+    [4] "LF_FOOT, RF_FOOT"
+    [5] "LH_FOOT, RH_FOOT"
+    [6] "LF_FOOT, LH_FOOT"
+    [7] "RF_FOOT, RH_FOOT"
+  }
+
+  minimumDistance  0.05
+
+  ; relaxed log barrier parameters
+  mu      1e-2
+  delta   1e-3
+}
+
+; Whole body control
 torqueLimitsTask
 {
    (0,0)  33.5     ; HAA

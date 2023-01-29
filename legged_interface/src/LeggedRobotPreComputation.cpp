@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pinocchio/algorithm/jacobian.hpp>
 #include <pinocchio/algorithm/kinematics.hpp>
 
+#include <ocs2_centroidal_model/ModelHelperFunctions.h>
 #include <ocs2_core/misc/Numerics.h>
 
 #include "legged_interface/LeggedRobotPreComputation.h"
@@ -48,15 +49,23 @@ LeggedRobotPreComputation::LeggedRobotPreComputation(PinocchioInterface pinocchi
     : pinocchioInterface_(std::move(pinocchioInterface)),
       info_(std::move(info)),
       swingTrajectoryPlannerPtr_(&swingTrajectoryPlanner),
+      mappingPtr_(new CentroidalModelPinocchioMapping(info_)),
       settings_(std::move(settings)) {
   eeNormalVelConConfigs_.resize(info_.numThreeDofContacts);
+  mappingPtr_->setPinocchioInterface(pinocchioInterface_);
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-LeggedRobotPreComputation* LeggedRobotPreComputation::clone() const {
-  return new LeggedRobotPreComputation(*this);
+LeggedRobotPreComputation::LeggedRobotPreComputation(const LeggedRobotPreComputation& rhs)
+    : pinocchioInterface_(rhs.pinocchioInterface_),
+      info_(rhs.info_),
+      swingTrajectoryPlannerPtr_(rhs.swingTrajectoryPlannerPtr_),
+      mappingPtr_(rhs.mappingPtr_->clone()),
+      settings_(rhs.settings_) {
+  eeNormalVelConConfigs_.resize(rhs.eeNormalVelConConfigs_.size());
+  mappingPtr_->setPinocchioInterface(pinocchioInterface_);
 }
 
 /******************************************************************************************************/
@@ -83,6 +92,23 @@ void LeggedRobotPreComputation::request(RequestSet request, scalar_t t, const ve
     for (size_t i = 0; i < info_.numThreeDofContacts; i++) {
       eeNormalVelConConfigs_[i] = eeNormalVelConConfig(i);
     }
+  }
+
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+  vector_t q = mappingPtr_->getPinocchioJointPosition(x);
+  if (request.contains(Request::Approximation)) {
+    pinocchio::forwardKinematics(model, data, q);
+    pinocchio::updateFramePlacements(model, data);
+    pinocchio::updateGlobalPlacements(model, data);
+    pinocchio::computeJointJacobians(model, data);
+
+    updateCentroidalDynamics(pinocchioInterface_, info_, q);
+    vector_t v = mappingPtr_->getPinocchioJointVelocity(x, u);
+    updateCentroidalDynamicsDerivatives(pinocchioInterface_, info_, q, v);
+  } else {
+    pinocchio::forwardKinematics(model, data, q);
+    pinocchio::updateFramePlacements(model, data);
   }
 }
 
