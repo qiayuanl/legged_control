@@ -50,7 +50,7 @@ its dependencies following the step below.
    instead of `catkin_make`. It will take you about ten minutes.
    ```
    catkin config -DCMAKE_BUILD_TYPE=RelWithDebInfo
-   catkin build ocs2_legged_robot_ros
+   catkin build ocs2_legged_robot_ros ocs2_self_collision_visualization
    ```
    Ensure you can command the ANYmal as shown in
    the [document](https://leggedrobotics.github.io/ocs2/robotic_examples.html#legged-robot) and below.

@@ -137,6 +137,8 @@ void HoQp::buildZMatrix() {
 void HoQp::solveProblem() {
   size_t numTotal = numDecisionVars_ + numSlackVars_;
   vector_t f = f_;
+  h_.diagonal().array() += 1e-20;
+
   eiquadprog::solvers::EiquadprogFast qp;
   qp.reset(numTotal, 0, f.size());
   vector_t qpSol(numTotal);

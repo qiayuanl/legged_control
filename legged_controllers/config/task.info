@@ -8,7 +8,7 @@ legged_robot_interface
 model_settings
 {
   positionErrorGain             0.0
-  phaseTransitionStanceTime     0.4
+  phaseTransitionStanceTime     0.1
 
   verboseCppAd                  true
   recompileLibrariesCppAd       false
@@ -183,7 +183,7 @@ Q
   ;; Normalized Centroidal Momentum: [linear, angular] ;;
   (0,0)   15.0     ; vcom_x
   (1,1)   15.0     ; vcom_y
-  (2,2)   30.0     ; vcom_z
+  (2,2)   100.0    ; vcom_z
   (3,3)   10.0     ; L_x / robotMass
   (4,4)   30.0     ; L_y / robotMass
   (5,5)   30.0     ; L_z / robotMass

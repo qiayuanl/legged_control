@@ -14,8 +14,9 @@ vector_t WeightedWbc::update(const vector_t& stateDesired, const vector_t& input
 
   Task constraints =
       formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateFrictionConeTask() + formulateNoContactMotionTask();
-  Task weighedTask = formulateSwingLegTask() * weightSwingLeg_ + formulateBaseAccelTask(period) * weightBaseAccel_ +
-                     formulateContactForceTask() * weightContactForce_;
+  Task weighedTask = formulateSwingLegTask() * weightSwingLeg_ +
+                     formulateBaseAccelTask(stateDesired, inputDesired, period) * weightBaseAccel_ +
+                     formulateContactForceTask(inputDesired) * weightContactForce_;
 
   matrix_t H = weighedTask.a_.transpose() * weighedTask.a_;
   vector_t g = -weighedTask.a_.transpose() * weighedTask.b_;

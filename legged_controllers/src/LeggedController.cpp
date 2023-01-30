@@ -21,6 +21,7 @@
 #include <angles/angles.h>
 #include <legged_estimation/FromTopiceEstimate.h>
 #include <legged_estimation/LinearKalmanFilter.h>
+#include <legged_wbc/HierarchicalWbc.h>
 #include <legged_wbc/WeightedWbc.h>
 #include <pluginlib/class_list_macros.hpp>
 
@@ -67,9 +68,8 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
   setupStateEstimate(urdfFile, contactHandles, robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu"));
 
   // Whole body control
-  wbc_ = std::make_shared<WeightedWbc>(std::make_unique<PinocchioInterface>(centroidal_model::createPinocchioInterface(
-                                           urdfFile, leggedInterface_->modelSettings().jointNames)),
-                                       leggedInterface_->getCentroidalModelInfo(), *eeKinematicsPtr_);
+  wbc_ = std::make_shared<HierarchicalWbc>(leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(),
+                                           *eeKinematicsPtr_);
   wbc_->loadTasksSetting(taskFile, verbose);
 
   // Safety Checker

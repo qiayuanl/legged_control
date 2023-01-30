@@ -6,7 +6,6 @@
 
 #include "legged_wbc/Task.h"
 
-#include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
 #include <ocs2_centroidal_model/PinocchioCentroidalDynamics.h>
 #include <ocs2_legged_robot/gait/MotionPhaseDefinition.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
@@ -21,8 +20,7 @@ class WbcBase {
   using Matrix6 = Eigen::Matrix<scalar_t, 6, 6>;
 
  public:
-  WbcBase(std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr, CentroidalModelInfo info,
-          const PinocchioEndEffectorKinematics& eeKinematics);
+  WbcBase(const PinocchioInterface& pinocchioInterface, CentroidalModelInfo info, const PinocchioEndEffectorKinematics& eeKinematics);
 
   virtual void loadTasksSetting(const std::string& taskFile, bool verbose);
 
@@ -30,25 +28,28 @@ class WbcBase {
                           scalar_t period);
 
  protected:
+  void updateMeasured(const vector_t& rbdStateMeasured);
+  void updateDesired(const vector_t& stateDesired, const vector_t& inputDesired);
+
   size_t getNumDecisionVars() const { return numDecisionVars_; }
 
   Task formulateFloatingBaseEomTask();
   Task formulateTorqueLimitsTask();
   Task formulateNoContactMotionTask();
   Task formulateFrictionConeTask();
-  Task formulateBaseAccelTask(scalar_t period);
+  Task formulateBaseAccelTask(const vector_t& stateDesired, const vector_t& inputDesired, scalar_t period);
   Task formulateSwingLegTask();
-  Task formulateContactForceTask();
+  Task formulateContactForceTask(const vector_t& inputDesired) const;
 
  private:
   size_t numDecisionVars_;
-  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
+  PinocchioInterface pinocchioInterfaceMeasured_, pinocchioInterfaceDesired_;
   CentroidalModelInfo info_;
 
   std::unique_ptr<PinocchioEndEffectorKinematics> eeKinematics_;
   CentroidalModelPinocchioMapping mapping_;
 
-  vector_t stateDesired_, inputDesired_, qMeasured_, vMeasured_, inputLast_;
+  vector_t qMeasured_, vMeasured_, inputLast_;
   matrix_t j_, dj_;
   contact_flag_t contactFlag_{};
   size_t numContacts_{};
