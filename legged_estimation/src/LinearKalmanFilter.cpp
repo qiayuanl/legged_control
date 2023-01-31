@@ -2,26 +2,25 @@
 // Created by qiayuan on 2022/7/24.
 //
 
-#include <utility>
-
 #include <pinocchio/fwd.hpp>
+
+#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/kinematics.hpp>
 
 #include "legged_estimation/LinearKalmanFilter.h"
 
 #include <ocs2_legged_robot/common/Types.h>
 #include <ocs2_robotic_tools/common/RotationDerivativesTransforms.h>
 #include <ocs2_robotic_tools/common/RotationTransforms.h>
-#include <pinocchio/algorithm/frames.hpp>
-#include <pinocchio/algorithm/kinematics.hpp>
 
 namespace legged {
 
-KalmanFilterEstimate::KalmanFilterEstimate(std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr, CentroidalModelInfo info,
+KalmanFilterEstimate::KalmanFilterEstimate(PinocchioInterface pinocchioInterface, CentroidalModelInfo info,
                                            const PinocchioEndEffectorKinematics& eeKinematics,
                                            const std::vector<HybridJointHandle>& hybridJointHandles,
                                            const std::vector<ContactSensorHandle>& contactSensorHandles,
                                            const hardware_interface::ImuSensorHandle& imuSensorHandle)
-    : StateEstimateBase(std::move(pinocchioInterfacePtr), std::move(info), eeKinematics, hybridJointHandles, contactSensorHandles,
+    : StateEstimateBase(std::move(pinocchioInterface), std::move(info), eeKinematics, hybridJointHandles, contactSensorHandles,
                         imuSensorHandle),
       tfListener_(tfBuffer_),
       topicUpdated_(false) {
@@ -56,8 +55,8 @@ KalmanFilterEstimate::KalmanFilterEstimate(std::unique_ptr<PinocchioInterface> p
   p_ = 100. * p_;
   q_.setIdentity();
   r_.setIdentity();
-
-  eeKinematics_->setPinocchioInterface(*pinocchioInterfacePtr_);
+  feetHeights_.setZero(4);
+  eeKinematics_->setPinocchioInterface(pinocchioInterface_);
 
   world2odom_.setRotation(tf2::Quaternion::getIdentity());
   sub_ = ros::NodeHandle().subscribe<nav_msgs::Odometry>("/tracking_camera/odom/sample", 10, &KalmanFilterEstimate::callback, this);
@@ -85,8 +84,8 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   q_.block(3, 3, 3, 3) = (dt * 9.81f / 20.f) * Eigen::Matrix<scalar_t, 3, 3>::Identity();
   q_.block(6, 6, 12, 12) = dt * Eigen::Matrix<scalar_t, 12, 12>::Identity();
 
-  const auto& model = pinocchioInterfacePtr_->getModel();
-  auto& data = pinocchioInterfacePtr_->getData();
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
   size_t actuatedDofNum = info_.actuatedDofNum;
 
   vector_t qPino(generalizedCoordinatesNum_);
@@ -107,7 +106,6 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   const auto eePos = eeKinematics_->getPosition(vector_t());
   const auto eeVel = eeKinematics_->getVelocity(vector_t(), vector_t());
 
-  scalar_t footRadius = 0.015;
   scalar_t imuProcessNoisePosition = 0.2;
   scalar_t imuProcessNoiseVelocity = 0.2;
   scalar_t footProcessNoisePosition = 0.002;
@@ -140,18 +138,17 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
     r.block(rIndex2, rIndex2, 3, 3) = (isContact ? 1. : high_suspect_number) * r.block(rIndex2, rIndex2, 3, 3);
     r(rIndex3, rIndex3) = (isContact ? 1. : high_suspect_number) * r(rIndex3, rIndex3);
 
-    ps_.segment(3 * i, 3) = -1. * eePos[i];
-    ps_.segment(3 * i, 3)[2] += footRadius;
-    vs_.segment(3 * i, 3) = -1. * eeVel[i];
+    ps_.segment(3 * i, 3) = -eePos[i];
+    ps_.segment(3 * i, 3)[2] += footRadius_;
+    vs_.segment(3 * i, 3) = -eeVel[i];
   }
   Eigen::Matrix<scalar_t, 3, 1> g(0, 0, -9.81);
   Eigen::Matrix<scalar_t, 3, 1> imuAccel(imuSensorHandle_.getLinearAcceleration()[0], imuSensorHandle_.getLinearAcceleration()[1],
                                          imuSensorHandle_.getLinearAcceleration()[2]);
   Eigen::Matrix<scalar_t, 3, 1> accel = getRotationMatrixFromZyxEulerAngles(quatToZyx(quat)) * imuAccel + g;
-  Eigen::Matrix<scalar_t, 4, 1> pzs = Eigen::Matrix<scalar_t, 4, 1>::Zero();
 
   Eigen::Matrix<scalar_t, 28, 1> y;
-  y << ps_, vs_, pzs;
+  y << ps_, vs_, feetHeights_;
   xHat_ = a_ * xHat_ + b_ * accel;
   Eigen::Matrix<scalar_t, 18, 18> at = a_.transpose();
   Eigen::Matrix<scalar_t, 18, 18> pm = a_ * p_ * at + q;
@@ -245,12 +242,25 @@ void KalmanFilterEstimate::updateFromTopic() {
     return;
   }
   tf2::Transform odom2base = world2odom_.inverse() * world2sensor * base2sensor.inverse();
-  //  vector3_t newPos(odom2base.getOrigin().x(), odom2base.getOrigin().y(), odom2base.getOrigin().z());
-  vector3_t newPos(odom2base.getOrigin().x(), odom2base.getOrigin().y(), xHat_(2));
-  vector_t deltaPos = newPos - xHat_.segment<3>(0);
+  vector3_t newPos(odom2base.getOrigin().x(), odom2base.getOrigin().y(), odom2base.getOrigin().z());
+
+  const auto& model = pinocchioInterface_.getModel();
+  auto& data = pinocchioInterface_.getData();
+
+  vector_t qPino(generalizedCoordinatesNum_);
+  qPino.head<3>() = newPos;
+  qPino.segment<3>(3) = rbdState_.head<3>();
+  qPino.tail(info_.actuatedDofNum) = rbdState_.segment(6, info_.actuatedDofNum);
+  pinocchio::forwardKinematics(model, data, qPino);
+  pinocchio::updateFramePlacements(model, data);
+
   xHat_.segment<3>(0) = newPos;
   for (size_t i = 0; i < 4; ++i) {
-    xHat_.segment<3>(6 + i * 3) += deltaPos;
+    xHat_.segment<3>(6 + i * 3) = eeKinematics_->getPosition(vector_t())[i];
+    xHat_(6 + i * 3 + 2) -= footRadius_;
+    if (contactSensorHandles_[i].isContact()) {
+      feetHeights_[i] = xHat_(6 + i * 3 + 2);
+    }
   }
 }
 

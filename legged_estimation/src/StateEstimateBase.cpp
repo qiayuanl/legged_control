@@ -11,11 +11,11 @@
 namespace legged {
 using namespace legged_robot;
 
-StateEstimateBase::StateEstimateBase(std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr, CentroidalModelInfo info,
+StateEstimateBase::StateEstimateBase(PinocchioInterface pinocchioInterface, CentroidalModelInfo info,
                                      const PinocchioEndEffectorKinematics& eeKinematics, std::vector<HybridJointHandle> hybridJointHandles,
                                      std::vector<ContactSensorHandle> contactSensorHandles,
                                      hardware_interface::ImuSensorHandle imuSensorHandle)
-    : pinocchioInterfacePtr_(std::move(pinocchioInterfacePtr)),
+    : pinocchioInterface_(std::move(pinocchioInterface)),
       info_(std::move(info)),
       eeKinematics_(eeKinematics.clone()),
       generalizedCoordinatesNum_(info_.generalizedCoordinatesNum),

@@ -19,8 +19,8 @@ using namespace ocs2;
 
 class KalmanFilterEstimate : public StateEstimateBase {
  public:
-  KalmanFilterEstimate(std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr, CentroidalModelInfo info,
-                       const PinocchioEndEffectorKinematics& eeKinematics, const std::vector<HybridJointHandle>& hybridJointHandles,
+  KalmanFilterEstimate(PinocchioInterface pinocchioInterface, CentroidalModelInfo info, const PinocchioEndEffectorKinematics& eeKinematics,
+                       const std::vector<HybridJointHandle>& hybridJointHandles,
                        const std::vector<ContactSensorHandle>& contactSensorHandles,
                        const hardware_interface::ImuSensorHandle& imuSensorHandle);
   vector_t update(const ros::Time& time, const ros::Duration& period) override;
@@ -39,6 +39,9 @@ class KalmanFilterEstimate : public StateEstimateBase {
   Eigen::Matrix<scalar_t, 28, 28> r_;
   Eigen::Matrix<scalar_t, 18, 3> b_;
   Eigen::Matrix<scalar_t, 28, 18> c_;
+
+  scalar_t footRadius_ = 0.02;
+  vector_t feetHeights_;
 
   // Topic
   ros::Subscriber sub_;

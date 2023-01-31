@@ -220,19 +220,17 @@ void LeggedController::setupMrt() {
 
 void LeggedController::setupStateEstimate(const std::string& urdfFile, const std::vector<ContactSensorHandle>& contactSensorHandles,
                                           const hardware_interface::ImuSensorHandle& imuSensorHandle) {
-  stateEstimate_ = std::make_shared<KalmanFilterEstimate>(std::make_unique<PinocchioInterface>(centroidal_model::createPinocchioInterface(
-                                                              urdfFile, leggedInterface_->modelSettings().jointNames)),
-                                                          leggedInterface_->getCentroidalModelInfo(), *eeKinematicsPtr_,
-                                                          hybridJointHandles_, contactSensorHandles, imuSensorHandle);
+  stateEstimate_ =
+      std::make_shared<KalmanFilterEstimate>(leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(),
+                                             *eeKinematicsPtr_, hybridJointHandles_, contactSensorHandles, imuSensorHandle);
   currentObservation_.time = 0;
 }
 
 void LeggedCheaterController::setupStateEstimate(const std::string& urdfFile, const std::vector<ContactSensorHandle>& contactSensorHandles,
                                                  const hardware_interface::ImuSensorHandle& imuSensorHandle) {
-  stateEstimate_ = std::make_shared<FromTopicStateEstimate>(std::make_unique<PinocchioInterface>(centroidal_model::createPinocchioInterface(
-                                                                urdfFile, leggedInterface_->modelSettings().jointNames)),
-                                                            leggedInterface_->getCentroidalModelInfo(), *eeKinematicsPtr_,
-                                                            hybridJointHandles_, contactSensorHandles, imuSensorHandle);
+  stateEstimate_ =
+      std::make_shared<FromTopicStateEstimate>(leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(),
+                                               *eeKinematicsPtr_, hybridJointHandles_, contactSensorHandles, imuSensorHandle);
 }
 
 }  // namespace legged

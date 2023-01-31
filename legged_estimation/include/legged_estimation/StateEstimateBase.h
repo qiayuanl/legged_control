@@ -23,9 +23,9 @@ using namespace legged_robot;
 
 class StateEstimateBase {
  public:
-  StateEstimateBase(std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr, CentroidalModelInfo info,
-                    const PinocchioEndEffectorKinematics& eeKinematics, std::vector<HybridJointHandle> hybridJointHandles,
-                    std::vector<ContactSensorHandle> contactSensorHandles, hardware_interface::ImuSensorHandle imuSensorHandle);
+  StateEstimateBase(PinocchioInterface pinocchioInterface, CentroidalModelInfo info, const PinocchioEndEffectorKinematics& eeKinematics,
+                    std::vector<HybridJointHandle> hybridJointHandles, std::vector<ContactSensorHandle> contactSensorHandles,
+                    hardware_interface::ImuSensorHandle imuSensorHandle);
   virtual vector_t update(const ros::Time& time, const ros::Duration& period) = 0;
   size_t getMode();
 
@@ -35,7 +35,7 @@ class StateEstimateBase {
   void updateJointStates();
   void publishMsgs(const nav_msgs::Odometry& odom, const ros::Time& time);
 
-  std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr_;
+  PinocchioInterface pinocchioInterface_;
   CentroidalModelInfo info_;
   std::unique_ptr<PinocchioEndEffectorKinematics> eeKinematics_;
 

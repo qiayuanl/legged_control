@@ -12,7 +12,7 @@ using namespace ocs2;
 
 class FromTopicStateEstimate : public StateEstimateBase {
  public:
-  FromTopicStateEstimate(std::unique_ptr<PinocchioInterface> pinocchioInterfacePtr, CentroidalModelInfo info,
+  FromTopicStateEstimate(PinocchioInterface pinocchioInterface, CentroidalModelInfo info,
                          const PinocchioEndEffectorKinematics& eeKinematics, const std::vector<HybridJointHandle>& hybridJointHandles,
                          const std::vector<ContactSensorHandle>& contactSensorHandles,
                          const hardware_interface::ImuSensorHandle& imuSensorHandle);
