@@ -8,7 +8,6 @@
 
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
-#include <ocs2_centroidal_model/FactoryFunctions.h>
 #include <ocs2_core/thread_support/ExecuteAndSleep.h>
 #include <ocs2_core/thread_support/SetThreadPriority.h>
 #include <ocs2_legged_robot_ros/gait/GaitReceiver.h>
@@ -68,8 +67,8 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
   setupStateEstimate(urdfFile, contactHandles, robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu"));
 
   // Whole body control
-  wbc_ = std::make_shared<HierarchicalWbc>(leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(),
-                                           *eeKinematicsPtr_);
+  wbc_ = std::make_shared<WeightedWbc>(leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(),
+                                       *eeKinematicsPtr_);
   wbc_->loadTasksSetting(taskFile, verbose);
 
   // Safety Checker
@@ -218,7 +217,7 @@ void LeggedController::setupMrt() {
   setThreadPriority(leggedInterface_->sqpSettings().threadPriority, mpcThread_);
 }
 
-void LeggedController::setupStateEstimate(const std::string& urdfFile, const std::vector<ContactSensorHandle>& contactSensorHandles,
+void LeggedController::setupStateEstimate(const std::string& /*urdfFile*/, const std::vector<ContactSensorHandle>& contactSensorHandles,
                                           const hardware_interface::ImuSensorHandle& imuSensorHandle) {
   stateEstimate_ =
       std::make_shared<KalmanFilterEstimate>(leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(),
@@ -226,7 +225,8 @@ void LeggedController::setupStateEstimate(const std::string& urdfFile, const std
   currentObservation_.time = 0;
 }
 
-void LeggedCheaterController::setupStateEstimate(const std::string& urdfFile, const std::vector<ContactSensorHandle>& contactSensorHandles,
+void LeggedCheaterController::setupStateEstimate(const std::string& /*urdfFile*/,
+                                                 const std::vector<ContactSensorHandle>& contactSensorHandles,
                                                  const hardware_interface::ImuSensorHandle& imuSensorHandle) {
   stateEstimate_ =
       std::make_shared<FromTopicStateEstimate>(leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(),
