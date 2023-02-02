@@ -4,7 +4,7 @@
 
 #include "legged_wbc/WeightedWbc.h"
 
-#include <eiquadprog/eiquadprog-fast.hpp>
+#include <qpOASES.hpp>
 
 namespace legged {
 
@@ -12,20 +12,41 @@ vector_t WeightedWbc::update(const vector_t& stateDesired, const vector_t& input
                              scalar_t period) {
   WbcBase::update(stateDesired, inputDesired, rbdStateMeasured, mode, period);
 
+  // Constraints
   Task constraints =
       formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateFrictionConeTask() + formulateNoContactMotionTask();
+  size_t numConstraints = constraints.b_.size() + constraints.f_.size();
+
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> A(numConstraints, getNumDecisionVars());
+  vector_t lbA(numConstraints), ubA(numConstraints);  // clang-format off
+  A << constraints.a_,
+       constraints.d_;
+
+  lbA << constraints.b_,
+         -qpOASES::INFTY * vector_t::Ones(constraints.f_.size());
+  ubA << constraints.b_,
+         constraints.f_;  // clang-format on
+
+  // Cost
   Task weighedTask = formulateSwingLegTask() * weightSwingLeg_ +
                      formulateBaseAccelTask(stateDesired, inputDesired, period) * weightBaseAccel_ +
                      formulateContactForceTask(inputDesired) * weightContactForce_;
-
-  matrix_t H = weighedTask.a_.transpose() * weighedTask.a_;
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> H = weighedTask.a_.transpose() * weighedTask.a_;
   vector_t g = -weighedTask.a_.transpose() * weighedTask.b_;
-  H.diagonal().array() += 1e-20;
 
-  eiquadprog::solvers::EiquadprogFast qp;
-  qp.reset(getNumDecisionVars(), constraints.b_.size(), constraints.f_.size());
+  // Solve
+  auto qpProblem = qpOASES::QProblem(getNumDecisionVars(), numConstraints);
+  qpOASES::Options options;
+  options.setToMPC();
+  options.printLevel = qpOASES::PL_LOW;
+  options.enableEqualities = qpOASES::BT_TRUE;
+  qpProblem.setOptions(options);
+  int nWsr = 20;
+
+  qpProblem.init(H.data(), g.data(), A.data(), nullptr, nullptr, lbA.data(), ubA.data(), nWsr);
   vector_t qpSol(getNumDecisionVars());
-  qp.solve_quadprog(H, g, constraints.a_, -constraints.b_, -constraints.d_, constraints.f_, qpSol);
+
+  qpProblem.getPrimalSolution(qpSol.data());
   return qpSol;
 }
 

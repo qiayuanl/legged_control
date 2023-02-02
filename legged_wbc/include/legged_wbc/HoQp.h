@@ -58,7 +58,7 @@ class HoQp {
   vector_t stackedSlackSolutionsPrev_, xPrev_;
   size_t numPrevSlackVars_{};
 
-  matrix_t h_, d_;
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> h_, d_;
   vector_t c_, f_;
   vector_t stackedSlackVars_, slackVarsSolutions_, decisionVarsSolutions_;
 

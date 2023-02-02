@@ -6,7 +6,7 @@
 
 #include "legged_wbc/HoQp.h"
 
-#include <eiquadprog/eiquadprog-fast.hpp>
+#include <qpOASES.hpp>
 #include <utility>
 
 namespace legged {
@@ -135,14 +135,17 @@ void HoQp::buildZMatrix() {
 }
 
 void HoQp::solveProblem() {
-  size_t numTotal = numDecisionVars_ + numSlackVars_;
-  vector_t f = f_;
-  h_.diagonal().array() += 1e-20;
+  auto qpProblem = qpOASES::QProblem(numDecisionVars_ + numSlackVars_, f_.size());
+  qpOASES::Options options;
+  options.setToMPC();
+  options.printLevel = qpOASES::PL_LOW;
+  qpProblem.setOptions(options);
+  int nWsr = 20;
 
-  eiquadprog::solvers::EiquadprogFast qp;
-  qp.reset(numTotal, 0, f.size());
-  vector_t qpSol(numTotal);
-  qp.solve_quadprog(h_, c_, matrix_t(0, numTotal), vector_t(0), -d_, f, qpSol);
+  qpProblem.init(h_.data(), c_.data(), d_.data(), nullptr, nullptr, nullptr, f_.data(), nWsr);
+  vector_t qpSol(numDecisionVars_ + numSlackVars_);
+
+  qpProblem.getPrimalSolution(qpSol.data());
 
   decisionVarsSolutions_ = qpSol.head(numDecisionVars_);
   slackVarsSolutions_ = qpSol.tail(numSlackVars_);
