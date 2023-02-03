@@ -44,7 +44,7 @@ its dependencies following the step below.
    # Clone ocs2_robotic_assets
    git clone https://github.com/leggedrobotics/ocs2_robotic_assets.git
    # Install dependencies
-   sudo apt install liburdfdom-dev liboctomap-dev libassimp-dev ros-${ROS_DISTRO}-eiquadprog
+   sudo apt install liburdfdom-dev liboctomap-dev libassimp-dev
    ```
 2. Compile the `ocs2_legged_robot_ros` package with [catkin tools](https://catkin-tools.readthedocs.io/en/latest/)
    instead of `catkin_make`. It will take you about ten minutes.
