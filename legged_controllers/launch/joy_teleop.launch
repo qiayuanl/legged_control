@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+
+<launch>
+    <arg name="joy_dev" default="/dev/input/js0"/>
+    <arg name="teleop_config" default="$(find legged_controllers)/config/joy.yaml"/>
+
+    <node pkg="joy" type="joy_node" name="joy_node">
+        <param name="dev" value="$(arg joy_dev)"/>
+        <param name="deadzone" value="0.05"/>
+        <param name="autorepeat_rate" value="20"/>
+    </node>
+
+    <rosparam file="$(arg teleop_config)" command="load"/>
+    <node pkg="joy_teleop" type="joy_teleop.py" name="joy_teleop">
+    </node>
+
+</launch>
