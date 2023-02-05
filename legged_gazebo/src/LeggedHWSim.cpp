@@ -79,18 +79,18 @@ void LeggedHWSim::readSim(ros::Time time, ros::Duration period) {
   // Imu Sensor
   for (auto& imu : imuDatas_) {
     // TODO(qiayuan) Add noise
-    ignition::math::Pose3d pose = imu.linkPrt_->WorldPose();
+    ignition::math::Pose3d pose = imu.linkPtr_->WorldPose();
     imu.ori_[0] = pose.Rot().X();
     imu.ori_[1] = pose.Rot().Y();
     imu.ori_[2] = pose.Rot().Z();
     imu.ori_[3] = pose.Rot().W();
-    ignition::math::Vector3d rate = imu.linkPrt_->RelativeAngularVel();
+    ignition::math::Vector3d rate = imu.linkPtr_->RelativeAngularVel();
     imu.angularVel_[0] = rate.X();
     imu.angularVel_[1] = rate.Y();
     imu.angularVel_[2] = rate.Z();
 
     ignition::math::Vector3d gravity = {0., 0., -9.81};
-    ignition::math::Vector3d accel = imu.linkPrt_->RelativeLinearAccel() - pose.Rot().RotateVectorReverse(gravity);
+    ignition::math::Vector3d accel = imu.linkPtr_->RelativeLinearAccel() - pose.Rot().RotateVectorReverse(gravity);
     imu.linearAcc_[0] = accel.X();
     imu.linearAcc_[1] = accel.Y();
     imu.linearAcc_[2] = accel.Z();
@@ -182,7 +182,7 @@ void LeggedHWSim::parseImu(XmlRpc::XmlRpcValue& imuDatas, const gazebo::physics:
     gazebo::physics::LinkPtr linkPtr = parentModel->GetLink(frameId);
     ROS_ASSERT(linkPtr != nullptr);
     imuDatas_.push_back((ImuData{
-        .linkPrt_ = linkPtr,
+        .linkPtr_ = linkPtr,
         .ori_ = {0., 0., 0., 0.},
         .oriCov_ = {static_cast<double>(oriCov[0]), 0., 0., 0., static_cast<double>(oriCov[1]), 0., 0., 0., static_cast<double>(oriCov[2])},
         .angularVel_ = {0., 0., 0.},

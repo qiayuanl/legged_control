@@ -59,7 +59,7 @@ struct HybridJointCommand {
 };
 
 struct ImuData {
-  gazebo::physics::LinkPtr linkPrt_;
+  gazebo::physics::LinkPtr linkPtr_;
   double ori_[4];            // NOLINT(modernize-avoid-c-arrays)
   double oriCov_[9];         // NOLINT(modernize-avoid-c-arrays)
   double angularVel_[3];     // NOLINT(modernize-avoid-c-arrays)
