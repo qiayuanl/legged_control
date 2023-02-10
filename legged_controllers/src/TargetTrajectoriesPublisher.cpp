@@ -98,8 +98,8 @@ int main(int argc, char** argv) {
   // Get node parameters
   std::string referenceFile;
   std::string taskFile;
-  nodeHandle.getParam("/reference_file", referenceFile);
-  nodeHandle.getParam("/task_file", taskFile);
+  nodeHandle.getParam("/referenceFile", referenceFile);
+  nodeHandle.getParam("/taskFile", taskFile);
 
   loadData::loadCppDataType(referenceFile, "comHeight", COM_HEIGHT);
   loadData::loadEigenMatrix(referenceFile, "defaultJointState", DEFAULT_JOINT_STATE);
