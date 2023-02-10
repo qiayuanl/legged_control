@@ -1,6 +1,5 @@
 <launch>
     <arg name="robot_type" default="$(env ROBOT_TYPE)" doc="Robot type: [a1, aliengo, go1, laikago]"/>
-    <arg name="hung_up" default="false"/>
 
     <param name="legged_robot_description" command="$(find xacro)/xacro $(find legged_unitree_description)/urdf/robot.xacro
        robot_type:=$(arg robot_type)

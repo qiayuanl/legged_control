@@ -1,11 +1,14 @@
 <?xml version="1.0" ?>
 
 <launch>
+    <arg name="robot_type" default="$(env ROBOT_TYPE)" doc="Robot type: [a1, aliengo, go1, laikago]"/>
+
     <arg name="cheater" default="false"/>
 
-    <arg name="task_file" default="$(find legged_controllers)/config/task.info"/>
-    <arg name="reference_file" default="$(find legged_controllers)/config/reference.info"/>
-    <arg name="urdf_file" default="$(find legged_unitree_description)/urdf/a1.urdf"/>
+    <arg name="urdf_file" default="$(find legged_unitree_description)/urdf/$(arg robot_type).urdf"/>
+
+    <arg name="task_file" default="$(find legged_controllers)/config/task/$(arg robot_type).info"/>
+    <arg name="reference_file" default="$(find legged_controllers)/config/reference/$(arg robot_type).info"/>
     <arg name="gait_file" default="$(find legged_controllers)/config/gait.info"/>
 
     <!-- make the files into global parameters -->
@@ -14,7 +17,7 @@
     <param name="urdf_file" value="$(arg urdf_file)"/>
 
     <param name="gaitCommandFile" value="$(arg gait_file)"/>
-    <rosparam file="$(find legged_controllers)/config/default.yaml" command="load"/>
+    <rosparam file="$(find legged_controllers)/config/controllers.yaml" command="load"/>
 
     <node if="$(arg cheater)" name="controller_loader" pkg="controller_manager" type="controller_manager"
           output="screen" args="load

@@ -1,4 +1,4 @@
-centroidalModelType             0      // 0: FullCentroidalDynamics, 1: Single Rigid Body Dynamics
+centroidalModelType             1      // 0: FullCentroidalDynamics, 1: Single Rigid Body Dynamics
 
 legged_robot_interface
 {
@@ -12,14 +12,14 @@ model_settings
 
   verboseCppAd                  true
   recompileLibrariesCppAd       false
-  modelFolderCppAd              /tmp/legged_control
+  modelFolderCppAd              /tmp/legged_control/aliengo
 }
 
 swing_trajectory_config
 {
   liftOffVelocity               0.05
   touchDownVelocity            -0.1
-  swingHeight                   0.08
+  swingHeight                   0.15
   touchdownAfterHorizon         0.2
   swingTimeScale                0.15
 }
@@ -162,17 +162,17 @@ initialState
 
    ;; Leg Joint Positions: [LF, LH, RF, RH] ;;
    (12,0) -0.20   ; LF_HAA
-   (13,0)  0.72   ; LF_HFE
-   (14,0) -1.44   ; LF_KFE
+   (13,0)  0.62   ; LF_HFE
+   (14,0) -1.24   ; LF_KFE
    (15,0) -0.20   ; LH_HAA
-   (16,0)  0.72   ; LH_HFE
-   (17,0) -1.44   ; LH_KFE
+   (16,0)  0.62   ; LH_HFE
+   (17,0) -1.24   ; LH_KFE
    (18,0)  0.20   ; RF_HAA
-   (19,0)  0.72   ; RF_HFE
-   (20,0) -1.44   ; RF_KFE
+   (19,0)  0.62   ; RF_HFE
+   (20,0) -1.24   ; RF_KFE
    (21,0)  0.20   ; RH_HAA
-   (22,0)  0.72   ; RH_HFE
-   (23,0) -1.44   ; RH_KFE
+   (22,0)  0.62   ; RH_HFE
+   (23,0) -1.24   ; RH_KFE
 }
 
 ; standard state weight matrix
@@ -284,9 +284,9 @@ selfCollision
 ; Whole body control
 torqueLimitsTask
 {
-   (0,0)  33.5     ; HAA
-   (1,0)  33.5     ; HFE
-   (2,0)  33.5     ; KFE
+   (0,0)  35.278   ; HAA
+   (1,0)  35.278   ; HFE
+   (2,0)  44.4     ; KFE
 }
 
 frictionConeTask

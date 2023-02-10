@@ -13,6 +13,9 @@
     <xacro:property name="hip_length" value="0.0418"/>
     <xacro:property name="thigh_shoulder_radius" value="0.044"/>
     <xacro:property name="thigh_shoulder_length" value="0.03"/>
+    <xacro:property name="thigh_shoulder_y_offset" value="0.0"/>
+
+    <xacro:property name="thigh_x_offset" value="0.0"/>
     <xacro:property name="thigh_width" value="0.0374"/>
     <xacro:property name="thigh_height" value="0.043"/>
     <xacro:property name="calf_width" value="0.0208"/>
@@ -39,8 +42,8 @@
     <xacro:property name="hip_min" value="${-70*pi/180.0}"/>
     <xacro:property name="hip_velocity_max" value="20"/>
     <xacro:property name="hip_torque_max" value="35.278"/>
-    <xacro:property name="thigh_max" value="1e10"/>
-    <xacro:property name="thigh_min" value="-1e10"/>
+    <xacro:property name="thigh_max" value="1e22"/>
+    <xacro:property name="thigh_min" value="-1e22"/>
     <xacro:property name="thigh_velocity_max" value="20"/>
     <xacro:property name="thigh_torque_max" value="35.278"/>
     <xacro:property name="calf_max" value="${-37*pi/180.0}"/>

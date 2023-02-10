@@ -139,7 +139,7 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
   }
 
   for (size_t j = 0; j < leggedInterface_->getCentroidalModelInfo().actuatedDofNum; ++j) {
-    hybridJointHandles_[j].setCommand(posDes(j), velDes(j), 5, 3, torque(j));
+    hybridJointHandles_[j].setCommand(posDes(j), velDes(j), 0, 1, torque(j));
   }
 
   // Visualization

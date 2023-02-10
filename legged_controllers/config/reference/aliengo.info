@@ -1,0 +1,46 @@
+targetDisplacementVelocity          0.5;
+targetRotationVelocity              1.57;
+
+comHeight                           0.4
+
+defaultJointState
+{
+   (0,0)  -0.20   ; LF_HAA
+   (1,0)   0.62   ; LF_HFE
+   (2,0)  -1.24   ; LF_KFE
+   (3,0)  -0.20   ; LH_HAA
+   (4,0)   0.62   ; LH_HFE
+   (5,0)  -1.24   ; LH_KFE
+   (6,0)   0.20   ; RF_HAA
+   (7,0)   0.62   ; RF_HFE
+   (8,0)  -1.24   ; RF_KFE
+   (9,0)   0.20   ; RH_HAA
+   (10,0)  0.62   ; RH_HFE
+   (11,0) -1.24   ; RH_KFE
+}
+
+initialModeSchedule
+{
+  modeSequence
+  {
+    [0]  STANCE
+    [1]  STANCE
+  }
+  eventTimes
+  {
+    [0]  0.5
+  }
+}
+
+defaultModeSequenceTemplate
+{
+  modeSequence
+  {
+    [0]  STANCE
+  }
+  switchingTimes
+  {
+    [0]  0.0
+    [1]  1.0
+  }
+}
