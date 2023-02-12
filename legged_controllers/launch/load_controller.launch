@@ -6,9 +6,9 @@
     <arg name="cheater" default="false"/>
 
     <arg name="urdfFile" default="$(find legged_unitree_description)/urdf/$(arg robot_type).urdf"/>
-    <arg name="taskFile" default="$(find legged_controllers)/config/task/$(arg robot_type).info"/>
-    <arg name="referenceFile" default="$(find legged_controllers)/config/reference/$(arg robot_type).info"/>
-    <arg name="gaitCommandFile" default="$(find legged_controllers)/config/gait.info"/>
+    <arg name="taskFile" default="$(find legged_controllers)/config/$(arg robot_type)/task.info"/>
+    <arg name="referenceFile" default="$(find legged_controllers)/config/$(arg robot_type)/reference.info"/>
+    <arg name="gaitCommandFile" default="$(find legged_controllers)/config/$(arg robot_type)/gait.info"/>
 
     <!-- make the files into global parameters -->
     <param name="urdfFile" value="$(arg urdfFile)"/>
