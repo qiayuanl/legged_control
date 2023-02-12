@@ -5,7 +5,7 @@
        robot_type:=$(arg robot_type)
     "/>
 
-    <rosparam file="$(find legged_unitree_hw)/config/default.yaml" command="load"/>
+    <rosparam file="$(find legged_unitree_hw)/config/$(arg robot_type).yaml" command="load"/>
 
     <param name="robot_type" value="$(arg robot_type)"/>
     <node name="legged_unitree_hw" pkg="legged_unitree_hw" type="legged_unitree_hw" respawn="false"

@@ -217,18 +217,18 @@ R
   scaling 1e-3
 
   ;; Feet Contact Forces: [LF, RF, LH, RH] ;;
-  (0,0)   1.0       ; left_front_force
-  (1,1)   1.0       ; left_front_force
-  (2,2)   1.0       ; left_front_force
-  (3,3)   1.0       ; right_front_force
-  (4,4)   1.0       ; right_front_force
-  (5,5)   1.0       ; right_front_force
-  (6,6)   1.0       ; left_hind_force
-  (7,7)   1.0       ; left_hind_force
-  (8,8)   1.0       ; left_hind_force
-  (9,9)   1.0       ; right_hind_force
-  (10,10) 1.0       ; right_hind_force
-  (11,11) 1.0       ; right_hind_force
+  (0,0)   5.0       ; left_front_force
+  (1,1)   5.0       ; left_front_force
+  (2,2)   5.0       ; left_front_force
+  (3,3)   5.0       ; right_front_force
+  (4,4)   5.0       ; right_front_force
+  (5,5)   5.0       ; right_front_force
+  (6,6)   5.0       ; left_hind_force
+  (7,7)   5.0       ; left_hind_force
+  (8,8)   5.0       ; left_hind_force
+  (9,9)   5.0       ; right_hind_force
+  (10,10) 5.0       ; right_hind_force
+  (11,11) 5.0       ; right_hind_force
 
   ;; foot velocity relative to base: [LF, LH, RF, RH] (uses the Jacobian at nominal configuration) ;;
   (12,12) 5000.0    ; x
