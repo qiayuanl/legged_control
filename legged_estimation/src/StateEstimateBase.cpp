@@ -62,13 +62,11 @@ void StateEstimateBase::publishMsgs(const nav_msgs::Odometry& odom, const ros::T
   scalar_t publishRate = 100;
   if (lastPub_ + ros::Duration(1. / publishRate) < time) {
     if (odomPub_->trylock()) {
-      odomPub_->msg_.header.stamp = time;
       odomPub_->msg_.pose = odom.pose;
       odomPub_->msg_.twist = odom.twist;
       odomPub_->unlockAndPublish();
     }
     if (posePub_->trylock()) {
-      posePub_->msg_.header.stamp = time;
       posePub_->msg_.pose = odom.pose;
       posePub_->unlockAndPublish();
     }

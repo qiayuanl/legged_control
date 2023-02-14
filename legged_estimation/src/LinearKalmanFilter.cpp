@@ -208,6 +208,7 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
       odom.twist.covariance[6 * (3 + i) + (3 + j)] = imuSensorHandle_.getAngularVelocityCovariance()[i * 3 + j];
     }
   }
+  odom.header.stamp = time;
   publishMsgs(odom, time);
 
   return rbdState_;
