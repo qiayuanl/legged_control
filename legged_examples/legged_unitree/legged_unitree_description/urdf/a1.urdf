@@ -86,7 +86,7 @@
     <self_collide>1</self_collide>
     <material>Gazebo/DarkGrey</material>
     <kp value="1000000.0"/>
-    <kd value="100.0"/>
+    <kd value="1.0"/>
   </gazebo>
   <!-- RF leg -->
   <gazebo reference="RF_hip">
