@@ -1,4 +1,4 @@
-centroidalModelType             1      // 0: FullCentroidalDynamics, 1: Single Rigid Body Dynamics
+centroidalModelType             0      // 0: FullCentroidalDynamics, 1: Single Rigid Body Dynamics
 
 legged_robot_interface
 {
@@ -17,9 +17,9 @@ model_settings
 
 swing_trajectory_config
 {
-  liftOffVelocity               0.05
-  touchDownVelocity            -0.1
-  swingHeight                   0.15
+  liftOffVelocity               0.2
+  touchDownVelocity            -0.4
+  swingHeight                   0.1
   touchdownAfterHorizon         0.2
   swingTimeScale                0.15
 }
