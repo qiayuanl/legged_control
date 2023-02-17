@@ -16,6 +16,9 @@ class WeightedWbc : public WbcBase {
   void loadTasksSetting(const std::string& taskFile, bool verbose) override;
 
  protected:
+  virtual Task formulateConstraints();
+  virtual Task formulateWeightedTasks(const vector_t& stateDesired, const vector_t& inputDesired, scalar_t period);
+
  private:
   scalar_t weightSwingLeg_, weightBaseAccel_, weightContactForce_;
 };

@@ -13,8 +13,7 @@ vector_t WeightedWbc::update(const vector_t& stateDesired, const vector_t& input
   WbcBase::update(stateDesired, inputDesired, rbdStateMeasured, mode, period);
 
   // Constraints
-  Task constraints =
-      formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateFrictionConeTask() + formulateNoContactMotionTask();
+  Task constraints = formulateConstraints();
   size_t numConstraints = constraints.b_.size() + constraints.f_.size();
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> A(numConstraints, getNumDecisionVars());
@@ -28,9 +27,7 @@ vector_t WeightedWbc::update(const vector_t& stateDesired, const vector_t& input
          constraints.f_;  // clang-format on
 
   // Cost
-  Task weighedTask = formulateSwingLegTask() * weightSwingLeg_ +
-                     formulateBaseAccelTask(stateDesired, inputDesired, period) * weightBaseAccel_ +
-                     formulateContactForceTask(inputDesired) * weightContactForce_;
+  Task weighedTask = formulateWeightedTasks(stateDesired, inputDesired, period);
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> H = weighedTask.a_.transpose() * weighedTask.a_;
   vector_t g = -weighedTask.a_.transpose() * weighedTask.b_;
 
@@ -48,6 +45,15 @@ vector_t WeightedWbc::update(const vector_t& stateDesired, const vector_t& input
 
   qpProblem.getPrimalSolution(qpSol.data());
   return qpSol;
+}
+
+Task WeightedWbc::formulateConstraints() {
+  return formulateFloatingBaseEomTask() + formulateTorqueLimitsTask() + formulateFrictionConeTask() + formulateNoContactMotionTask();
+}
+
+Task WeightedWbc::formulateWeightedTasks(const vector_t& stateDesired, const vector_t& inputDesired, scalar_t period) {
+  return formulateSwingLegTask() * weightSwingLeg_ + formulateBaseAccelTask(stateDesired, inputDesired, period) * weightBaseAccel_ +
+         formulateContactForceTask(inputDesired) * weightContactForce_;
 }
 
 void WeightedWbc::loadTasksSetting(const std::string& taskFile, bool verbose) {
