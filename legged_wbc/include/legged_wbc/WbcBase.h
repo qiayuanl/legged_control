@@ -41,7 +41,6 @@ class WbcBase {
   Task formulateSwingLegTask();
   Task formulateContactForceTask(const vector_t& inputDesired) const;
 
- private:
   size_t numDecisionVars_;
   PinocchioInterface pinocchioInterfaceMeasured_, pinocchioInterfaceDesired_;
   CentroidalModelInfo info_;
