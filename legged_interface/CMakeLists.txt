@@ -49,7 +49,14 @@ link_directories(
 )
 
 add_library(${PROJECT_NAME}
+        src/constraint/EndEffectorLinearConstraint.cpp
+        src/constraint/FrictionConeConstraint.cpp
+        src/constraint/ZeroForceConstraint.cpp
         src/constraint/NormalVelocityConstraintCppAd.cpp
+        src/constraint/ZeroVelocityConstraintCppAd.cpp
+        src/constraint/SwingTrajectoryPlanner.cpp
+        src/initialization/LeggedRobotInitializer.cpp
+        src/SwitchedModelReferenceManager.cpp
         src/LeggedRobotPreComputation.cpp
         src/LeggedInterface.cpp
         )

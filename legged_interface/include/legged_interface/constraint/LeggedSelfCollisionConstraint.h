@@ -4,10 +4,9 @@
 
 #pragma once
 
-#include <memory>
-
-#include <legged_interface/LeggedRobotPreComputation.h>
 #include <ocs2_self_collision/SelfCollisionConstraint.h>
+
+#include "legged_interface/LeggedRobotPreComputation.h"
 
 namespace legged {
 using namespace ocs2;

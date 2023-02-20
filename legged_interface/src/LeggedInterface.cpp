@@ -9,8 +9,13 @@
 
 #include "legged_interface/LeggedInterface.h"
 #include "legged_interface/LeggedRobotPreComputation.h"
+#include "legged_interface/constraint/FrictionConeConstraint.h"
 #include "legged_interface/constraint/LeggedSelfCollisionConstraint.h"
 #include "legged_interface/constraint/NormalVelocityConstraintCppAd.h"
+#include "legged_interface/constraint/ZeroForceConstraint.h"
+#include "legged_interface/constraint/ZeroVelocityConstraintCppAd.h"
+#include "legged_interface/cost/LeggedRobotQuadraticTrackingCost.h"
+#include "legged_interface/initialization/LeggedRobotInitializer.h"
 
 #include <ocs2_centroidal_model/AccessHelperFunctions.h>
 #include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
@@ -23,12 +28,7 @@
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
 
-#include <ocs2_legged_robot/constraint/FrictionConeConstraint.h>
-#include <ocs2_legged_robot/constraint/ZeroForceConstraint.h>
-#include <ocs2_legged_robot/constraint/ZeroVelocityConstraintCppAd.h>
-#include <ocs2_legged_robot/cost/LeggedRobotQuadraticTrackingCost.h>
 #include <ocs2_legged_robot/dynamics/LeggedRobotDynamicsAD.h>
-#include <ocs2_legged_robot/initialization/LeggedRobotInitializer.h>
 
 // Boost
 #include <boost/filesystem/operations.hpp>

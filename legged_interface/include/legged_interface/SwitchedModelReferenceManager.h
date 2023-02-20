@@ -1,5 +1,5 @@
 /******************************************************************************
-Copyright (c) 2020, Farbod Farshidian. All rights reserved.
+Copyright (c) 2021, Farbod Farshidian. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,49 +29,40 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <memory>
-#include <string>
+#include <ocs2_core/thread_support/Synchronized.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 
-#include <ocs2_core/PreComputation.h>
-#include <ocs2_pinocchio_interface/PinocchioInterface.h>
+#include <ocs2_legged_robot/gait/GaitSchedule.h>
+#include <ocs2_legged_robot/gait/MotionPhaseDefinition.h>
 
-#include <ocs2_centroidal_model/CentroidalModelPinocchioMapping.h>
-
-#include <ocs2_legged_robot/common/ModelSettings.h>
-
-#include "legged_interface/constraint/EndEffectorLinearConstraint.h"
 #include "legged_interface/constraint/SwingTrajectoryPlanner.h"
 
 namespace ocs2 {
 namespace legged_robot {
 
-/** Callback for caching and reference update */
-class LeggedRobotPreComputation : public PreComputation {
+/**
+ * Manages the ModeSchedule and the TargetTrajectories for switched model.
+ */
+class SwitchedModelReferenceManager : public ReferenceManager {
  public:
-  LeggedRobotPreComputation(PinocchioInterface pinocchioInterface, CentroidalModelInfo info,
-                            const SwingTrajectoryPlanner& swingTrajectoryPlanner, ModelSettings settings);
-  ~LeggedRobotPreComputation() override = default;
+  SwitchedModelReferenceManager(std::shared_ptr<GaitSchedule> gaitSchedulePtr, std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr);
 
-  LeggedRobotPreComputation* clone() const override { return new LeggedRobotPreComputation(*this); }
+  ~SwitchedModelReferenceManager() override = default;
 
-  void request(RequestSet request, scalar_t t, const vector_t& x, const vector_t& u) override;
+  void setModeSchedule(const ModeSchedule& modeSchedule) override;
 
-  const std::vector<EndEffectorLinearConstraint::Config>& getEeNormalVelocityConstraintConfigs() const { return eeNormalVelConConfigs_; }
+  contact_flag_t getContactFlags(scalar_t time) const;
 
-  PinocchioInterface& getPinocchioInterface() { return pinocchioInterface_; }
-  const PinocchioInterface& getPinocchioInterface() const { return pinocchioInterface_; }
+  const std::shared_ptr<GaitSchedule>& getGaitSchedule() { return gaitSchedulePtr_; }
+
+  const std::shared_ptr<SwingTrajectoryPlanner>& getSwingTrajectoryPlanner() { return swingTrajectoryPtr_; }
 
  protected:
-  LeggedRobotPreComputation(const LeggedRobotPreComputation& other);
+  void modifyReferences(scalar_t initTime, scalar_t finalTime, const vector_t& initState, TargetTrajectories& targetTrajectories,
+                        ModeSchedule& modeSchedule) override;
 
- private:
-  PinocchioInterface pinocchioInterface_;
-  CentroidalModelInfo info_;
-  const SwingTrajectoryPlanner* swingTrajectoryPlannerPtr_;
-  std::unique_ptr<CentroidalModelPinocchioMapping> mappingPtr_;
-  const ModelSettings settings_;
-
-  std::vector<EndEffectorLinearConstraint::Config> eeNormalVelConConfigs_;
+  std::shared_ptr<GaitSchedule> gaitSchedulePtr_;
+  std::shared_ptr<SwingTrajectoryPlanner> swingTrajectoryPtr_;
 };
 
 }  // namespace legged_robot

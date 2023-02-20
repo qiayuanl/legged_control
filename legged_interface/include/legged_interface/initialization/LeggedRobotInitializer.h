@@ -29,46 +29,36 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <ocs2_core/constraint/StateInputConstraint.h>
+#include <ocs2_centroidal_model/CentroidalModelInfo.h>
+#include <ocs2_core/initialization/Initializer.h>
 
 #include "legged_interface/SwitchedModelReferenceManager.h"
-#include "legged_interface/constraint/EndEffectorLinearConstraint.h"
 
 namespace ocs2 {
 namespace legged_robot {
 
-/**
- * Specializes the CppAd version of normal velocity constraint on an end-effector position and linear velocity.
- * Constructs the member EndEffectorLinearConstraint object with number of constraints of 1.
- *
- * See also EndEffectorLinearConstraint for the underlying computation.
- */
-class NormalVelocityConstraintCppAd final : public StateInputConstraint {
+class LeggedRobotInitializer final : public Initializer {
  public:
-  /**
+  /*
    * Constructor
-   * @param [in] referenceManager : Switched model ReferenceManager
-   * @param [in] endEffectorKinematics: The kinematic interface to the target end-effector.
-   * @param [in] contactPointIndex : The 3 DoF contact index.
+   * @param [in] info : The centroidal model information.
+   * @param [in] referenceManager : Switched system reference manager.
+   * @param [in] extendNormalizedMomentum: If true, it extrapolates the normalized momenta; otherwise sets them to zero.
    */
-  NormalVelocityConstraintCppAd(const SwitchedModelReferenceManager& referenceManager,
-                                const EndEffectorKinematics<scalar_t>& endEffectorKinematics, size_t contactPointIndex);
+  LeggedRobotInitializer(CentroidalModelInfo info, const SwitchedModelReferenceManager& referenceManager,
+                         bool extendNormalizedMomentum = false);
 
-  ~NormalVelocityConstraintCppAd() override = default;
-  NormalVelocityConstraintCppAd* clone() const override { return new NormalVelocityConstraintCppAd(*this); }
+  ~LeggedRobotInitializer() override = default;
+  LeggedRobotInitializer* clone() const override;
 
-  bool isActive(scalar_t time) const override;
-  size_t getNumConstraints(scalar_t time) const override { return 1; }
-  vector_t getValue(scalar_t time, const vector_t& state, const vector_t& input, const PreComputation& preComp) const override;
-  VectorFunctionLinearApproximation getLinearApproximation(scalar_t time, const vector_t& state, const vector_t& input,
-                                                           const PreComputation& preComp) const override;
+  void compute(scalar_t time, const vector_t& state, scalar_t nextTime, vector_t& input, vector_t& nextState) override;
 
  private:
-  NormalVelocityConstraintCppAd(const NormalVelocityConstraintCppAd& rhs);
+  LeggedRobotInitializer(const LeggedRobotInitializer& other) = default;
 
+  const CentroidalModelInfo info_;
   const SwitchedModelReferenceManager* referenceManagerPtr_;
-  std::unique_ptr<EndEffectorLinearConstraint> eeLinearConstraintPtr_;
-  const size_t contactPointIndex_;
+  const bool extendNormalizedMomentum_;
 };
 
 }  // namespace legged_robot
