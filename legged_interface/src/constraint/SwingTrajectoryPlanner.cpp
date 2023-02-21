@@ -77,6 +77,23 @@ void SwingTrajectoryPlanner::update(const ModeSchedule& modeSchedule, scalar_t t
 /******************************************************************************************************/
 void SwingTrajectoryPlanner::update(const ModeSchedule& modeSchedule, const feet_array_t<scalar_array_t>& liftOffHeightSequence,
                                     const feet_array_t<scalar_array_t>& touchDownHeightSequence) {
+  scalar_array_t heightSequence(modeSchedule.modeSequence.size());
+  feet_array_t<scalar_array_t> maxHeightSequence;
+  for (size_t j = 0; j < numFeet_; j++) {
+    for (int p = 0; p < modeSchedule.modeSequence.size(); ++p) {
+      heightSequence[p] = std::max(liftOffHeightSequence[j][p], touchDownHeightSequence[j][p]);
+    }
+    maxHeightSequence[j] = heightSequence;
+  }
+  update(modeSchedule, liftOffHeightSequence, touchDownHeightSequence, maxHeightSequence);
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+void SwingTrajectoryPlanner::update(const ModeSchedule& modeSchedule, const feet_array_t<scalar_array_t>& liftOffHeightSequence,
+                                    const feet_array_t<scalar_array_t>& touchDownHeightSequence,
+                                    const feet_array_t<scalar_array_t>& maxHeightSequence) {
   const auto& modeSequence = modeSchedule.modeSequence;
   const auto& eventTimes = modeSchedule.eventTimes;
 
@@ -104,7 +121,7 @@ void SwingTrajectoryPlanner::update(const ModeSchedule& modeSchedule, const feet
 
         const CubicSpline::Node liftOff{swingStartTime, liftOffHeightSequence[j][p], scaling * config_.liftOffVelocity};
         const CubicSpline::Node touchDown{swingFinalTime, touchDownHeightSequence[j][p], scaling * config_.touchDownVelocity};
-        const scalar_t midHeight = std::max(liftOffHeightSequence[j][p], touchDownHeightSequence[j][p]) + scaling * config_.swingHeight;
+        const scalar_t midHeight = maxHeightSequence[j][p] + scaling * config_.swingHeight;
         feetHeightTrajectories_[j].emplace_back(liftOff, midHeight, touchDown);
       } else {  // for a stance leg
         // Note: setting the time here arbitrarily to 0.0 -> 1.0 makes the assert in CubicSpline fail
