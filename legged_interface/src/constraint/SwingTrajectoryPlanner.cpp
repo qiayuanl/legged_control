@@ -104,7 +104,7 @@ void SwingTrajectoryPlanner::update(const ModeSchedule& modeSchedule, const feet
 
         const CubicSpline::Node liftOff{swingStartTime, liftOffHeightSequence[j][p], scaling * config_.liftOffVelocity};
         const CubicSpline::Node touchDown{swingFinalTime, touchDownHeightSequence[j][p], scaling * config_.touchDownVelocity};
-        const scalar_t midHeight = std::min(liftOffHeightSequence[j][p], touchDownHeightSequence[j][p]) + scaling * config_.swingHeight;
+        const scalar_t midHeight = std::max(liftOffHeightSequence[j][p], touchDownHeightSequence[j][p]) + scaling * config_.swingHeight;
         feetHeightTrajectories_[j].emplace_back(liftOff, midHeight, touchDown);
       } else {  // for a stance leg
         // Note: setting the time here arbitrarily to 0.0 -> 1.0 makes the assert in CubicSpline fail
