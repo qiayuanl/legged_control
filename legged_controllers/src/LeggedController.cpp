@@ -211,6 +211,7 @@ void LeggedController::setupMrt() {
       } catch (const std::exception& e) {
         controllerRunning_ = false;
         ROS_ERROR_STREAM("[Ocs2 MPC thread] Error : " << e.what());
+        stopRequest(ros::Time());
       }
     }
   });
