@@ -25,11 +25,8 @@ StateEstimateBase::StateEstimateBase(PinocchioInterface pinocchioInterface, Cent
       imuSensorHandle_(std::move(imuSensorHandle)) {
   ros::NodeHandle nh;
   odomPub_.reset(new realtime_tools::RealtimePublisher<nav_msgs::Odometry>(nh, "odom", 10));
-  odomPub_->msg_.header.frame_id = "odom";
-  odomPub_->msg_.child_frame_id = "base";
 
   posePub_.reset(new realtime_tools::RealtimePublisher<geometry_msgs::PoseWithCovarianceStamped>(nh, "pose", 10));
-  posePub_->msg_.header.frame_id = "odom";
 }
 
 size_t StateEstimateBase::getMode() {
@@ -58,15 +55,17 @@ void StateEstimateBase::updateJointStates() {
   }
 }
 
-void StateEstimateBase::publishMsgs(const nav_msgs::Odometry& odom, const ros::Time& time) {
-  scalar_t publishRate = 100;
+void StateEstimateBase::publishMsgs(const nav_msgs::Odometry& odom) {
+  ros::Time time = odom.header.stamp;
+  scalar_t publishRate = 200;
   if (lastPub_ + ros::Duration(1. / publishRate) < time) {
+    lastPub_ = time;
     if (odomPub_->trylock()) {
-      odomPub_->msg_.pose = odom.pose;
-      odomPub_->msg_.twist = odom.twist;
+      odomPub_->msg_ = odom;
       odomPub_->unlockAndPublish();
     }
     if (posePub_->trylock()) {
+      posePub_->msg_.header = odom.header;
       posePub_->msg_.pose = odom.pose;
       posePub_->unlockAndPublish();
     }

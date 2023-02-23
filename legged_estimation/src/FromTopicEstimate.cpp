@@ -20,7 +20,7 @@ void FromTopicStateEstimate::callback(const nav_msgs::Odometry::ConstPtr& msg) {
   buffer_.writeFromNonRT(*msg);
 }
 
-vector_t FromTopicStateEstimate::update(const ros::Time& time, const ros::Duration& /*period*/) {
+vector_t FromTopicStateEstimate::update(const ros::Time& /*time*/, const ros::Duration& /*period*/) {
   nav_msgs::Odometry odom = *buffer_.readFromRT();
 
   updateAngular(Eigen::Quaternion<scalar_t>(odom.pose.pose.orientation.w, odom.pose.pose.orientation.x, odom.pose.pose.orientation.y,
@@ -30,7 +30,7 @@ vector_t FromTopicStateEstimate::update(const ros::Time& time, const ros::Durati
                Eigen::Matrix<scalar_t, 3, 1>(odom.twist.twist.linear.x, odom.twist.twist.linear.y, odom.twist.twist.linear.z));
   updateJointStates();
 
-  publishMsgs(odom, time);
+  publishMsgs(odom);
 
   return rbdState_;
 }

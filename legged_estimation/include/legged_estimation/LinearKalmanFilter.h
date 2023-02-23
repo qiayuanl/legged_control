@@ -26,9 +26,21 @@ class KalmanFilterEstimate : public StateEstimateBase {
   vector_t update(const ros::Time& time, const ros::Duration& period) override;
 
  private:
+  Eigen::Quaternion<scalar_t> getQuat() {
+    return Eigen::Quaternion<scalar_t>(imuSensorHandle_.getOrientation()[3], imuSensorHandle_.getOrientation()[0],
+                                       imuSensorHandle_.getOrientation()[1], imuSensorHandle_.getOrientation()[2]);
+  }
+
+  Eigen::Matrix<scalar_t, 3, 1> getAngularVelLocal() {
+    return Eigen::Matrix<scalar_t, 3, 1>(imuSensorHandle_.getAngularVelocity()[0], imuSensorHandle_.getAngularVelocity()[1],
+                                         imuSensorHandle_.getAngularVelocity()[2]);
+  }
+
   void updateFromTopic();
 
   void callback(const nav_msgs::Odometry::ConstPtr& msg);
+
+  nav_msgs::Odometry getOdomMsg();
 
   Eigen::Matrix<scalar_t, 18, 1> xHat_;
   Eigen::Matrix<scalar_t, 12, 1> ps_;

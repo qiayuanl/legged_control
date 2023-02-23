@@ -64,10 +64,9 @@ KalmanFilterEstimate::KalmanFilterEstimate(PinocchioInterface pinocchioInterface
 
 vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration& period) {
   // Angular from IMU
-  Eigen::Quaternion<scalar_t> quat(imuSensorHandle_.getOrientation()[3], imuSensorHandle_.getOrientation()[0],
-                                   imuSensorHandle_.getOrientation()[1], imuSensorHandle_.getOrientation()[2]);
-  Eigen::Matrix<scalar_t, 3, 1> angularVelLocal(imuSensorHandle_.getAngularVelocity()[0], imuSensorHandle_.getAngularVelocity()[1],
-                                                imuSensorHandle_.getAngularVelocity()[2]);
+  auto quat = getQuat();
+  auto angularVelLocal = getAngularVelLocal();
+
   vector_t zyx = quatToZyx(quat);
   Eigen::Matrix<scalar_t, 3, 1> angularVelGlobal = getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(
       zyx, getEulerAnglesZyxDerivativesFromLocalAngularVelocity<scalar_t>(zyx, angularVelLocal));
@@ -179,37 +178,11 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
 
   updateLinear(xHat_.segment<3>(0), xHat_.segment<3>(3));
 
-  nav_msgs::Odometry odom;
-  odom.pose.pose.position.x = xHat_.segment<3>(0)(0);
-  odom.pose.pose.position.y = xHat_.segment<3>(0)(1);
-  odom.pose.pose.position.z = xHat_.segment<3>(0)(2);
-  odom.pose.pose.orientation.x = quat.x();
-  odom.pose.pose.orientation.y = quat.y();
-  odom.pose.pose.orientation.z = quat.z();
-  odom.pose.pose.orientation.w = quat.w();
-  odom.pose.pose.orientation.x = quat.x();
-  for (int i = 0; i < 3; ++i) {
-    for (int j = 0; j < 3; ++j) {
-      odom.pose.covariance[i * 6 + j] = p_(i, j);
-      odom.pose.covariance[6 * (3 + i) + (3 + j)] = imuSensorHandle_.getOrientationCovariance()[i * 3 + j];
-    }
-  }
-  //  The twist in this message should be specified in the coordinate frame given by the child_frame_id: "base"
-  vector_t twist = getRotationMatrixFromZyxEulerAngles(quatToZyx(quat)).transpose() * xHat_.segment<3>(3);
-  odom.twist.twist.linear.x = twist.x();
-  odom.twist.twist.linear.y = twist.y();
-  odom.twist.twist.linear.z = twist.z();
-  odom.twist.twist.angular.x = angularVelLocal.x();
-  odom.twist.twist.angular.y = angularVelLocal.y();
-  odom.twist.twist.angular.z = angularVelLocal.z();
-  for (int i = 0; i < 3; ++i) {
-    for (int j = 0; j < 3; ++j) {
-      odom.twist.covariance[i * 6 + j] = p_.block<3, 3>(3, 3)(i, j);
-      odom.twist.covariance[6 * (3 + i) + (3 + j)] = imuSensorHandle_.getAngularVelocityCovariance()[i * 3 + j];
-    }
-  }
+  auto odom = getOdomMsg();
   odom.header.stamp = time;
-  publishMsgs(odom, time);
+  odom.header.frame_id = "odom";
+  odom.child_frame_id = "base";
+  publishMsgs(odom);
 
   return rbdState_;
 }
@@ -263,11 +236,52 @@ void KalmanFilterEstimate::updateFromTopic() {
       feetHeights_[i] = xHat_(6 + i * 3 + 2);
     }
   }
+
+  auto odom = getOdomMsg();
+  odom.header = msg->header;
+  odom.child_frame_id = "base";
+  publishMsgs(odom);
 }
 
 void KalmanFilterEstimate::callback(const nav_msgs::Odometry::ConstPtr& msg) {
   buffer_.writeFromNonRT(*msg);
   topicUpdated_ = true;
+}
+
+nav_msgs::Odometry KalmanFilterEstimate::getOdomMsg() {
+  auto quat = getQuat();
+  auto angularVelLocal = getAngularVelLocal();
+
+  nav_msgs::Odometry odom;
+  odom.pose.pose.position.x = xHat_.segment<3>(0)(0);
+  odom.pose.pose.position.y = xHat_.segment<3>(0)(1);
+  odom.pose.pose.position.z = xHat_.segment<3>(0)(2);
+  odom.pose.pose.orientation.x = quat.x();
+  odom.pose.pose.orientation.y = quat.y();
+  odom.pose.pose.orientation.z = quat.z();
+  odom.pose.pose.orientation.w = quat.w();
+  odom.pose.pose.orientation.x = quat.x();
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      odom.pose.covariance[i * 6 + j] = p_(i, j);
+      odom.pose.covariance[6 * (3 + i) + (3 + j)] = imuSensorHandle_.getOrientationCovariance()[i * 3 + j];
+    }
+  }
+  //  The twist in this message should be specified in the coordinate frame given by the child_frame_id: "base"
+  vector_t twist = getRotationMatrixFromZyxEulerAngles(quatToZyx(quat)).transpose() * xHat_.segment<3>(3);
+  odom.twist.twist.linear.x = twist.x();
+  odom.twist.twist.linear.y = twist.y();
+  odom.twist.twist.linear.z = twist.z();
+  odom.twist.twist.angular.x = angularVelLocal.x();
+  odom.twist.twist.angular.y = angularVelLocal.y();
+  odom.twist.twist.angular.z = angularVelLocal.z();
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      odom.twist.covariance[i * 6 + j] = p_.block<3, 3>(3, 3)(i, j);
+      odom.twist.covariance[6 * (3 + i) + (3 + j)] = imuSensorHandle_.getAngularVelocityCovariance()[i * 3 + j];
+    }
+  }
+  return odom;
 }
 
 }  // namespace legged

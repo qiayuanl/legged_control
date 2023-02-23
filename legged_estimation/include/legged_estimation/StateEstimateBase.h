@@ -33,7 +33,7 @@ class StateEstimateBase {
   void updateAngular(const Eigen::Quaternion<scalar_t>& quat, const vector_t& angularVel);
   void updateLinear(const vector_t& pos, const vector_t& linearVel);
   void updateJointStates();
-  void publishMsgs(const nav_msgs::Odometry& odom, const ros::Time& time);
+  void publishMsgs(const nav_msgs::Odometry& odom);
 
   PinocchioInterface pinocchioInterface_;
   CentroidalModelInfo info_;
