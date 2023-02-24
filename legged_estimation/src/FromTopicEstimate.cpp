@@ -27,7 +27,8 @@ vector_t FromTopicStateEstimate::update(const ros::Time& /*time*/, const ros::Du
                                             odom.pose.pose.orientation.z),
                 Eigen::Matrix<scalar_t, 3, 1>(odom.twist.twist.angular.x, odom.twist.twist.angular.y, odom.twist.twist.angular.z));
   updateLinear(Eigen::Matrix<scalar_t, 3, 1>(odom.pose.pose.position.x, odom.pose.pose.position.y, odom.pose.pose.position.z),
-               Eigen::Matrix<scalar_t, 3, 1>(odom.twist.twist.linear.x, odom.twist.twist.linear.y, odom.twist.twist.linear.z));
+               Eigen::Matrix<scalar_t, 3, 1>(odom.twist.twist.linear.x, odom.twist.twist.linear.y,
+                                             odom.twist.twist.linear.z));  // TODO: twist should be in the base frame
   updateJointStates();
 
   publishMsgs(odom);
