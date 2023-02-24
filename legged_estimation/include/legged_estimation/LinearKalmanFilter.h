@@ -44,12 +44,13 @@ class KalmanFilterEstimate : public StateEstimateBase {
 
   Eigen::Matrix<scalar_t, 18, 1> xHat_;
   Eigen::Matrix<scalar_t, 12, 1> ps_;
+  Eigen::Matrix<scalar_t, 12, 1> vs_;
   Eigen::Matrix<scalar_t, 18, 18> a_;
   Eigen::Matrix<scalar_t, 18, 18> q_;
   Eigen::Matrix<scalar_t, 18, 18> p_;
-  Eigen::Matrix<scalar_t, 16, 16> r_;
+  Eigen::Matrix<scalar_t, 28, 28> r_;
   Eigen::Matrix<scalar_t, 18, 3> b_;
-  Eigen::Matrix<scalar_t, 16, 18> c_;
+  Eigen::Matrix<scalar_t, 28, 18> c_;
 
   scalar_t footRadius_ = 0.02;
   vector_t feetHeights_;
