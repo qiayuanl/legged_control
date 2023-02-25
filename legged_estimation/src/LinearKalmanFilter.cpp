@@ -67,10 +67,11 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   auto quat = getQuat();
   auto angularVelLocal = getAngularVelLocal();
 
-  vector_t zyx = quatToZyx(quat);
-  Eigen::Matrix<scalar_t, 3, 1> angularVelGlobal = getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(
-      zyx, getEulerAnglesZyxDerivativesFromLocalAngularVelocity<scalar_t>(zyx, angularVelLocal));
-  updateAngular(quat, angularVelGlobal);
+  vector3_t zyx = quatToZyx(quat) - zyxOffset_;
+
+  vector3_t angularVelGlobal = getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(
+      zyx, getEulerAnglesZyxDerivativesFromLocalAngularVelocity<scalar_t>(quatToZyx(quat), angularVelLocal));
+  updateAngular(zyx, angularVelGlobal);
 
   // Joint states
   updateJointStates();

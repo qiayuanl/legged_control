@@ -38,8 +38,8 @@ size_t StateEstimateBase::getMode() {
   return stanceLeg2ModeNumber(contactFlag);
 }
 
-void StateEstimateBase::updateAngular(const Eigen::Quaternion<scalar_t>& quat, const vector_t& angularVel) {
-  rbdState_.segment<3>(0) = quatToZyx(quat);
+void StateEstimateBase::updateAngular(const vector3_t& zyx, const vector_t& angularVel) {
+  rbdState_.segment<3>(0) = zyx;
   rbdState_.segment<3>(generalizedCoordinatesNum_) = angularVel;
 }
 

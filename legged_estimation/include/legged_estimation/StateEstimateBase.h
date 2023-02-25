@@ -14,6 +14,7 @@
 #include <legged_common/hardware_interface/HybridJointInterface.h>
 #include <ocs2_centroidal_model/CentroidalModelInfo.h>
 #include <ocs2_legged_robot/common/ModelSettings.h>
+#include <ocs2_legged_robot/common/Types.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 
 namespace legged {
@@ -30,7 +31,7 @@ class StateEstimateBase {
   size_t getMode();
 
  protected:
-  void updateAngular(const Eigen::Quaternion<scalar_t>& quat, const vector_t& angularVel);
+  void updateAngular(const vector3_t& zyx, const vector_t& angularVel);
   void updateLinear(const vector_t& pos, const vector_t& linearVel);
   void updateJointStates();
   void publishMsgs(const nav_msgs::Odometry& odom);

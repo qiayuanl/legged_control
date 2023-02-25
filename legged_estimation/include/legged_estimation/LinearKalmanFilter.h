@@ -54,6 +54,7 @@ class KalmanFilterEstimate : public StateEstimateBase {
 
   scalar_t footRadius_ = 0.02;
   vector_t feetHeights_;
+  vector3_t zyxOffset_ = vector3_t::Zero();
 
   // Topic
   ros::Subscriber sub_;
