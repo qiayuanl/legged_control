@@ -106,12 +106,12 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   const auto eePos = eeKinematics_->getPosition(vector_t());
   const auto eeVel = eeKinematics_->getVelocity(vector_t(), vector_t());
 
-  scalar_t imuProcessNoisePosition = 0.2;
-  scalar_t imuProcessNoiseVelocity = 0.2;
+  scalar_t imuProcessNoisePosition = 0.02;
+  scalar_t imuProcessNoiseVelocity = 0.02;
   scalar_t footProcessNoisePosition = 0.002;
   scalar_t footSensorNoisePosition = 0.005;
-  scalar_t footSensorNoiseVelocity = 100.;  // TODO(qiayuan): adjust the value
-  scalar_t footHeightSensorNoise = 0.005;
+  scalar_t footSensorNoiseVelocity = 0.1;  // TODO(qiayuan): adjust the value
+  scalar_t footHeightSensorNoise = 0.01;
 
   Eigen::Matrix<scalar_t, 18, 18> q = Eigen::Matrix<scalar_t, 18, 18>::Identity();
   q.block(0, 0, 3, 3) = q_.block(0, 0, 3, 3) * imuProcessNoisePosition;
