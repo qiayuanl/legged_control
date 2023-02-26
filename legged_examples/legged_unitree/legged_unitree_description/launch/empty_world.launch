@@ -7,11 +7,12 @@
        robot_type:=$(arg robot_type)
     "/>
 
-    <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
-    <include file="$(find gazebo_ros)/launch/empty_world.launch"/>
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find legged_gazebo)/worlds/empty_world.world"/>
+    </include>
 
     <!-- push robot_description to factory and spawn robot in gazebo -->
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" clear_params="true"
-          args="-z 0.5 -param legged_robot_description -urdf -model $(arg robot_type)" output="screen"/>
+          args="-z 0.3 -param legged_robot_description -urdf -model $(arg robot_type)" output="screen"/>
 
 </launch>
