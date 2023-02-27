@@ -15,14 +15,13 @@
     <xacro:property name="thigh_shoulder_length" value="0.04"/>
     <xacro:property name="thigh_shoulder_y_offset" value="-0.008"/>
 
-    <xacro:property name="thigh_x_offset" value="-0.015"/>
     <xacro:property name="thigh_width" value="0.03"/>
     <xacro:property name="thigh_height" value="0.034"/>
+    <xacro:property name="thigh_x_offset" value="-0.015"/>
     <xacro:property name="calf_width" value="0.016"/>
     <xacro:property name="calf_height" value="0.016"/>
+    <xacro:property name="calf_x_offset" value="0.0"/>
     <xacro:property name="foot_radius" value="0.02"/>
-    <xacro:property name="stick_radius" value="0.01"/>
-    <xacro:property name="stick_length" value="0.2"/>
 
     <!-- kinematic value -->
     <xacro:property name="thigh_offset" value="0.0838"/>
