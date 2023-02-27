@@ -131,40 +131,42 @@
             </collision>
             <inertial>
                 <origin rpy="0 0 0" xyz="${calf_com_x} ${calf_com_y} ${calf_com_z}"/>
-                <mass value="${calf_mass}"/>
+                <mass value="${calf_mass/2}"/>
                 <inertia
-                        ixx="${calf_ixx}" ixy="${calf_ixy}" ixz="${calf_ixz}"
-                        iyy="${calf_iyy}" iyz="${calf_iyz}"
-                        izz="${calf_izz}"/>
+                        ixx="${calf_ixx/2}" ixy="${calf_ixy/2}" ixz="${calf_ixz/2}"
+                        iyy="${calf_iyy/2}" iyz="${calf_iyz/2}"
+                        izz="${calf_izz/2}"/>
             </inertial>
         </link>
 
         <joint name="${prefix}_foot_fixed" type="fixed">
-            <origin rpy="0 0 0" xyz="0 0 ${-(calf_length)}"/>
+            <origin rpy="0 0 0" xyz="${-0.707*foot_radius} 0 ${-calf_length-0.707*foot_radius}"/>
             <parent link="${prefix}_calf"/>
             <child link="${prefix}_FOOT"/>
         </joint>
 
         <link name="${prefix}_FOOT">
             <visual>
-                <origin rpy="0 0 0" xyz="0 0 0"/>
+                <origin rpy="0 0 0" xyz="${0.707*foot_radius} 0 ${0.707*foot_radius}"/>
                 <geometry>
                     <sphere radius="${foot_radius-0.01}"/>
                 </geometry>
                 <material name="orange"/>
             </visual>
             <collision>
-                <origin rpy="0 0 0" xyz="0 0 0"/>
+                <origin rpy="0 0 0" xyz="${0.707*foot_radius} 0 ${0.707*foot_radius}"/>
                 <geometry>
                     <sphere radius="${foot_radius}"/>
                 </geometry>
             </collision>
             <inertial>
-                <mass value="${foot_mass}"/>
+                <origin rpy="0 0 0"
+                        xyz="${calf_com_x+0.707*foot_radius} ${calf_com_y} ${calf_com_z+calf_length+0.707*foot_radius}"/>
+                <mass value="${calf_mass/2}"/>
                 <inertia
-                        ixx="${(2*foot_mass)/5.0*(foot_radius*foot_radius)}" ixy="0.0" ixz="0.0"
-                        iyy="${(2*foot_mass)/5.0*(foot_radius*foot_radius)}" iyz="0.0"
-                        izz="${(2*foot_mass)/5.0*(foot_radius*foot_radius)}"/>
+                        ixx="${calf_ixx/2}" ixy="${calf_ixy/2}" ixz="${calf_ixz/2}"
+                        iyy="${calf_iyy/2}" iyz="${calf_iyz/2}"
+                        izz="${calf_izz/2}"/>
             </inertial>
         </link>
 
