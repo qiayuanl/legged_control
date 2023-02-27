@@ -5,16 +5,11 @@
 
     <arg name="cheater" default="false"/>
 
-    <arg name="urdfFile" default="$(find legged_unitree_description)/urdf/$(arg robot_type).urdf"/>
-    <arg name="taskFile" default="$(find legged_controllers)/config/$(arg robot_type)/task.info"/>
-    <arg name="referenceFile" default="$(find legged_controllers)/config/$(arg robot_type)/reference.info"/>
-    <arg name="gaitCommandFile" default="$(find legged_controllers)/config/$(arg robot_type)/gait.info"/>
-
     <!-- make the files into global parameters -->
-    <param name="urdfFile" value="$(arg urdfFile)"/>
-    <param name="taskFile" value="$(arg taskFile)"/>
-    <param name="referenceFile" value="$(arg referenceFile)"/>
-    <param name="gaitCommandFile" value="$(arg gaitCommandFile)"/>
+    <param name="urdfFile" value="/tmp/legged_control/$(arg robot_type).urdf"/>
+    <param name="taskFile" value="$(find legged_controllers)/config/$(arg robot_type)/task.info"/>
+    <param name="referenceFile" value="$(find legged_controllers)/config/$(arg robot_type)/reference.info"/>
+    <param name="gaitCommandFile" value="$(find legged_controllers)/config/$(arg robot_type)/gait.info"/>
 
     <rosparam file="$(find legged_controllers)/config/controllers.yaml" command="load"/>
 
