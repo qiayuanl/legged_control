@@ -23,6 +23,8 @@ class KalmanFilterEstimate : public StateEstimateBase {
 
   vector_t update(const ros::Time& time, const ros::Duration& period) override;
 
+  void loadSettings(const std::string& taskFile, bool verbose);
+
  private:
   void updateFromTopic();
 
@@ -40,8 +42,15 @@ class KalmanFilterEstimate : public StateEstimateBase {
   Eigen::Matrix<scalar_t, 18, 3> b_;
   Eigen::Matrix<scalar_t, 28, 18> c_;
 
-  const scalar_t footRadius_ = 0.02;
+  // Config
   vector_t feetHeights_;
+  scalar_t footRadius_ = 0.02;
+  scalar_t imuProcessNoisePosition_ = 0.02;
+  scalar_t imuProcessNoiseVelocity_ = 0.02;
+  scalar_t footProcessNoisePosition_ = 0.002;
+  scalar_t footSensorNoisePosition_ = 0.005;
+  scalar_t footSensorNoiseVelocity_ = 0.1;
+  scalar_t footHeightSensorNoise_ = 0.01;
 
   // Topic
   ros::Subscriber sub_;

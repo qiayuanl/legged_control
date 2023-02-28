@@ -87,22 +87,15 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   const auto eePos = eeKinematics_->getPosition(vector_t());
   const auto eeVel = eeKinematics_->getVelocity(vector_t(), vector_t());
 
-  scalar_t imuProcessNoisePosition = 0.02;
-  scalar_t imuProcessNoiseVelocity = 0.02;
-  scalar_t footProcessNoisePosition = 0.002;
-  scalar_t footSensorNoisePosition = 0.005;
-  scalar_t footSensorNoiseVelocity = 0.1;  // TODO(qiayuan): adjust the value
-  scalar_t footHeightSensorNoise = 0.01;
-
   Eigen::Matrix<scalar_t, 18, 18> q = Eigen::Matrix<scalar_t, 18, 18>::Identity();
-  q.block(0, 0, 3, 3) = q_.block(0, 0, 3, 3) * imuProcessNoisePosition;
-  q.block(3, 3, 3, 3) = q_.block(3, 3, 3, 3) * imuProcessNoiseVelocity;
-  q.block(6, 6, 12, 12) = q_.block(6, 6, 12, 12) * footProcessNoisePosition;
+  q.block(0, 0, 3, 3) = q_.block(0, 0, 3, 3) * imuProcessNoisePosition_;
+  q.block(3, 3, 3, 3) = q_.block(3, 3, 3, 3) * imuProcessNoiseVelocity_;
+  q.block(6, 6, 12, 12) = q_.block(6, 6, 12, 12) * footProcessNoisePosition_;
 
   Eigen::Matrix<scalar_t, 28, 28> r = Eigen::Matrix<scalar_t, 28, 28>::Identity();
-  r.block(0, 0, 12, 12) = r_.block(0, 0, 12, 12) * footSensorNoisePosition;
-  r.block(12, 12, 12, 12) = r_.block(12, 12, 12, 12) * footSensorNoiseVelocity;
-  r.block(24, 24, 4, 4) = r_.block(24, 24, 4, 4) * footHeightSensorNoise;
+  r.block(0, 0, 12, 12) = r_.block(0, 0, 12, 12) * footSensorNoisePosition_;
+  r.block(12, 12, 12, 12) = r_.block(12, 12, 12, 12) * footSensorNoiseVelocity_;
+  r.block(24, 24, 4, 4) = r_.block(24, 24, 4, 4) * footHeightSensorNoise_;
 
   for (int i = 0; i < 4; i++) {
     int i1 = 3 * i;
@@ -260,6 +253,24 @@ nav_msgs::Odometry KalmanFilterEstimate::getOdomMsg() {
     }
   }
   return odom;
+}
+
+void KalmanFilterEstimate::loadSettings(const std::string& taskFile, bool verbose) {
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_info(taskFile, pt);
+  std::string prefix = "kalmanFilter.";
+  if (verbose) {
+    std::cerr << "\n #### Kalman Filter Noise:";
+    std::cerr << "\n #### =============================================================================\n";
+  }
+
+  loadData::loadPtreeValue(pt, footRadius_, prefix + "footRadius", verbose);
+  loadData::loadPtreeValue(pt, imuProcessNoisePosition_, prefix + "imuProcessNoisePosition", verbose);
+  loadData::loadPtreeValue(pt, imuProcessNoiseVelocity_, prefix + "imuProcessNoiseVelocity", verbose);
+  loadData::loadPtreeValue(pt, footProcessNoisePosition_, prefix + "footProcessNoisePosition", verbose);
+  loadData::loadPtreeValue(pt, footSensorNoisePosition_, prefix + "footSensorNoisePosition", verbose);
+  loadData::loadPtreeValue(pt, footSensorNoiseVelocity_, prefix + "footSensorNoiseVelocity", verbose);
+  loadData::loadPtreeValue(pt, footHeightSensorNoise_, prefix + "footHeightSensorNoise", verbose);
 }
 
 }  // namespace legged

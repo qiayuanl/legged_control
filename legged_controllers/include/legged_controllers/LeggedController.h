@@ -41,7 +41,7 @@ class LeggedController : public controller_interface::MultiInterfaceController<H
                                     bool verbose);
   virtual void setupMpc();
   virtual void setupMrt();
-  virtual void setupStateEstimate(const std::string& taskFile);
+  virtual void setupStateEstimate(const std::string& taskFile, bool verbose);
 
   // Interface
   std::shared_ptr<LeggedInterface> leggedInterface_;
@@ -78,7 +78,7 @@ class LeggedController : public controller_interface::MultiInterfaceController<H
 
 class LeggedCheaterController : public LeggedController {
  protected:
-  void setupStateEstimate(const std::string& taskFile) override;
+  void setupStateEstimate(const std::string& taskFile, bool verbose) override;
 };
 
 }  // namespace legged
