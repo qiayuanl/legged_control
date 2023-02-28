@@ -25,13 +25,25 @@ class KalmanFilterEstimate : public StateEstimateBase {
 
   void loadSettings(const std::string& taskFile, bool verbose);
 
- private:
+ protected:
   void updateFromTopic();
 
   void callback(const nav_msgs::Odometry::ConstPtr& msg);
 
   nav_msgs::Odometry getOdomMsg();
 
+  vector_t feetHeights_;
+
+  // Config
+  scalar_t footRadius_ = 0.02;
+  scalar_t imuProcessNoisePosition_ = 0.02;
+  scalar_t imuProcessNoiseVelocity_ = 0.02;
+  scalar_t footProcessNoisePosition_ = 0.002;
+  scalar_t footSensorNoisePosition_ = 0.005;
+  scalar_t footSensorNoiseVelocity_ = 0.1;
+  scalar_t footHeightSensorNoise_ = 0.01;
+
+ private:
   Eigen::Matrix<scalar_t, 18, 1> xHat_;
   Eigen::Matrix<scalar_t, 12, 1> ps_;
   Eigen::Matrix<scalar_t, 12, 1> vs_;
@@ -41,16 +53,6 @@ class KalmanFilterEstimate : public StateEstimateBase {
   Eigen::Matrix<scalar_t, 28, 28> r_;
   Eigen::Matrix<scalar_t, 18, 3> b_;
   Eigen::Matrix<scalar_t, 28, 18> c_;
-
-  // Config
-  vector_t feetHeights_;
-  scalar_t footRadius_ = 0.02;
-  scalar_t imuProcessNoisePosition_ = 0.02;
-  scalar_t imuProcessNoiseVelocity_ = 0.02;
-  scalar_t footProcessNoisePosition_ = 0.002;
-  scalar_t footSensorNoisePosition_ = 0.005;
-  scalar_t footSensorNoiseVelocity_ = 0.1;
-  scalar_t footHeightSensorNoise_ = 0.01;
 
   // Topic
   ros::Subscriber sub_;
