@@ -124,7 +124,7 @@
                 <material name="orange"/>
             </visual>
             <collision>
-                <origin rpy="0 ${pi/2.0} 0" xyz="0 0 ${-calf_length/2.0}"/>
+                <origin rpy="0 ${pi/2.0} 0" xyz="${calf_x_offset} 0 ${-calf_length/2.0}"/>
                 <geometry>
                     <box size="${calf_length} ${calf_width} ${calf_height}"/>
                 </geometry>
