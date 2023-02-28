@@ -19,23 +19,11 @@ using namespace ocs2;
 
 class KalmanFilterEstimate : public StateEstimateBase {
  public:
-  KalmanFilterEstimate(PinocchioInterface pinocchioInterface, CentroidalModelInfo info, const PinocchioEndEffectorKinematics& eeKinematics,
-                       const std::vector<HybridJointHandle>& hybridJointHandles,
-                       const std::vector<ContactSensorHandle>& contactSensorHandles,
-                       const hardware_interface::ImuSensorHandle& imuSensorHandle);
+  KalmanFilterEstimate(PinocchioInterface pinocchioInterface, CentroidalModelInfo info, const PinocchioEndEffectorKinematics& eeKinematics);
+
   vector_t update(const ros::Time& time, const ros::Duration& period) override;
 
  private:
-  Eigen::Quaternion<scalar_t> getQuat() {
-    return Eigen::Quaternion<scalar_t>(imuSensorHandle_.getOrientation()[3], imuSensorHandle_.getOrientation()[0],
-                                       imuSensorHandle_.getOrientation()[1], imuSensorHandle_.getOrientation()[2]);
-  }
-
-  Eigen::Matrix<scalar_t, 3, 1> getAngularVelLocal() {
-    return Eigen::Matrix<scalar_t, 3, 1>(imuSensorHandle_.getAngularVelocity()[0], imuSensorHandle_.getAngularVelocity()[1],
-                                         imuSensorHandle_.getAngularVelocity()[2]);
-  }
-
   void updateFromTopic();
 
   void callback(const nav_msgs::Odometry::ConstPtr& msg);
@@ -52,9 +40,8 @@ class KalmanFilterEstimate : public StateEstimateBase {
   Eigen::Matrix<scalar_t, 18, 3> b_;
   Eigen::Matrix<scalar_t, 28, 18> c_;
 
-  scalar_t footRadius_ = 0.02;
+  const scalar_t footRadius_ = 0.02;
   vector_t feetHeights_;
-  vector3_t zyxOffset_ = vector3_t::Zero();
 
   // Topic
   ros::Subscriber sub_;

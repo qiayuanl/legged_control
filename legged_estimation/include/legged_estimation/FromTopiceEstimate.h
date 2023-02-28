@@ -13,9 +13,11 @@ using namespace ocs2;
 class FromTopicStateEstimate : public StateEstimateBase {
  public:
   FromTopicStateEstimate(PinocchioInterface pinocchioInterface, CentroidalModelInfo info,
-                         const PinocchioEndEffectorKinematics& eeKinematics, const std::vector<HybridJointHandle>& hybridJointHandles,
-                         const std::vector<ContactSensorHandle>& contactSensorHandles,
-                         const hardware_interface::ImuSensorHandle& imuSensorHandle);
+                         const PinocchioEndEffectorKinematics& eeKinematics);
+
+  void updateImu(const Eigen::Quaternion<scalar_t>& quat, const vector3_t& angularVelLocal, const vector3_t& linearAccelLocal,
+                 const matrix3_t& orientationCovariance, const matrix3_t& angularVelCovariance,
+                 const matrix3_t& linearAccelCovariance) override{};
 
   vector_t update(const ros::Time& time, const ros::Duration& period) override;
 

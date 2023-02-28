@@ -16,14 +16,8 @@
 namespace legged {
 
 KalmanFilterEstimate::KalmanFilterEstimate(PinocchioInterface pinocchioInterface, CentroidalModelInfo info,
-                                           const PinocchioEndEffectorKinematics& eeKinematics,
-                                           const std::vector<HybridJointHandle>& hybridJointHandles,
-                                           const std::vector<ContactSensorHandle>& contactSensorHandles,
-                                           const hardware_interface::ImuSensorHandle& imuSensorHandle)
-    : StateEstimateBase(std::move(pinocchioInterface), std::move(info), eeKinematics, hybridJointHandles, contactSensorHandles,
-                        imuSensorHandle),
-      tfListener_(tfBuffer_),
-      topicUpdated_(false) {
+                                           const PinocchioEndEffectorKinematics& eeKinematics)
+    : StateEstimateBase(std::move(pinocchioInterface), std::move(info), eeKinematics), tfListener_(tfBuffer_), topicUpdated_(false) {
   xHat_.setZero();
   ps_.setZero();
   vs_.setZero();
@@ -63,19 +57,6 @@ KalmanFilterEstimate::KalmanFilterEstimate(PinocchioInterface pinocchioInterface
 }
 
 vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration& period) {
-  // Angular from IMU
-  auto quat = getQuat();
-  auto angularVelLocal = getAngularVelLocal();
-
-  vector3_t zyx = quatToZyx(quat) - zyxOffset_;
-
-  vector3_t angularVelGlobal = getGlobalAngularVelocityFromEulerAnglesZyxDerivatives<scalar_t>(
-      zyx, getEulerAnglesZyxDerivativesFromLocalAngularVelocity<scalar_t>(quatToZyx(quat), angularVelLocal));
-  updateAngular(zyx, angularVelGlobal);
-
-  // Joint states
-  updateJointStates();
-
   scalar_t dt = period.toSec();
   a_.block(0, 3, 3, 3) = dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
   b_.block(0, 0, 3, 3) = 0.5 * dt * dt * Eigen::Matrix<scalar_t, 3, 3>::Identity();
@@ -88,8 +69,8 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   auto& data = pinocchioInterface_.getData();
   size_t actuatedDofNum = info_.actuatedDofNum;
 
-  vector_t qPino(generalizedCoordinatesNum_);
-  vector_t vPino(generalizedCoordinatesNum_);
+  vector_t qPino(info_.generalizedCoordinatesNum);
+  vector_t vPino(info_.generalizedCoordinatesNum);
   qPino.setZero();
   qPino.segment<3>(3) = rbdState_.head<3>();  // Only set orientation, let position in origin.
   qPino.tail(actuatedDofNum) = rbdState_.segment(6, actuatedDofNum);
@@ -98,7 +79,7 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   vPino.segment<3>(3) = getEulerAnglesZyxDerivativesFromGlobalAngularVelocity<scalar_t>(
       qPino.segment<3>(3),
       rbdState_.segment<3>(info_.generalizedCoordinatesNum));  // Only set angular velocity, let linear velocity be zero
-  vPino.tail(actuatedDofNum) = rbdState_.segment(6 + generalizedCoordinatesNum_, actuatedDofNum);
+  vPino.tail(actuatedDofNum) = rbdState_.segment(6 + info_.generalizedCoordinatesNum, actuatedDofNum);
 
   pinocchio::forwardKinematics(model, data, qPino, vPino);
   pinocchio::updateFramePlacements(model, data);
@@ -130,7 +111,7 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
     int rIndex1 = i1;
     int rIndex2 = 12 + i1;
     int rIndex3 = 24 + i;
-    bool isContact = contactSensorHandles_[i].isContact();
+    bool isContact = contactFlag_[i];
 
     scalar_t high_suspect_number(100);
     q.block(qIndex, qIndex, 3, 3) = (isContact ? 1. : high_suspect_number) * q.block(qIndex, qIndex, 3, 3);
@@ -142,10 +123,9 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
     ps_.segment(3 * i, 3)[2] += footRadius_;
     vs_.segment(3 * i, 3) = -eeVel[i];
   }
-  Eigen::Matrix<scalar_t, 3, 1> g(0, 0, -9.81);
-  Eigen::Matrix<scalar_t, 3, 1> imuAccel(imuSensorHandle_.getLinearAcceleration()[0], imuSensorHandle_.getLinearAcceleration()[1],
-                                         imuSensorHandle_.getLinearAcceleration()[2]);
-  Eigen::Matrix<scalar_t, 3, 1> accel = getRotationMatrixFromZyxEulerAngles(quatToZyx(quat)) * imuAccel + g;
+
+  vector3_t g(0, 0, -9.81);
+  vector3_t accel = getRotationMatrixFromZyxEulerAngles(quatToZyx(quat_)) * linearAccelLocal_ + g;
 
   Eigen::Matrix<scalar_t, 28, 1> y;
   y << ps_, vs_, feetHeights_;
@@ -222,7 +202,7 @@ void KalmanFilterEstimate::updateFromTopic() {
   const auto& model = pinocchioInterface_.getModel();
   auto& data = pinocchioInterface_.getData();
 
-  vector_t qPino(generalizedCoordinatesNum_);
+  vector_t qPino(info_.generalizedCoordinatesNum);
   qPino.head<3>() = newPos;
   qPino.segment<3>(3) = rbdState_.head<3>();
   qPino.tail(info_.actuatedDofNum) = rbdState_.segment(6, info_.actuatedDofNum);
@@ -233,7 +213,7 @@ void KalmanFilterEstimate::updateFromTopic() {
   for (size_t i = 0; i < 4; ++i) {
     xHat_.segment<3>(6 + i * 3) = eeKinematics_->getPosition(vector_t())[i];
     xHat_(6 + i * 3 + 2) -= footRadius_;
-    if (contactSensorHandles_[i].isContact()) {
+    if (contactFlag_[i]) {
       feetHeights_[i] = xHat_(6 + i * 3 + 2);
     }
   }
@@ -250,36 +230,33 @@ void KalmanFilterEstimate::callback(const nav_msgs::Odometry::ConstPtr& msg) {
 }
 
 nav_msgs::Odometry KalmanFilterEstimate::getOdomMsg() {
-  auto quat = getQuat();
-  auto angularVelLocal = getAngularVelLocal();
-
   nav_msgs::Odometry odom;
   odom.pose.pose.position.x = xHat_.segment<3>(0)(0);
   odom.pose.pose.position.y = xHat_.segment<3>(0)(1);
   odom.pose.pose.position.z = xHat_.segment<3>(0)(2);
-  odom.pose.pose.orientation.x = quat.x();
-  odom.pose.pose.orientation.y = quat.y();
-  odom.pose.pose.orientation.z = quat.z();
-  odom.pose.pose.orientation.w = quat.w();
-  odom.pose.pose.orientation.x = quat.x();
+  odom.pose.pose.orientation.x = quat_.x();
+  odom.pose.pose.orientation.y = quat_.y();
+  odom.pose.pose.orientation.z = quat_.z();
+  odom.pose.pose.orientation.w = quat_.w();
+  odom.pose.pose.orientation.x = quat_.x();
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       odom.pose.covariance[i * 6 + j] = p_(i, j);
-      odom.pose.covariance[6 * (3 + i) + (3 + j)] = imuSensorHandle_.getOrientationCovariance()[i * 3 + j];
+      odom.pose.covariance[6 * (3 + i) + (3 + j)] = orientationCovariance_(i * 3 + j);
     }
   }
   //  The twist in this message should be specified in the coordinate frame given by the child_frame_id: "base"
-  vector_t twist = getRotationMatrixFromZyxEulerAngles(quatToZyx(quat)).transpose() * xHat_.segment<3>(3);
+  vector_t twist = getRotationMatrixFromZyxEulerAngles(quatToZyx(quat_)).transpose() * xHat_.segment<3>(3);
   odom.twist.twist.linear.x = twist.x();
   odom.twist.twist.linear.y = twist.y();
   odom.twist.twist.linear.z = twist.z();
-  odom.twist.twist.angular.x = angularVelLocal.x();
-  odom.twist.twist.angular.y = angularVelLocal.y();
-  odom.twist.twist.angular.z = angularVelLocal.z();
+  odom.twist.twist.angular.x = angularVelLocal_.x();
+  odom.twist.twist.angular.y = angularVelLocal_.y();
+  odom.twist.twist.angular.z = angularVelLocal_.z();
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       odom.twist.covariance[i * 6 + j] = p_.block<3, 3>(3, 3)(i, j);
-      odom.twist.covariance[6 * (3 + i) + (3 + j)] = imuSensorHandle_.getAngularVelocityCovariance()[i * 3 + j];
+      odom.twist.covariance[6 * (3 + i) + (3 + j)] = angularVelCovariance_(i * 3 + j);
     }
   }
   return odom;

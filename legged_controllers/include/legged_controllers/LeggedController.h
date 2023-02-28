@@ -35,30 +35,39 @@ class LeggedController : public controller_interface::MultiInterfaceController<H
   void stopping(const ros::Time& /*time*/) override { mpcRunning_ = false; }
 
  protected:
+  virtual void updateStateEstimation(const ros::Time& time, const ros::Duration& period);
+
   virtual void setupLeggedInterface(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile,
                                     bool verbose);
   virtual void setupMpc();
   virtual void setupMrt();
-  virtual void setupStateEstimate(const std::string& urdfFile, const std::vector<ContactSensorHandle>& contactSensorHandles,
-                                  const hardware_interface::ImuSensorHandle& imuSensorHandle);
+  virtual void setupStateEstimate(const std::string& taskFile);
 
+  // Interface
   std::shared_ptr<LeggedInterface> leggedInterface_;
   std::shared_ptr<PinocchioEndEffectorKinematics> eeKinematicsPtr_;
+  std::vector<HybridJointHandle> hybridJointHandles_;
+  std::vector<ContactSensorHandle> contactHandles_;
+  hardware_interface::ImuSensorHandle imuSensorHandle_;
 
+  // State Estimation
+  SystemObservation currentObservation_;
+  vector_t measuredRbdState_;
+  std::shared_ptr<StateEstimateBase> stateEstimate_;
+  std::shared_ptr<CentroidalModelRbdConversions> rbdConversions_;
+
+  // Whole Body Control
   std::shared_ptr<WbcBase> wbc_;
   std::shared_ptr<SafetyChecker> safetyChecker_;
 
+  // Nonlinear MPC
   std::shared_ptr<MPC_BASE> mpc_;
   std::shared_ptr<MPC_MRT_Interface> mpcMrtInterface_;
-  std::shared_ptr<CentroidalModelRbdConversions> rbdConversions_;
-  std::shared_ptr<StateEstimateBase> stateEstimate_;
 
+  // Visualization
   std::shared_ptr<LeggedRobotVisualizer> robotVisualizer_;
   std::shared_ptr<LeggedSelfCollisionVisualization> selfCollisionVisualization_;
   ros::Publisher observationPublisher_;
-
-  SystemObservation currentObservation_;
-  std::vector<HybridJointHandle> hybridJointHandles_;
 
  private:
   std::thread mpcThread_;
@@ -69,8 +78,7 @@ class LeggedController : public controller_interface::MultiInterfaceController<H
 
 class LeggedCheaterController : public LeggedController {
  protected:
-  void setupStateEstimate(const std::string& urdfFile, const std::vector<ContactSensorHandle>& contactSensorHandles,
-                          const hardware_interface::ImuSensorHandle& imuSensorHandle) override;
+  void setupStateEstimate(const std::string& taskFile) override;
 };
 
 }  // namespace legged
