@@ -101,7 +101,8 @@ void LeggedHWSim::readSim(ros::Time time, ros::Duration period) {
     state.second = false;
   }
   for (const auto& contact : contactManager_->GetContacts()) {
-    if (static_cast<uint32_t>(contact->time.sec) != time.sec || static_cast<uint32_t>(contact->time.nsec) != (time - period).nsec) {
+    if (static_cast<uint32_t>(contact->time.sec) != (time - period).sec ||
+        static_cast<uint32_t>(contact->time.nsec) != (time - period).nsec) {
       continue;
     }
     std::string linkName = contact->collision1->GetLink()->GetName();
