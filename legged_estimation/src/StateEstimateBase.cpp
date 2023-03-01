@@ -16,7 +16,7 @@ StateEstimateBase::StateEstimateBase(PinocchioInterface pinocchioInterface, Cent
     : pinocchioInterface_(std::move(pinocchioInterface)),
       info_(std::move(info)),
       eeKinematics_(eeKinematics.clone()),
-      rbdState_(2 * info_.generalizedCoordinatesNum) {
+      rbdState_(vector_t ::Zero(2 * info_.generalizedCoordinatesNum)) {
   ros::NodeHandle nh;
   odomPub_.reset(new realtime_tools::RealtimePublisher<nav_msgs::Odometry>(nh, "odom", 10));
 
@@ -24,10 +24,8 @@ StateEstimateBase::StateEstimateBase(PinocchioInterface pinocchioInterface, Cent
 }
 
 void StateEstimateBase::updateJointStates(const vector_t& jointPos, const vector_t& jointVel) {
-  size_t num = info_.generalizedCoordinatesNum;
-
-  rbdState_.segment(6, num) = jointPos;
-  rbdState_.segment(6 + num, num) = jointVel;
+  rbdState_.segment(6, info_.actuatedDofNum) = jointPos;
+  rbdState_.segment(6 + info_.generalizedCoordinatesNum, info_.actuatedDofNum) = jointVel;
 }
 
 void StateEstimateBase::updateImu(const Eigen::Quaternion<scalar_t>& quat, const vector3_t& angularVelLocal,
