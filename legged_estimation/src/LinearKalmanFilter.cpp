@@ -49,10 +49,12 @@ KalmanFilterEstimate::KalmanFilterEstimate(PinocchioInterface pinocchioInterface
   p_ = 100. * p_;
   q_.setIdentity();
   r_.setIdentity();
-  feetHeights_.setZero(4);
-  eeKinematics_->setPinocchioInterface(pinocchioInterface_);
+  footHeights_.fill(0.);
+  footHeightBias_.fill(0.);
 
+  eeKinematics_->setPinocchioInterface(pinocchioInterface_);
   world2odom_.setRotation(tf2::Quaternion::getIdentity());
+
   sub_ = ros::NodeHandle().subscribe<nav_msgs::Odometry>("/tracking_camera/odom/sample", 10, &KalmanFilterEstimate::callback, this);
 }
 
@@ -71,15 +73,13 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
 
   vector_t qPino(info_.generalizedCoordinatesNum);
   vector_t vPino(info_.generalizedCoordinatesNum);
-  qPino.setZero();
-  qPino.segment<3>(3) = rbdState_.head<3>();  // Only set orientation, let position in origin.
+  qPino.head<3>() = rbdState_.segment<3>(3);
+  qPino.segment<3>(3) = rbdState_.head<3>();
   qPino.tail(actuatedDofNum) = rbdState_.segment(6, actuatedDofNum);
-
-  vPino.setZero();
+  vPino.head<3>() = rbdState_.segment<3>(info_.generalizedCoordinatesNum + 3);
   vPino.segment<3>(3) = getEulerAnglesZyxDerivativesFromGlobalAngularVelocity<scalar_t>(
-      qPino.segment<3>(3),
-      rbdState_.segment<3>(info_.generalizedCoordinatesNum));  // Only set angular velocity, let linear velocity be zero
-  vPino.tail(actuatedDofNum) = rbdState_.segment(6 + info_.generalizedCoordinatesNum, actuatedDofNum);
+      qPino.segment<3>(3), rbdState_.segment<3>(info_.generalizedCoordinatesNum));
+  vPino.tail(actuatedDofNum) = rbdState_.segment(info_.generalizedCoordinatesNum + 6, actuatedDofNum);
 
   pinocchio::forwardKinematics(model, data, qPino, vPino);
   pinocchio::updateFramePlacements(model, data);
@@ -112,16 +112,34 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
     r.block(rIndex2, rIndex2, 3, 3) = (isContact ? 1. : high_suspect_number) * r.block(rIndex2, rIndex2, 3, 3);
     r(rIndex3, rIndex3) = (isContact ? 1. : high_suspect_number) * r(rIndex3, rIndex3);
 
-    ps_.segment(3 * i, 3) = -eePos[i];
+    ps_.segment(3 * i, 3) = qPino.head<3>() - eePos[i];
     ps_.segment(3 * i, 3)[2] += footRadius_;
-    vs_.segment(3 * i, 3) = -eeVel[i];
+    vs_.segment(3 * i, 3) = vPino.head<3>() - eeVel[i];
+
+    scalar_t newFootHeight = eePos[i].z() - footRadius_;
+    if (isContact) {
+      if (!lastContact_[i]) {
+        footHeights_[i] = newFootHeight - footHeightBias_[i];
+      } else {
+        //        footHeightBias_[i] = 0.8 * footHeightBias_[i] + 0.2 * (newFootHeight - footHeights_[i]);
+      }
+    }
+    lastContact_[i] = isContact;
   }
+
+  for (int i = 0; i < 4; ++i) {
+    std::cerr << footHeights_[i] << "\t";
+  }
+  std::cerr << std::endl;
 
   vector3_t g(0, 0, -9.81);
   vector3_t accel = getRotationMatrixFromZyxEulerAngles(quatToZyx(quat_)) * linearAccelLocal_ + g;
 
   Eigen::Matrix<scalar_t, 28, 1> y;
-  y << ps_, vs_, feetHeights_;
+  y << ps_, vs_;
+  for (int i = 0; i < 4; ++i) {
+    y(24 + i) = footHeights_[i];
+  }
   xHat_ = a_ * xHat_ + b_ * accel;
   Eigen::Matrix<scalar_t, 18, 18> at = a_.transpose();
   Eigen::Matrix<scalar_t, 18, 18> pm = a_ * p_ * at + q;
@@ -207,7 +225,7 @@ void KalmanFilterEstimate::updateFromTopic() {
     xHat_.segment<3>(6 + i * 3) = eeKinematics_->getPosition(vector_t())[i];
     xHat_(6 + i * 3 + 2) -= footRadius_;
     if (contactFlag_[i]) {
-      feetHeights_[i] = xHat_(6 + i * 3 + 2);
+      footHeights_[i] = xHat_(6 + i * 3 + 2);
     }
   }
 

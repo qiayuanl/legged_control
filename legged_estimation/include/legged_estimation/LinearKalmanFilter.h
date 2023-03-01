@@ -32,7 +32,9 @@ class KalmanFilterEstimate : public StateEstimateBase {
 
   nav_msgs::Odometry getOdomMsg();
 
-  vector_t feetHeights_;
+  feet_array_t<scalar_t> footHeights_;
+  feet_array_t<scalar_t> footHeightBias_;
+  contact_flag_t lastContact_;
 
   // Config
   scalar_t footRadius_ = 0.02;
