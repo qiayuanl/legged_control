@@ -106,11 +106,11 @@ void LeggedHWSim::readSim(ros::Time time, ros::Duration period) {
       continue;
     }
     std::string linkName = contact->collision1->GetLink()->GetName();
-    if (name2contact_.find(linkName) != name2contact_.end()) {
+    if (name2contact_.find(linkName) != name2contact_.end() && contact->wrench->body1Force.Length() > 5.) {
       name2contact_[linkName] = true;
     }
     linkName = contact->collision2->GetLink()->GetName();
-    if (name2contact_.find(linkName) != name2contact_.end()) {
+    if (name2contact_.find(linkName) != name2contact_.end() && contact->wrench->body2Force.Length() > 5.) {
       name2contact_[linkName] = true;
     }
   }
