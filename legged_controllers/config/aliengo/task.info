@@ -299,6 +299,18 @@ swingLegTask
     kd                   37
 }
 
+baseHeightTask
+{
+    kp                   400
+    kd                   140
+}
+
+baseAngularTask
+{
+    kp                   400
+    kd                   140
+}
+
 weight
 {
     swingLeg        100

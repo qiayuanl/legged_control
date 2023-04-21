@@ -1,5 +1,5 @@
 //
-// Created by qiayuan on 2022/7/1.
+// Created by skywoodsz on 2023/3/12.
 //
 
 #pragma once
@@ -14,7 +14,7 @@ namespace legged {
 using namespace ocs2;
 using namespace legged_robot;
 
-// Decision Variables: x = [\dot u^T, F^T, \tau^T]^T
+// Decision Variables: x = [\dot u^T, F^T]^T
 class WbcBase {
   using Vector6 = Eigen::Matrix<scalar_t, 6, 1>;
   using Matrix6 = Eigen::Matrix<scalar_t, 6, 6>;
@@ -29,7 +29,8 @@ class WbcBase {
 
  protected:
   void updateMeasured(const vector_t& rbdStateMeasured);
-  void updateDesired(const vector_t& stateDesired, const vector_t& inputDesired);
+  void updateDesired(const vector_t& stateDesired, const vector_t& inputDesired, ocs2::scalar_t period);
+  vector_t updateCmd(vector_t x_optimal);
 
   size_t getNumDecisionVars() const { return numDecisionVars_; }
 
@@ -37,9 +38,12 @@ class WbcBase {
   Task formulateTorqueLimitsTask();
   Task formulateNoContactMotionTask();
   Task formulateFrictionConeTask();
-  Task formulateBaseAccelTask(const vector_t& stateDesired, const vector_t& inputDesired, scalar_t period);
+  Task formulateBaseHeightMotionTask();
+  Task formulateBaseAngularMotionTask();
+  Task formulateBaseXYLinearAccelTask();
   Task formulateSwingLegTask();
   Task formulateContactForceTask(const vector_t& inputDesired) const;
+
 
   size_t numDecisionVars_;
   PinocchioInterface pinocchioInterfaceMeasured_, pinocchioInterfaceDesired_;
@@ -49,13 +53,17 @@ class WbcBase {
   CentroidalModelPinocchioMapping mapping_;
 
   vector_t qMeasured_, vMeasured_, inputLast_;
+  vector_t qDesired_, vDesired_, baseAccDesired_;
   matrix_t j_, dj_;
+  matrix_t base_j_, base_dj_;
   contact_flag_t contactFlag_{};
   size_t numContacts_{};
 
   // Task Parameters:
   vector_t torqueLimits_;
   scalar_t frictionCoeff_{}, swingKp_{}, swingKd_{};
+  scalar_t baseHeightKp_{}, baseHeightKd_{};
+  scalar_t baseAngularKp_{}, baseAngularKd_{};
 };
 
 }  // namespace legged

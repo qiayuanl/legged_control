@@ -140,7 +140,7 @@ void HoQp::solveProblem() {
   options.setToMPC();
   options.printLevel = qpOASES::PL_LOW;
   qpProblem.setOptions(options);
-  int nWsr = 20;
+  int nWsr = 50;
 
   qpProblem.init(h_.data(), c_.data(), d_.data(), nullptr, nullptr, nullptr, f_.data(), nWsr);
   vector_t qpSol(numDecisionVars_ + numSlackVars_);

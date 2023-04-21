@@ -21,7 +21,8 @@
 #include <legged_estimation/FromTopiceEstimate.h>
 #include <legged_estimation/LinearKalmanFilter.h>
 #include <legged_wbc/HierarchicalWbc.h>
-#include <legged_wbc/WeightedWbc.h>
+//#include <legged_wbc/WeightedWbc.h>
+
 #include <pluginlib/class_list_macros.hpp>
 
 namespace legged {
@@ -66,9 +67,9 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
   setupStateEstimate(taskFile, verbose);
 
   // Whole body control
-  wbc_ = std::make_shared<WeightedWbc>(leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(),
+  wbc_ = std::make_shared<HierarchicalWbc>(leggedInterface_->getPinocchioInterface(), leggedInterface_->getCentroidalModelInfo(),
                                        *eeKinematicsPtr_);
-  wbc_->loadTasksSetting(taskFile, verbose);
+  wbc_->loadTasksSetting(taskFile, true);
 
   // Safety Checker
   safetyChecker_ = std::make_shared<SafetyChecker>(leggedInterface_->getCentroidalModelInfo());
