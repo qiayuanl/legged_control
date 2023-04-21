@@ -7,7 +7,7 @@ We find that in `legged_wbc`, the optimization variable is $[\dot{u}, F, \tau]^T
 1. Reduce the dimension of `legged_wbc` optimization variables. The original optimization variable is $[\dot{u}, F, \tau]^T$, and our improved optimization variable is $[\dot{u}, F]^T$. The dimension is reduced by 12 compared to before.
 2. Redesign the control law.  We added the position and speed errors to the control law. In addition, we designed height, attitude and xy position as three subtasks instead of synthesizing one big task.
 
-The performance comparison is as follows: We test on NUC11PAHi7 with the robot running in gazebo. The maximum number of iterations for the QP solver is set to 50.
+The performance comparison is as follows: We tested on NUC11PAHi7 with the robot running in gazebo. The maximum number of iterations for the QP solver was set to 50.
 
 The original result was
 
@@ -23,7 +23,7 @@ Average : 0.330465[ms].
 gazebo realtime factor 0.93
 ```
 
-Now the result is
+Now the result was
 
 ```
 HierarchicalWbc
