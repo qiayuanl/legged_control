@@ -5,7 +5,7 @@
        robot_type:=$(arg robot_type)
     "/>
     <node name="generate_urdf" pkg="legged_common" type="generate_urdf.sh" output="screen"
-          args="legged_robot_description $(arg robot_type)"/>
+          args="$(find legged_unitree_description)/urdf/robot.xacro $(arg robot_type)"/>
 
     <rosparam file="$(find legged_unitree_hw)/config/$(arg robot_type).yaml" command="load"/>
 
