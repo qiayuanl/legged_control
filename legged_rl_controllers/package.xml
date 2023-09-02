@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>legged_rl_controllers</name>
+    <version>0.0.0</version>
+    <description>The legged_rl_controllers packages.</description>
+    <maintainer email="luohxisme@gmail.com">Haoxiang Luo</maintainer>
+    <maintainer email="qiayuanl@berkeley.com">Qiayuan Liao</maintainer>
+
+    <license>BSD</license>
+    <author email="luohxisme@gmail.com">Haoxiang Luo</author>
+    <author email="qiayuanl@berkeley.com">Qiayuan Liao</author>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <build_depend>cmake_clang_tools</build_depend>
+    <depend>roscpp</depend>
+    <depend>legged_interface</depend>
+    <depend>legged_estimation</depend>
+
+    <depend>controller_interface</depend>
+    <exec_depend>controller_manager</exec_depend>
+
+    <export>
+        <controller_interface plugin="${prefix}/legged_rl_controllers_plugins.xml"/>
+    </export>
+</package>

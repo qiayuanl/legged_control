@@ -1,0 +1,11 @@
+<library path="lib/liblegged_rl_controllers">
+
+    <class name="legged/LeggedRLController" type="legged::LeggedRLController"
+           base_class_type="controller_interface::ControllerBase">
+        <description>
+            The basic legged RL controller.
+        </description>
+    </class>
+</library>
+
+

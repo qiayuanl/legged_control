@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+
+<launch>
+    <arg name="robot_type" default="$(env ROBOT_TYPE)" doc="Robot type: [a1, aliengo, go1, laikago, lite3]"/>
+
+    <!-- make the files into global parameters -->
+    <param name="urdfFile" value="/tmp/legged_control/$(arg robot_type).urdf"/>
+    <param name="taskFile" value="$(find legged_controllers)/config/$(arg robot_type)/task.info"/>
+    <param name="referenceFile" value="$(find legged_controllers)/config/$(arg robot_type)/reference.info"/>
+    <param name="gaitCommandFile" value="$(find legged_controllers)/config/$(arg robot_type)/gait.info"/>
+    <param name="policyFile" value="$(find legged_rl_controllers)/policy/$(arg robot_type).onnx"/>
+
+
+    <arg name="rl_config_file" default="$(arg robot_type).yaml"/>
+    <rosparam file="$(find legged_rl_controllers)/config/controllers.yaml" command="load"/>
+    <rosparam file="$(find legged_rl_controllers)/config/$(arg rl_config_file)" command="load"/>
+
+    <node name="controller_loader" pkg="controller_manager" type="controller_manager"
+          output="screen" args="load
+          controllers/joint_state_controller
+          controllers/legged_rl_controller
+"/>
+</launch>
