@@ -42,7 +42,6 @@ class LeggedRLController : public RLControllerBase {
 
   int actionsSize_;
   int observationSize_;
-  size_t index[12] = {0, 1, 2, 6, 7, 8, 3, 4, 5, 9, 10 ,11};
   std::vector<tensor_element_t> actions_;
   std::vector<tensor_element_t> observations_;
 };

@@ -30,7 +30,7 @@ void LeggedRLController::handleWalkMode() {
   // set action
   for (int i = 0; i < hybridJointHandles_.size(); i++) {
     scalar_t pos_des = actions_[i] * robotCfg_.controlCfg.actionScale + defaultJointAngles_(i, 0);
-    hybridJointHandles_[index[i]].setCommand(pos_des, 0, robotCfg_.controlCfg.stiffness, robotCfg_.controlCfg.damping, 0);
+    hybridJointHandles_[i].setCommand(pos_des, 0, robotCfg_.controlCfg.stiffness, robotCfg_.controlCfg.damping, 0);
     lastActions_(i, 0) = actions_[i];
   }
 }
@@ -116,8 +116,8 @@ bool LeggedRLController::loadRLCfg(ros::NodeHandle& nh) {
   basePosition_.setZero();
   std::vector<scalar_t> defaultJointAngles{
       robotCfg_.initState.LF_HAA_joint, robotCfg_.initState.LF_HFE_joint, robotCfg_.initState.LF_KFE_joint,
-      robotCfg_.initState.RF_HAA_joint, robotCfg_.initState.RF_HFE_joint, robotCfg_.initState.RF_KFE_joint,
       robotCfg_.initState.LH_HAA_joint, robotCfg_.initState.LH_HFE_joint, robotCfg_.initState.LH_KFE_joint,
+      robotCfg_.initState.RF_HAA_joint, robotCfg_.initState.RF_HFE_joint, robotCfg_.initState.RF_KFE_joint,
       robotCfg_.initState.RH_HAA_joint, robotCfg_.initState.RH_HFE_joint, robotCfg_.initState.RH_KFE_joint};
   lastActions_.resize(leggedInterface_->getCentroidalModelInfo().actuatedDofNum);
   defaultJointAngles_.resize(leggedInterface_->getCentroidalModelInfo().actuatedDofNum);
@@ -166,8 +166,8 @@ void LeggedRLController::computeObservation() {
   vector_t jointPos(12);
   vector_t jointVel(12);
   for (size_t i = 0; i < 12; i++) {
-    jointPos[i] = hybridJointHandles_[index[i]].getPosition();
-    jointVel[i] = hybridJointHandles_[index[i]].getVelocity();
+    jointPos[i] = hybridJointHandles_[i].getPosition();
+    jointVel[i] = hybridJointHandles_[i].getVelocity();
   }
 
   // actions
