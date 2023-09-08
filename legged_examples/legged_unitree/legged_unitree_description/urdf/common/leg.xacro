@@ -4,7 +4,7 @@
 
     <xacro:include filename="$(find legged_unitree_description)/urdf/common/transmission.xacro"/>
 
-    <xacro:macro name="leg" params="prefix mirror mirror_dae front_hind front_hind_dae *origin">
+    <xacro:macro name="leg" params="prefix mesh_path mirror mirror_dae front_hind front_hind_dae *origin">
 
         <joint name="${prefix}_HAA" type="revolute">
             <xacro:insert_block name="origin"/>
@@ -37,7 +37,7 @@
                     <origin rpy="${pi} ${pi} 0" xyz="0 0 0"/>
                 </xacro:if>
                 <geometry>
-                    <mesh filename="package://legged_unitree_description/meshes/$(arg robot_type)/hip.dae"
+                    <mesh filename="${mesh_path}/hip.dae"
                           scale="1 1 1"/>
                 </geometry>
                 <material name="orange"/>
@@ -73,11 +73,11 @@
                 <origin rpy="0 0 0" xyz="0 0 0"/>
                 <geometry>
                     <xacro:if value="${mirror_dae == True}">
-                        <mesh filename="package://legged_unitree_description/meshes/$(arg robot_type)/thigh.dae"
+                        <mesh filename="${mesh_path}/thigh.dae"
                               scale="1 1 1"/>
                     </xacro:if>
                     <xacro:if value="${mirror_dae == False}">
-                        <mesh filename="package://legged_unitree_description/meshes/$(arg robot_type)/thigh_mirror.dae"
+                        <mesh filename="${mesh_path}/thigh_mirror.dae"
                               scale="1 1 1"/>
                     </xacro:if>
                 </geometry>
@@ -118,7 +118,7 @@
             <visual>
                 <origin rpy="0 0 0" xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="package://legged_unitree_description/meshes/$(arg robot_type)/calf.dae"
+                    <mesh filename="${mesh_path}/calf.dae"
                           scale="1 1 1"/>
                 </geometry>
                 <material name="orange"/>
@@ -139,7 +139,7 @@
             </inertial>
         </link>
 
-        <joint name="${prefix}_foot_fixed" type="fixed">
+        <joint name="${prefix}_foot_fixed" type="fixed" dont_collapse="true">
             <origin rpy="0 0 0" xyz="0 0 ${-(calf_length)}"/>
             <parent link="${prefix}_calf"/>
             <child link="${prefix}_FOOT"/>
