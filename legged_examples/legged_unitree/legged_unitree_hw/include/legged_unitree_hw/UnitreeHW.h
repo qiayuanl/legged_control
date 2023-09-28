@@ -60,6 +60,8 @@ class UnitreeHW : public LeggedHW {
    */
   void write(const ros::Time& time, const ros::Duration& period) override;
 
+  void updateJoystick(const ros::Time& time);
+
  private:
   bool setupJoints();
 
@@ -78,6 +80,9 @@ class UnitreeHW : public LeggedHW {
 
   int powerLimit_{};
   int contactThreshold_{};
+
+  ros::Publisher joyPublisher_;
+  ros::Time lastPub_;
 };
 
 }  // namespace legged
