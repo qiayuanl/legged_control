@@ -5,6 +5,9 @@
 
 #include "legged_unitree_hw/UnitreeHW.h"
 
+#include <sensor_msgs/Joy.h>
+#include "unitree_legged_sdk/unitree_joystick.h"
+
 namespace legged {
 bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
   if (!LeggedHW::init(root_nh, robot_hw_nh)) {
@@ -30,10 +33,12 @@ bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
     ROS_FATAL("Unknown robot type: %s", robot_type.c_str());
     return false;
   }
+
+  joyPublisher_ = root_nh.advertise<sensor_msgs::Joy>("/joy", 10);
   return true;
 }
 
-void UnitreeHW::read(const ros::Time& /*time*/, const ros::Duration& /*period*/) {
+void UnitreeHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
   udp_->Recv();
   udp_->GetRecv(lowState_);
 
@@ -66,6 +71,8 @@ void UnitreeHW::read(const ros::Time& /*time*/, const ros::Duration& /*period*/)
     handle.setVelocityDesired(0.);
     handle.setKd(3.);
   }
+
+  updateJoystick(time);
 }
 
 void UnitreeHW::write(const ros::Time& /*time*/, const ros::Duration& /*period*/) {
@@ -139,6 +146,31 @@ bool UnitreeHW::setupContactSensor(ros::NodeHandle& nh) {
     contactSensorInterface_.registerHandle(ContactSensorHandle(CONTACT_SENSOR_NAMES[i], &contactState_[i]));
   }
   return true;
+}
+
+void UnitreeHW::updateJoystick(const ros::Time& time) {
+  if ((time - lastPub_).toSec() < 1 / 50.) {
+    return;
+  }
+  lastPub_ = time;
+  xRockerBtnDataStruct keyData;
+  memcpy(&keyData, &lowState_.wirelessRemote[0], 40);
+  sensor_msgs::Joy joyMsg;  // Pack as same as Logitech F710
+  joyMsg.axes.push_back(-keyData.lx);
+  joyMsg.axes.push_back(keyData.ly);
+  joyMsg.axes.push_back(-keyData.rx);
+  joyMsg.axes.push_back(keyData.ry);
+  joyMsg.buttons.push_back(keyData.btn.components.X);
+  joyMsg.buttons.push_back(keyData.btn.components.A);
+  joyMsg.buttons.push_back(keyData.btn.components.B);
+  joyMsg.buttons.push_back(keyData.btn.components.Y);
+  joyMsg.buttons.push_back(keyData.btn.components.L1);
+  joyMsg.buttons.push_back(keyData.btn.components.R1);
+  joyMsg.buttons.push_back(keyData.btn.components.L2);
+  joyMsg.buttons.push_back(keyData.btn.components.R2);
+  joyMsg.buttons.push_back(keyData.btn.components.select);
+  joyMsg.buttons.push_back(keyData.btn.components.start);
+  joyPublisher_.publish(joyMsg);
 }
 
 }  // namespace legged
