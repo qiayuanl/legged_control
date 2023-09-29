@@ -6,7 +6,7 @@
 #define _UNITREE_LEGGED_UDP_H_
 
 #include "comm.h"
-#include "unitree_legged_sdk/quadruped.h"
+#include "quadruped.h"
 #include <pthread.h>
 
 namespace UNITREE_LEGGED_SDK

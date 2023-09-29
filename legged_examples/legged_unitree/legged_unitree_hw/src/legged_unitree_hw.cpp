@@ -35,8 +35,9 @@
 // Created by qiayuan on 12/27/20.
 //
 
-#include <legged_hw/LeggedHWLoop.h>
 #include "legged_unitree_hw/UnitreeHW.h"
+
+#include <legged_hw/LeggedHWLoop.h>
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "legged_unitree_hw");

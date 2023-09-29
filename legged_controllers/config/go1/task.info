@@ -1,0 +1,319 @@
+centroidalModelType             0      // 0: FullCentroidalDynamics, 1: Single Rigid Body Dynamics
+
+legged_robot_interface
+{
+  verbose                               false  // show the loaded parameters
+}
+
+model_settings
+{
+  positionErrorGain             0.0
+  phaseTransitionStanceTime     0.1
+
+  verboseCppAd                  true
+  recompileLibrariesCppAd       false
+  modelFolderCppAd              /tmp/legged_control/go1
+}
+
+swing_trajectory_config
+{
+  liftOffVelocity               0.05
+  touchDownVelocity            -0.1
+  swingHeight                   0.08
+  swingTimeScale                0.15
+}
+
+; DDP settings
+ddp
+{
+  algorithm                       SLQ
+
+  nThreads                        3
+  threadPriority                  50
+
+  maxNumIterations                1
+  minRelCost                      1e-1
+  constraintTolerance             5e-3
+
+  displayInfo                     false
+  displayShortSummary             false
+  checkNumericalStability         false
+  debugPrintRollout               false
+  debugCaching                    false
+
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  maxNumStepsPerSecond            10000
+  timeStep                        0.015
+  backwardPassIntegratorType      ODE45
+
+  constraintPenaltyInitialValue   20.0
+  constraintPenaltyIncreaseRate   2.0
+
+  preComputeRiccatiTerms          true
+
+  useFeedbackPolicy               false
+
+  strategy                        LINE_SEARCH
+  lineSearch
+  {
+    minStepLength                 1e-2
+    maxStepLength                 1.0
+    hessianCorrectionStrategy     DIAGONAL_SHIFT
+    hessianCorrectionMultiple     1e-5
+  }
+}
+
+
+; Multiple_Shooting SQP settings
+sqp
+{
+  nThreads                              3
+  dt                                    0.015
+  sqpIteration                          1
+  deltaTol                              1e-4
+  g_max                                 1e-2
+  g_min                                 1e-6
+  inequalityConstraintMu                0.1
+  inequalityConstraintDelta             5.0
+  projectStateInputEqualityConstraints  true
+  printSolverStatistics                 true
+  printSolverStatus                     false
+  printLinesearch                       false
+  useFeedbackPolicy                     false
+  integratorType                        RK2
+  threadPriority                        50
+}
+
+; Multiple_Shooting IPM settings
+ipm
+{
+  nThreads                              3
+  dt                                    0.015
+  ipmIteration                          1
+  deltaTol                              1e-4
+  g_max                                 10.0
+  g_min                                 1e-6
+  computeLagrangeMultipliers            true
+  printSolverStatistics                 true
+  printSolverStatus                     false
+  printLinesearch                       false
+  useFeedbackPolicy                     false
+  integratorType                        RK2
+  threadPriority                        50
+
+  initialBarrierParameter               1e-4
+  targetBarrierParameter                1e-4
+  barrierLinearDecreaseFactor           0.2
+  barrierSuperlinearDecreasePower       1.5
+  barrierReductionCostTol               1e-3
+  barrierReductionConstraintTol         1e-3
+
+  fractionToBoundaryMargin              0.995
+  usePrimalStepSizeForDual              false
+
+  initialSlackLowerBound                1e-4
+  initialDualLowerBound                 1e-4
+  initialSlackMarginRate                1e-2
+  initialDualMarginRate                 1e-2
+}
+
+; Rollout settings
+rollout
+{
+  AbsTolODE                       1e-5
+  RelTolODE                       1e-3
+  timeStep                        0.015
+  integratorType                  ODE45
+  maxNumStepsPerSecond            10000
+  checkNumericalStability         false
+}
+
+mpc
+{
+  timeHorizon                     1.0  ; [s]
+  solutionTimeWindow              -1   ; maximum [s]
+  coldStart                       false
+
+  debugPrint                      false
+
+  mpcDesiredFrequency             100  ; [Hz]
+  mrtDesiredFrequency             1000 ; [Hz] Useless
+}
+
+initialState
+{
+   ;; Normalized Centroidal Momentum: [linear, angular] ;;
+   (0,0)  0.0     ; vcom_x
+   (1,0)  0.0     ; vcom_y
+   (2,0)  0.0     ; vcom_z
+   (3,0)  0.0     ; L_x / robotMass
+   (4,0)  0.0     ; L_y / robotMass
+   (5,0)  0.0     ; L_z / robotMass
+
+   ;; Base Pose: [position, orientation] ;;
+   (6,0)  0.0     ; p_base_x
+   (7,0)  0.0     ; p_base_y
+   (8,0)  0.3     ; p_base_z
+   (9,0)  0.0     ; theta_base_z
+   (10,0) 0.0     ; theta_base_y
+   (11,0) 0.0     ; theta_base_x
+
+   ;; Leg Joint Positions: [LF, LH, RF, RH] ;;
+   (12,0) -0.20   ; LF_HAA
+   (13,0)  0.72   ; LF_HFE
+   (14,0) -1.44   ; LF_KFE
+   (15,0) -0.20   ; LH_HAA
+   (16,0)  0.72   ; LH_HFE
+   (17,0) -1.44   ; LH_KFE
+   (18,0)  0.20   ; RF_HAA
+   (19,0)  0.72   ; RF_HFE
+   (20,0) -1.44   ; RF_KFE
+   (21,0)  0.20   ; RH_HAA
+   (22,0)  0.72   ; RH_HFE
+   (23,0) -1.44   ; RH_KFE
+}
+
+; standard state weight matrix
+Q
+{
+  scaling 1e+0
+
+  ;; Normalized Centroidal Momentum: [linear, angular] ;;
+  (0,0)   15.0     ; vcom_x
+  (1,1)   15.0     ; vcom_y
+  (2,2)   100.0    ; vcom_z
+  (3,3)   10.0     ; L_x / robotMass
+  (4,4)   30.0     ; L_y / robotMass
+  (5,5)   30.0     ; L_z / robotMass
+
+  ;; Base Pose: [position, orientation] ;;
+  (6,6)   1000.0   ; p_base_x
+  (7,7)   1000.0   ; p_base_y
+  (8,8)   1500.0   ; p_base_z
+  (9,9)   100.0    ; theta_base_z
+  (10,10) 300.0    ; theta_base_y
+  (11,11) 300.0    ; theta_base_x
+
+  ;; Leg Joint Positions: [LF, LH, RF, RH] ;;
+  (12,12) 5.0     ; LF_HAA
+  (13,13) 5.0     ; LF_HFE
+  (14,14) 2.5     ; LF_KFE
+  (15,15) 5.0     ; LH_HAA
+  (16,16) 5.0     ; LH_HFE
+  (17,17) 2.5     ; LH_KFE
+  (18,18) 5.0     ; RF_HAA
+  (19,19) 5.0     ; RF_HFE
+  (20,20) 2.5     ; RF_KFE
+  (21,21) 5.0     ; RH_HAA
+  (22,22) 5.0     ; RH_HFE
+  (23,23) 2.5     ; RH_KFE
+}
+
+; control weight matrix
+R
+{
+  scaling 1e-3
+
+  ;; Feet Contact Forces: [LF, RF, LH, RH] ;;
+  (0,0)   1.0       ; left_front_force
+  (1,1)   1.0       ; left_front_force
+  (2,2)   1.0       ; left_front_force
+  (3,3)   1.0       ; right_front_force
+  (4,4)   1.0       ; right_front_force
+  (5,5)   1.0       ; right_front_force
+  (6,6)   1.0       ; left_hind_force
+  (7,7)   1.0       ; left_hind_force
+  (8,8)   1.0       ; left_hind_force
+  (9,9)   1.0       ; right_hind_force
+  (10,10) 1.0       ; right_hind_force
+  (11,11) 1.0       ; right_hind_force
+
+  ;; foot velocity relative to base: [LF, LH, RF, RH] (uses the Jacobian at nominal configuration) ;;
+  (12,12) 5000.0    ; x
+  (13,13) 5000.0    ; y
+  (14,14) 5000.0    ; z
+  (15,15) 5000.0    ; x
+  (16,16) 5000.0    ; y
+  (17,17) 5000.0    ; z
+  (18,18) 5000.0    ; x
+  (19,19) 5000.0    ; y
+  (20,20) 5000.0    ; z
+  (21,21) 5000.0    ; x
+  (22,22) 5000.0    ; y
+  (23,23) 5000.0    ; z
+}
+
+frictionConeSoftConstraint
+{
+  frictionCoefficient    0.3
+
+  ; relaxed log barrier parameters
+  mu                     0.1
+  delta                  5.0
+}
+
+selfCollision
+{
+  ; Self Collision raw object pairs
+  collisionObjectPairs
+  {
+  }
+
+  ; Self Collision pairs
+  collisionLinkPairs
+  {
+    [0] "LF_calf, RF_calf"
+    [1] "LH_calf, RH_calf"
+    [2] "LF_calf, LH_calf"
+    [3] "RF_calf, RH_calf"
+    [4] "LF_FOOT, RF_FOOT"
+    [5] "LH_FOOT, RH_FOOT"
+    [6] "LF_FOOT, LH_FOOT"
+    [7] "RF_FOOT, RH_FOOT"
+  }
+
+  minimumDistance  0.05
+
+  ; relaxed log barrier parameters
+  mu      1e-2
+  delta   1e-3
+}
+
+; Whole body control
+torqueLimitsTask
+{
+   (0,0)  33.5     ; HAA
+   (1,0)  33.5     ; HFE
+   (2,0)  33.5     ; KFE
+}
+
+frictionConeTask
+{
+  frictionCoefficient    0.3
+}
+
+swingLegTask
+{
+    kp                   350
+    kd                   37
+}
+
+weight
+{
+    swingLeg        100
+    baseAccel       1
+    contactForce    0.01
+}
+
+; State Estimation
+kalmanFilter
+{
+    footRadius                  0.02
+    imuProcessNoisePosition     0.02
+    imuProcessNoiseVelocity     0.02
+    footProcessNoisePosition    0.002
+    footSensorNoisePosition     0.005
+    footSensorNoiseVelocity     0.1
+    footHeightSensorNoise       0.01
+}

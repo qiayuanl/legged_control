@@ -5,8 +5,13 @@
 
 #include "legged_unitree_hw/UnitreeHW.h"
 
+#ifdef UNITREE_SDK_3_3_1
+#include "unitree_legged_sdk_3_3_1/unitree_joystick.h"
+#elif UNITREE_SDK_3_8_0
+#include "unitree_legged_sdk_3_8_0/joystick.h"
+#endif
+
 #include <sensor_msgs/Joy.h>
-#include "unitree_legged_sdk/unitree_joystick.h"
 
 namespace legged {
 bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
@@ -20,16 +25,28 @@ bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
   setupImu();
   setupContactSensor(robot_hw_nh);
 
+#ifdef UNITREE_SDK_3_3_1
   udp_ = std::make_shared<UNITREE_LEGGED_SDK::UDP>(UNITREE_LEGGED_SDK::LOWLEVEL);
+#elif UNITREE_SDK_3_8_0
+  udp_ = std::make_shared<UNITREE_LEGGED_SDK::UDP>(UNITREE_LEGGED_SDK::LOWLEVEL, 8090, "192.168.123.10", 8007);
+#endif
+
   udp_->InitCmdData(lowCmd_);
 
   std::string robot_type;
   root_nh.getParam("robot_type", robot_type);
+#ifdef UNITREE_SDK_3_3_1
   if (robot_type == "a1") {
     safety_ = std::make_shared<UNITREE_LEGGED_SDK::Safety>(UNITREE_LEGGED_SDK::LeggedType::A1);
   } else if (robot_type == "aliengo") {
     safety_ = std::make_shared<UNITREE_LEGGED_SDK::Safety>(UNITREE_LEGGED_SDK::LeggedType::Aliengo);
-  } else {
+  }
+#elif UNITREE_SDK_3_8_0
+  if (robot_type == "go1"){
+    safety_ = std::make_shared<UNITREE_LEGGED_SDK::Safety>(UNITREE_LEGGED_SDK::LeggedType::Go1);
+  }
+#endif
+  else {
     ROS_FATAL("Unknown robot type: %s", robot_type.c_str());
     return false;
   }

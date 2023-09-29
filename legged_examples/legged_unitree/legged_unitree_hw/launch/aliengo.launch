@@ -1,0 +1,4 @@
+<launch>
+    <node name="legged_unitree_hw" pkg="legged_unitree_hw" type="legged_unitree_hw_3_3_1" respawn="false"
+          clear_params="true"/>
+</launch>

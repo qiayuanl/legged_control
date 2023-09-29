@@ -10,7 +10,5 @@
     <rosparam file="$(find legged_unitree_hw)/config/$(arg robot_type).yaml" command="load"/>
 
     <param name="robot_type" value="$(arg robot_type)"/>
-    <node name="legged_unitree_hw" pkg="legged_unitree_hw" type="legged_unitree_hw" respawn="false"
-          clear_params="true"/>
-
+    <include file="$(find legged_unitree_hw)/launch/$(arg robot_type).launch"/>
 </launch>

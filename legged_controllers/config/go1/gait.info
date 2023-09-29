@@ -1,0 +1,255 @@
+list
+{
+  [0] stance
+  [1] trot
+  [2] standing_trot
+  [3] flying_trot
+  [4] pace
+  [5] standing_pace
+  [6] dynamic_walk
+  [7] static_walk
+  [8] amble
+  [9] lindyhop
+  [10] skipping
+  [11] pawup
+}
+
+stance
+ {
+   modeSequence
+   {
+     [0]     STANCE
+   }
+   switchingTimes
+   {
+     [0]     0.0
+     [1]     0.5
+   }
+}
+
+trot
+ {
+   modeSequence
+   {
+     [0]     LF_RH
+     [1]     RF_LH
+   }
+   switchingTimes
+   {
+     [0]     0.0
+     [1]     0.3
+     [2]     0.6
+   }
+}
+
+standing_trot
+{
+  modeSequence
+  {
+    [0]     LF_RH
+    [1]     STANCE
+    [2]     RF_LH
+    [3]     STANCE
+  }
+  switchingTimes
+  {
+    [0]     0.00
+    [1]     0.25
+    [2]     0.3
+    [3]     0.55
+    [4]     0.6
+  }
+}
+
+flying_trot
+{
+  modeSequence
+  {
+    [0]     LF_RH
+    [1]     FLY
+    [2]     RF_LH
+    [3]     FLY
+  }
+  switchingTimes
+  {
+    [0]     0.00
+    [1]     0.15
+    [2]     0.2
+    [3]     0.35
+    [4]     0.4
+  }
+}
+
+pace
+{
+  modeSequence
+  {
+    [0]     LF_LH
+    [1]     FLY
+    [2]     RF_RH
+    [3]     FLY
+  }
+  switchingTimes
+  {
+    [0]     0.0
+    [1]     0.28
+    [2]     0.30
+    [3]     0.58
+    [4]     0.60
+  }
+}
+
+standing_pace
+{
+  modeSequence
+  {
+    [0]     LF_LH
+    [1]     STANCE
+    [2]     RF_RH
+    [3]     STANCE
+  }
+  switchingTimes
+  {
+    [0]     0.0
+    [1]     0.30
+    [2]     0.35
+    [3]     0.65
+    [4]     0.70
+  }
+}
+
+dynamic_walk
+{
+  modeSequence
+  {
+    [0]     LF_RF_RH
+    [1]     RF_RH
+    [2]     RF_LH_RH
+    [3]     LF_RF_LH
+    [4]     LF_LH
+    [5]     LF_LH_RH
+  }
+  switchingTimes
+  {
+    [0]     0.0
+    [1]     0.2
+    [2]     0.3
+    [3]     0.5
+    [4]     0.7
+    [5]     0.8
+    [6]     1.0
+  }
+}
+
+static_walk
+{
+  modeSequence
+  {
+    [0]     LF_RF_RH
+    [1]     RF_LH_RH
+    [2]     LF_RF_LH
+    [3]     LF_LH_RH
+  }
+  switchingTimes
+  {
+    [0]     0.0
+    [1]     0.3
+    [2]     0.6
+    [3]     0.9
+    [4]     1.2
+  }
+}
+
+amble
+{
+  modeSequence
+  {
+    [0]     RF_LH
+    [1]     LF_LH
+    [2]     LF_RH
+    [3]     RF_RH
+  }
+  switchingTimes
+  {
+    [0]     0.0
+    [1]     0.15
+    [2]     0.40
+    [3]     0.55
+    [4]     0.80
+  }
+}
+
+lindyhop
+{
+  modeSequence
+  {
+    [0]     LF_RH
+    [1]     STANCE
+    [2]     RF_LH
+    [3]     STANCE
+    [4]     LF_LH
+    [5]     RF_RH
+    [6]     LF_LH
+    [7]     STANCE
+    [8]     RF_RH
+    [9]     LF_LH
+    [10]     RF_RH
+    [11]     STANCE
+  }
+  switchingTimes
+  {
+    [0]     0.00 ; Step 1
+    [1]     0.35 ; Stance
+    [2]     0.45 ; Step 2
+    [3]     0.80 ; Stance
+    [4]     0.90  ; Tripple step
+    [5]     1.125 ;
+    [6]     1.35  ;
+    [7]     1.70  ; Stance
+    [8]     1.80  ; Tripple step
+    [9]     2.025 ;
+    [10]    2.25  ;
+    [11]    2.60  ; Stance
+    [12]    2.70  ;
+  }
+}
+
+skipping
+{
+  modeSequence
+  {
+    [0]     LF_RH
+    [1]     FLY
+    [2]     LF_RH
+    [3]     FLY
+    [4]     RF_LH
+    [5]     FLY
+    [6]     RF_LH
+    [7]     FLY
+  }
+  switchingTimes
+  {
+    [0]     0.00
+    [1]     0.27
+    [2]     0.30
+    [3]     0.57
+    [4]     0.60
+    [5]     0.87
+    [6]     0.90
+    [7]     1.17
+    [8]     1.20
+  }
+}
+
+pawup
+{
+   modeSequence
+   {
+     [0]     RF_LH_RH
+   }
+   switchingTimes
+   {
+     [0]     0.0
+     [1]     2.0
+   }
+}
