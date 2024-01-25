@@ -11,8 +11,8 @@
 #include "unitree_legged_sdk_3_3_1/safety.h"
 #include "unitree_legged_sdk_3_3_1/udp.h"
 #elif UNITREE_SDK_3_8_0
-#include "unitree_legged_sdk_3_8_0/udp.h"
 #include "unitree_legged_sdk_3_8_0/safety.h"
+#include "unitree_legged_sdk_3_8_0/udp.h"
 #endif
 
 namespace legged {
@@ -67,6 +67,8 @@ class UnitreeHW : public LeggedHW {
 
   void updateJoystick(const ros::Time& time);
 
+  void updateContact(const ros::Time& time);
+
  private:
   bool setupJoints();
 
@@ -87,7 +89,8 @@ class UnitreeHW : public LeggedHW {
   int contactThreshold_{};
 
   ros::Publisher joyPublisher_;
-  ros::Time lastPub_;
+  ros::Publisher contactPublisher_;
+  ros::Time lastJoyPub_, lastContactPub_;
 };
 
 }  // namespace legged

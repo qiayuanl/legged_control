@@ -12,6 +12,7 @@
 #endif
 
 #include <sensor_msgs/Joy.h>
+#include <std_msgs/Int16MultiArray.h>
 
 namespace legged {
 bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
@@ -42,7 +43,7 @@ bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
     safety_ = std::make_shared<UNITREE_LEGGED_SDK::Safety>(UNITREE_LEGGED_SDK::LeggedType::Aliengo);
   }
 #elif UNITREE_SDK_3_8_0
-  if (robot_type == "go1"){
+  if (robot_type == "go1") {
     safety_ = std::make_shared<UNITREE_LEGGED_SDK::Safety>(UNITREE_LEGGED_SDK::LeggedType::Go1);
   }
 #endif
@@ -52,6 +53,7 @@ bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
   }
 
   joyPublisher_ = root_nh.advertise<sensor_msgs::Joy>("/joy", 10);
+  contactPublisher_ = root_nh.advertise<std_msgs::Int16MultiArray>(std::string("/contact"), 10);
   return true;
 }
 
@@ -90,6 +92,7 @@ void UnitreeHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
   }
 
   updateJoystick(time);
+  updateContact(time);
 }
 
 void UnitreeHW::write(const ros::Time& /*time*/, const ros::Duration& /*period*/) {
@@ -166,10 +169,10 @@ bool UnitreeHW::setupContactSensor(ros::NodeHandle& nh) {
 }
 
 void UnitreeHW::updateJoystick(const ros::Time& time) {
-  if ((time - lastPub_).toSec() < 1 / 50.) {
+  if ((time - lastJoyPub_).toSec() < 1 / 50.) {
     return;
   }
-  lastPub_ = time;
+  lastJoyPub_ = time;
   xRockerBtnDataStruct keyData;
   memcpy(&keyData, &lowState_.wirelessRemote[0], 40);
   sensor_msgs::Joy joyMsg;  // Pack as same as Logitech F710
@@ -188,6 +191,19 @@ void UnitreeHW::updateJoystick(const ros::Time& time) {
   joyMsg.buttons.push_back(keyData.btn.components.select);
   joyMsg.buttons.push_back(keyData.btn.components.start);
   joyPublisher_.publish(joyMsg);
+}
+
+void UnitreeHW::updateContact(const ros::Time& time) {
+  if ((time - lastContactPub_).toSec() < 1 / 50.) {
+    return;
+  }
+  lastContactPub_ = time;
+
+  std_msgs::Int16MultiArray contactMsg;
+  for (size_t i = 0; i < CONTACT_SENSOR_NAMES.size(); ++i) {
+    contactMsg.data.push_back(lowState_.footForce[i]);
+  }
+  contactPublisher_.publish(contactMsg);
 }
 
 }  // namespace legged
