@@ -146,7 +146,7 @@ bool UnitreeHW::setupJoints() {
 }
 
 bool UnitreeHW::setupImu() {
-  imuSensorInterface_.registerHandle(hardware_interface::ImuSensorHandle("unitree_imu", "unitree_imu", imuData_.ori_, imuData_.oriCov_,
+  imuSensorInterface_.registerHandle(hardware_interface::ImuSensorHandle("base_imu", "base_imu", imuData_.ori_, imuData_.oriCov_,
                                                                          imuData_.angularVel_, imuData_.angularVelCov_, imuData_.linearAcc_,
                                                                          imuData_.linearAccCov_));
   imuData_.oriCov_[0] = 0.0012;

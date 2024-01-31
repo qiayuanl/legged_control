@@ -134,6 +134,13 @@ void LeggedHWSim::readSim(ros::Time time, ros::Duration period) {
   for (auto& cmd : joint_velocity_command_) {
     cmd = 0;
   }
+  for (auto& joint : hybridJointDatas_) {
+    joint.posDes_ = joint.joint_.getPosition();
+    joint.velDes_ = joint.joint_.getVelocity();
+    joint.kp_ = 0.;
+    joint.kd_ = 0.;
+    joint.ff_ = 0.;
+  }
 }
 
 void LeggedHWSim::writeSim(ros::Time time, ros::Duration period) {

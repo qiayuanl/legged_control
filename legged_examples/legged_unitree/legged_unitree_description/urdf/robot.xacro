@@ -37,7 +37,7 @@
         </inertial>
     </link>
 
-    <xacro:IMU connected_to="base" imu_name="unitree_imu" xyz="0. 0. 0." rpy="0. 0. 0."/>
+    <xacro:IMU connected_to="base" imu_name="base_imu" xyz="0. 0. 0." rpy="0. 0. 0."/>
 
 
     <xacro:leg prefix="LF" mesh_path="${mesh_path}" mirror="1" mirror_dae="True" front_hind="1" front_hind_dae="True">

@@ -1,8 +1,8 @@
 gazebo:
   delay: 0.009
   imus:
-    unitree_imu:
-      frame_id: unitree_imu
+    base_imu:
+      frame_id: base_imu
       orientation_covariance_diagonal: [ 0.0012, 0.0012, 0.0012 ]
       angular_velocity_covariance: [ 0.0004, 0.0004, 0.0004 ]
       linear_acceleration_covariance: [ 0.01, 0.01, 0.01 ]
