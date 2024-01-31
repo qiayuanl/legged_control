@@ -33,7 +33,7 @@ KalmanFilterEstimate::KalmanFilterEstimate(PinocchioInterface pinocchioInterface
   for (ssize_t i = 0; i < numContacts_; ++i) {
     c_.block(3 * i, 0, 3, 6) = c1;
     c_.block(3 * (numContacts_ + i), 0, 3, 6) = c2;
-    c_(2 * numContacts_ + i, 6 + 3 * i + 2) = 1.0;
+    c_(2 * dimContacts_ + i, 6 + 3 * i + 2) = 1.0;
   }
   c_.block(0, 6, dimContacts_, dimContacts_) = -matrix_t::Identity(dimContacts_, dimContacts_);
 
@@ -133,11 +133,11 @@ vector_t KalmanFilterEstimate::update(const ros::Time& time, const ros::Duration
   matrix_t pt = p_.transpose();
   p_ = (p_ + pt) / 2.0;
 
-//  if (p_.block(0, 0, 2, 2).determinant() > 0.000001) {
-//    p_.block(0, 2, 2, 16).setZero();
-//    p_.block(2, 0, 16, 2).setZero();
-//    p_.block(0, 0, 2, 2) /= 10.;
-//  }
+  //  if (p_.block(0, 0, 2, 2).determinant() > 0.000001) {
+  //    p_.block(0, 2, 2, 16).setZero();
+  //    p_.block(2, 0, 16, 2).setZero();
+  //    p_.block(0, 0, 2, 2) /= 10.;
+  //  }
 
   if (topicUpdated_) {
     updateFromTopic();
