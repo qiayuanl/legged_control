@@ -44,15 +44,10 @@ class KalmanFilterEstimate : public StateEstimateBase {
   scalar_t footHeightSensorNoise_ = 0.01;
 
  private:
-  Eigen::Matrix<scalar_t, 18, 1> xHat_;
-  Eigen::Matrix<scalar_t, 12, 1> ps_;
-  Eigen::Matrix<scalar_t, 12, 1> vs_;
-  Eigen::Matrix<scalar_t, 18, 18> a_;
-  Eigen::Matrix<scalar_t, 18, 18> q_;
-  Eigen::Matrix<scalar_t, 18, 18> p_;
-  Eigen::Matrix<scalar_t, 28, 28> r_;
-  Eigen::Matrix<scalar_t, 18, 3> b_;
-  Eigen::Matrix<scalar_t, 28, 18> c_;
+  size_t numContacts_, dimContacts_, numState_, numObserve_;
+
+  matrix_t a_, b_, c_, q_, p_, r_;
+  vector_t xHat_, ps_, vs_;
 
   // Topic
   ros::Subscriber sub_;
