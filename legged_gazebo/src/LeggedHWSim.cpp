@@ -80,6 +80,9 @@ void LeggedHWSim::readSim(ros::Time time, ros::Duration period) {
     double position = sim_joints_[j]->Position(0);
 
     joint_velocity_[j] = (position - joint_position_[j]) / period.toSec();
+    if (time == ros::Time(period.toSec())) {
+      joint_velocity_[j] = 0;
+    }
     if (joint_types_[j] == urdf::Joint::PRISMATIC) {
       joint_position_[j] = position;
     } else {
