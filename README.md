@@ -1,5 +1,26 @@
 # legged_control
 
+   ***NOTICE: This software is not supported anymore! The authors of this software are developing a completely new framework and are not working on this project anymore. Please excuse any inconvenience this might cause.***
+
+## Publications
+
+If you use this work in an academic context, please consider citing the following publications:
+
+      @inproceedings{liao2023walking,
+        title={Walking in narrow spaces: Safety-critical locomotion control for quadrupedal robots with duality-based optimization},
+        author={Liao, Qiayuan and Li, Zhongyu and Thirugnanam, Akshay and Zeng, Jun and Sreenath, Koushil},
+        booktitle={2023 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+        pages={2723--2730},
+        year={2023},
+        organization={IEEE}
+      }
+      
+      @misc{legged\_control,
+         title = {{legged\_control}: An open-source NMPC, WBC, state estimation, and sim2real framework for legged robots},
+         note = {[Online]. Available: \url{https://github.com/qiayuanl/legged_control}},
+         author = {Qiayuan Liao}
+      }
+
 ## Introduction
 
 legged_control is an NMPC-WBC legged robot control stack and framework based
