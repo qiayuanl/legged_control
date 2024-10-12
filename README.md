@@ -6,20 +6,12 @@
 
 If you use this work in an academic context, please consider citing the following publications:
 
-      @inproceedings{liao2023walking,
-        title={Walking in narrow spaces: Safety-critical locomotion control for quadrupedal robots with duality-based optimization},
-        author={Liao, Qiayuan and Li, Zhongyu and Thirugnanam, Akshay and Zeng, Jun and Sreenath, Koushil},
-        booktitle={2023 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
-        pages={2723--2730},
-        year={2023},
-        organization={IEEE}
-      }
-      
-      @misc{legged\_control,
-         title = {{legged\_control}: An open-source NMPC, WBC, state estimation, and sim2real framework for legged robots},
-         note = {[Online]. Available: \url{https://github.com/qiayuanl/legged_control}},
-         author = {Qiayuan Liao}
-      }
+    @misc{2407.21781,
+    Author = {Qiayuan Liao and Bike Zhang and Xuanyu Huang and Xiaoyu Huang and Zhongyu Li and Koushil Sreenath},
+    Title = {Berkeley Humanoid: A Research Platform for Learning-based Control},
+    Year = {2024},
+    Eprint = {arXiv:2407.21781},
+    }
 
 ## Introduction
 
