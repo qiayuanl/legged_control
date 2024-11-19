@@ -214,6 +214,7 @@ void LeggedController::setupMpc() {
   // Gait receiver
   auto gaitReceiverPtr =
       std::make_shared<GaitReceiver>(nh, leggedInterface_->getSwitchedModelReferenceManagerPtr()->getGaitSchedule(), robotName);
+
   // ROS ReferenceManager
   auto rosReferenceManagerPtr = std::make_shared<RosReferenceManager>(robotName, leggedInterface_->getReferenceManagerPtr());
   rosReferenceManagerPtr->subscribe(nh);

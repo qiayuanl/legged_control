@@ -186,8 +186,8 @@
             <kd value="100.0"/>
         </gazebo>
         <gazebo reference="${prefix}_calf">
-            <mu1>0.6</mu1>
-            <mu2>0.6</mu2>
+            <mu1>0.2</mu1>
+            <mu2>0.2</mu2>
             <self_collide>1</self_collide>
         </gazebo>
         <gazebo reference="${prefix}_FOOT">

@@ -7,13 +7,24 @@
 
 #include <legged_hw/LeggedHW.h>
 
-#ifdef UNITREE_SDK_3_3_1
-#include "unitree_legged_sdk_3_3_1/safety.h"
-#include "unitree_legged_sdk_3_3_1/udp.h"
-#elif UNITREE_SDK_3_8_0
-#include "unitree_legged_sdk_3_8_0/safety.h"
-#include "unitree_legged_sdk_3_8_0/udp.h"
-#endif
+#include <unitree/idl/go2/LowCmd_.hpp>
+#include <unitree/idl/go2/LowState_.hpp>
+#include <unitree/robot/channel/channel_publisher.hpp>
+#include <unitree/robot/channel/channel_subscriber.hpp>
+#include <unitree/common/time/time_tool.hpp>
+#include <unitree/common/thread/thread.hpp>
+#include <unitree/robot/go2/robot_state/robot_state_client.hpp>
+
+using namespace unitree::common;
+using namespace unitree::robot;
+using namespace unitree::robot::go2;
+
+namespace UNITREE_LEGGED_SDK {
+    const int FR_ = 0;
+    const int FL_ = 1;
+    const int RR_ = 2;
+    const int RL_ = 3;
+}
 
 namespace legged {
 const std::vector<std::string> CONTACT_SENSOR_NAMES = {"RF_FOOT", "LF_FOOT", "RH_FOOT", "LH_FOOT"};
@@ -65,21 +76,38 @@ class UnitreeHW : public LeggedHW {
    */
   void write(const ros::Time& time, const ros::Duration& period) override;
 
-  void updateJoystick(const ros::Time& time);
-
   void updateContact(const ros::Time& time);
 
+  uint32_t crc32_core(uint32_t* ptr, uint32_t len);
+
+  void LowStateMessageHandler(const void* messages);
+
  private:
+// ###############################################################################
+
+  unitree_go::msg::dds_::LowCmd_ low_cmd{};      // default init
+  unitree_go::msg::dds_::LowState_ low_state{};  // default init
+
+  unitree_go::msg::dds_::LowState_ tmp_low_state{};  // default init
+
+  /*publisher*/
+  ChannelPublisherPtr<unitree_go::msg::dds_::LowCmd_> lowcmd_publisher;
+  /*subscriber*/
+  ChannelSubscriberPtr<unitree_go::msg::dds_::LowState_> lowstate_subscriber;
+
+  // const char* NETWORK_INTERFACE = "enp59s0";
+  const char* NETWORK_INTERFACE = "enp7s0";
+
+
+
+// ###############################################################################
+
   bool setupJoints();
 
   bool setupImu();
 
   bool setupContactSensor(ros::NodeHandle& nh);
 
-  std::shared_ptr<UNITREE_LEGGED_SDK::UDP> udp_;
-  std::shared_ptr<UNITREE_LEGGED_SDK::Safety> safety_;
-  UNITREE_LEGGED_SDK::LowState lowState_{};
-  UNITREE_LEGGED_SDK::LowCmd lowCmd_{};
 
   UnitreeMotorData jointData_[12]{};  // NOLINT(modernize-avoid-c-arrays)
   UnitreeImuData imuData_{};
@@ -88,7 +116,7 @@ class UnitreeHW : public LeggedHW {
   int powerLimit_{};
   int contactThreshold_{};
 
-  ros::Publisher joyPublisher_;
+  //ros::Publisher joyPublisher_;
   ros::Publisher contactPublisher_;
   ros::Time lastJoyPub_, lastContactPub_;
 };

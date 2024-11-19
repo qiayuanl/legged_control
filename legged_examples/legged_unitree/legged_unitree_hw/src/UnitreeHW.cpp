@@ -5,14 +5,35 @@
 
 #include "legged_unitree_hw/UnitreeHW.h"
 
-#ifdef UNITREE_SDK_3_3_1
-#include "unitree_legged_sdk_3_3_1/unitree_joystick.h"
-#elif UNITREE_SDK_3_8_0
-#include "unitree_legged_sdk_3_8_0/joystick.h"
-#endif
+// ######################################################################################################################
+#include <iostream>
+#include <stdio.h>
+#include <stdint.h>
+#include <math.h>
+#include <unitree/robot/channel/channel_publisher.hpp>
+#include <unitree/robot/channel/channel_subscriber.hpp>
+#include <unitree/idl/go2/LowState_.hpp>
+#include <unitree/idl/go2/LowCmd_.hpp>
+#include <unitree/common/time/time_tool.hpp>
+#include <unitree/common/thread/thread.hpp>
+#include <unitree/robot/go2/robot_state/robot_state_client.hpp>
+// ######################################################################################################################
 
 #include <sensor_msgs/Joy.h>
 #include <std_msgs/Int16MultiArray.h>
+
+using namespace unitree::common;
+using namespace unitree::robot;
+using namespace unitree::robot::go2;
+
+#define TOPIC_LOWCMD "rt/lowcmd"
+#define TOPIC_LOWSTATE "rt/lowstate"
+
+constexpr double PosStopF = (2.146E+9f);
+constexpr double VelStopF = (16000.0f);
+
+
+
 
 namespace legged {
 bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
@@ -20,67 +41,113 @@ bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
     return false;
   }
 
+// ##############################################################################################
+  ChannelFactory::Instance()->Init(0, NETWORK_INTERFACE);
+
+
+  low_cmd.head()[0] = 0xFE;
+  low_cmd.head()[1] = 0xEF;
+  low_cmd.level_flag() = 0xFF;
+  low_cmd.gpio() = 0;
+
+  for(int i=0; i<20; i++)
+  {
+      low_cmd.motor_cmd()[i].mode() = (0x01);   // motor switch to servo (PMSM) mode
+      low_cmd.motor_cmd()[i].q() = (PosStopF);
+      low_cmd.motor_cmd()[i].kp() = (0);
+      low_cmd.motor_cmd()[i].dq() = (VelStopF);
+      low_cmd.motor_cmd()[i].kd() = (0);
+      low_cmd.motor_cmd()[i].tau() = (0);
+  }
+
+  /*create publisher*/
+  lowcmd_publisher.reset(new ChannelPublisher<unitree_go::msg::dds_::LowCmd_>(TOPIC_LOWCMD));
+  lowcmd_publisher->InitChannel();
+
+  /*create subscriber*/
+  lowstate_subscriber.reset(new ChannelSubscriber<unitree_go::msg::dds_::LowState_>(TOPIC_LOWSTATE));
+  lowstate_subscriber->InitChannel(std::bind(&UnitreeHW::LowStateMessageHandler, this, std::placeholders::_1), 1);
+
+// ##############################################################################################
+
   robot_hw_nh.getParam("power_limit", powerLimit_);
 
   setupJoints();
   setupImu();
   setupContactSensor(robot_hw_nh);
 
-#ifdef UNITREE_SDK_3_3_1
-  udp_ = std::make_shared<UNITREE_LEGGED_SDK::UDP>(UNITREE_LEGGED_SDK::LOWLEVEL);
-#elif UNITREE_SDK_3_8_0
-  udp_ = std::make_shared<UNITREE_LEGGED_SDK::UDP>(UNITREE_LEGGED_SDK::LOWLEVEL, 8090, "192.168.123.10", 8007);
-#endif
 
-  udp_->InitCmdData(lowCmd_);
+// ######################################################################################################################
 
-  std::string robot_type;
-  root_nh.getParam("robot_type", robot_type);
-#ifdef UNITREE_SDK_3_3_1
-  if (robot_type == "a1") {
-    safety_ = std::make_shared<UNITREE_LEGGED_SDK::Safety>(UNITREE_LEGGED_SDK::LeggedType::A1);
-  } else if (robot_type == "aliengo") {
-    safety_ = std::make_shared<UNITREE_LEGGED_SDK::Safety>(UNITREE_LEGGED_SDK::LeggedType::Aliengo);
-  }
-#elif UNITREE_SDK_3_8_0
-  if (robot_type == "go1") {
-    safety_ = std::make_shared<UNITREE_LEGGED_SDK::Safety>(UNITREE_LEGGED_SDK::LeggedType::Go1);
-  }
-#endif
-  else {
-    ROS_FATAL("Unknown robot type: %s", robot_type.c_str());
-    return false;
-  }
 
-  joyPublisher_ = root_nh.advertise<sensor_msgs::Joy>("/joy", 10);
+  //joyPublisher_ = root_nh.advertise<sensor_msgs::Joy>("/joy", 10);
   contactPublisher_ = root_nh.advertise<std_msgs::Int16MultiArray>(std::string("/contact"), 10);
   return true;
 }
 
+uint32_t UnitreeHW::crc32_core(uint32_t* ptr, uint32_t len)
+{
+    unsigned int xbit = 0;
+    unsigned int data = 0;
+    unsigned int CRC32 = 0xFFFFFFFF;
+    const unsigned int dwPolynomial = 0x04c11db7;
+
+    for (unsigned int i = 0; i < len; i++)
+    {
+        xbit = 1 << 31;
+        data = ptr[i];
+        for (unsigned int bits = 0; bits < 32; bits++)
+        {
+            if (CRC32 & 0x80000000)
+            {
+                CRC32 <<= 1;
+                CRC32 ^= dwPolynomial;
+            }
+            else
+            {
+                CRC32 <<= 1;
+            }
+
+            if (data & xbit)
+                CRC32 ^= dwPolynomial;
+            xbit >>= 1;
+        }
+    }
+
+    return CRC32;
+}
+
+void UnitreeHW::LowStateMessageHandler(const void* message)
+{
+    low_state = *(unitree_go::msg::dds_::LowState_*)message;
+}
+
 void UnitreeHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
-  udp_->Recv();
-  udp_->GetRecv(lowState_);
+
+  tmp_low_state = low_state;
 
   for (int i = 0; i < 12; ++i) {
-    jointData_[i].pos_ = lowState_.motorState[i].q;
-    jointData_[i].vel_ = lowState_.motorState[i].dq;
-    jointData_[i].tau_ = lowState_.motorState[i].tauEst;
+    jointData_[i].pos_ = tmp_low_state.motor_state()[i].q();
+    jointData_[i].vel_ = tmp_low_state.motor_state()[i].dq();
+    jointData_[i].tau_ = tmp_low_state.motor_state()[i].tau_est();
   }
 
-  imuData_.ori_[0] = lowState_.imu.quaternion[1];
-  imuData_.ori_[1] = lowState_.imu.quaternion[2];
-  imuData_.ori_[2] = lowState_.imu.quaternion[3];
-  imuData_.ori_[3] = lowState_.imu.quaternion[0];
-  imuData_.angularVel_[0] = lowState_.imu.gyroscope[0];
-  imuData_.angularVel_[1] = lowState_.imu.gyroscope[1];
-  imuData_.angularVel_[2] = lowState_.imu.gyroscope[2];
-  imuData_.linearAcc_[0] = lowState_.imu.accelerometer[0];
-  imuData_.linearAcc_[1] = lowState_.imu.accelerometer[1];
-  imuData_.linearAcc_[2] = lowState_.imu.accelerometer[2];
+  imuData_.ori_[0] = tmp_low_state.imu_state().quaternion()[1];
+  imuData_.ori_[1] = tmp_low_state.imu_state().quaternion()[2];
+  imuData_.ori_[2] = tmp_low_state.imu_state().quaternion()[3];
+  imuData_.ori_[3] = tmp_low_state.imu_state().quaternion()[0];
+  imuData_.angularVel_[0] = tmp_low_state.imu_state().gyroscope()[0];
+  imuData_.angularVel_[1] = tmp_low_state.imu_state().gyroscope()[1];
+  imuData_.angularVel_[2] = tmp_low_state.imu_state().gyroscope()[2];
+  imuData_.linearAcc_[0] = tmp_low_state.imu_state().accelerometer()[0];
+  imuData_.linearAcc_[1] = tmp_low_state.imu_state().accelerometer()[1];
+  imuData_.linearAcc_[2] = tmp_low_state.imu_state().accelerometer()[2];
 
   for (size_t i = 0; i < CONTACT_SENSOR_NAMES.size(); ++i) {
-    contactState_[i] = lowState_.footForce[i] > contactThreshold_;
+    contactState_[i] = tmp_low_state.foot_force()[i] > contactThreshold_;
   }
+  contactState_[0] = tmp_low_state.foot_force()[0] + 15 > contactThreshold_; // Fix for error in foot force sensor
+
 
   // Set feedforward and velocity cmd to zero to avoid for safety when not controller setCommand
   std::vector<std::string> names = hybridJointInterface_.getNames();
@@ -91,22 +158,22 @@ void UnitreeHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
     handle.setKd(3.);
   }
 
-  updateJoystick(time);
+  //updateJoystick(time);
   updateContact(time);
 }
 
 void UnitreeHW::write(const ros::Time& /*time*/, const ros::Duration& /*period*/) {
   for (int i = 0; i < 12; ++i) {
-    lowCmd_.motorCmd[i].q = static_cast<float>(jointData_[i].posDes_);
-    lowCmd_.motorCmd[i].dq = static_cast<float>(jointData_[i].velDes_);
-    lowCmd_.motorCmd[i].Kp = static_cast<float>(jointData_[i].kp_);
-    lowCmd_.motorCmd[i].Kd = static_cast<float>(jointData_[i].kd_);
-    lowCmd_.motorCmd[i].tau = static_cast<float>(jointData_[i].ff_);
+    low_cmd.motor_cmd()[i].q() = static_cast<float>(jointData_[i].posDes_);
+    low_cmd.motor_cmd()[i].dq() = static_cast<float>(jointData_[i].velDes_);
+    low_cmd.motor_cmd()[i].kp() = static_cast<float>(jointData_[i].kp_);
+    low_cmd.motor_cmd()[i].kd() = static_cast<float>(jointData_[i].kd_);
+    low_cmd.motor_cmd()[i].tau() = static_cast<float>(jointData_[i].ff_);
   }
-  safety_->PositionLimit(lowCmd_);
-  safety_->PowerProtect(lowCmd_, lowState_, powerLimit_);
-  udp_->SetSend(lowCmd_);
-  udp_->Send();
+
+  low_cmd.crc() = crc32_core((uint32_t *)&low_cmd, (sizeof(unitree_go::msg::dds_::LowCmd_)>>2)-1);
+  lowcmd_publisher->Write(low_cmd);
+
 }
 
 bool UnitreeHW::setupJoints() {
@@ -168,30 +235,30 @@ bool UnitreeHW::setupContactSensor(ros::NodeHandle& nh) {
   return true;
 }
 
-void UnitreeHW::updateJoystick(const ros::Time& time) {
-  if ((time - lastJoyPub_).toSec() < 1 / 50.) {
-    return;
-  }
-  lastJoyPub_ = time;
-  xRockerBtnDataStruct keyData;
-  memcpy(&keyData, &lowState_.wirelessRemote[0], 40);
-  sensor_msgs::Joy joyMsg;  // Pack as same as Logitech F710
-  joyMsg.axes.push_back(-keyData.lx);
-  joyMsg.axes.push_back(keyData.ly);
-  joyMsg.axes.push_back(-keyData.rx);
-  joyMsg.axes.push_back(keyData.ry);
-  joyMsg.buttons.push_back(keyData.btn.components.X);
-  joyMsg.buttons.push_back(keyData.btn.components.A);
-  joyMsg.buttons.push_back(keyData.btn.components.B);
-  joyMsg.buttons.push_back(keyData.btn.components.Y);
-  joyMsg.buttons.push_back(keyData.btn.components.L1);
-  joyMsg.buttons.push_back(keyData.btn.components.R1);
-  joyMsg.buttons.push_back(keyData.btn.components.L2);
-  joyMsg.buttons.push_back(keyData.btn.components.R2);
-  joyMsg.buttons.push_back(keyData.btn.components.select);
-  joyMsg.buttons.push_back(keyData.btn.components.start);
-  joyPublisher_.publish(joyMsg);
-}
+// void UnitreeHW::updateJoystick(const ros::Time& time) {
+//   if ((time - lastJoyPub_).toSec() < 1 / 50.) {
+//     return;
+//   }
+//   lastJoyPub_ = time;
+//   xRockerBtnDataStruct keyData;
+//   memcpy(&keyData, &tmp_low_state.wirelessRemote[0], 40);
+//   sensor_msgs::Joy joyMsg;  // Pack as same as Logitech F710
+//   joyMsg.axes.push_back(-keyData.lx);
+//   joyMsg.axes.push_back(keyData.ly);
+//   joyMsg.axes.push_back(-keyData.rx);
+//   joyMsg.axes.push_back(keyData.ry);
+//   joyMsg.buttons.push_back(keyData.btn.components.X);
+//   joyMsg.buttons.push_back(keyData.btn.components.A);
+//   joyMsg.buttons.push_back(keyData.btn.components.B);
+//   joyMsg.buttons.push_back(keyData.btn.components.Y);
+//   joyMsg.buttons.push_back(keyData.btn.components.L1);
+//   joyMsg.buttons.push_back(keyData.btn.components.R1);
+//   joyMsg.buttons.push_back(keyData.btn.components.L2);
+//   joyMsg.buttons.push_back(keyData.btn.components.R2);
+//   joyMsg.buttons.push_back(keyData.btn.components.select);
+//   joyMsg.buttons.push_back(keyData.btn.components.start);
+//   joyPublisher_.publish(joyMsg);
+// }
 
 void UnitreeHW::updateContact(const ros::Time& time) {
   if ((time - lastContactPub_).toSec() < 1 / 50.) {
@@ -201,7 +268,7 @@ void UnitreeHW::updateContact(const ros::Time& time) {
 
   std_msgs::Int16MultiArray contactMsg;
   for (size_t i = 0; i < CONTACT_SENSOR_NAMES.size(); ++i) {
-    contactMsg.data.push_back(lowState_.footForce[i]);
+    contactMsg.data.push_back(tmp_low_state.foot_force()[i]);
   }
   contactPublisher_.publish(contactMsg);
 }
