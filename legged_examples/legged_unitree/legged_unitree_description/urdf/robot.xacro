@@ -12,7 +12,7 @@
     <xacro:include filename="$(find legged_unitree_description)/urdf/$(arg robot_type)/const.xacro"/>
 
 <!--    <xacro:property name="mesh_path" value="../meshes"/>-->
-    <xacro:property name="mesh_path" value="$(find legged_unitree_description)/meshes/$(arg robot_type)"/>
+    <xacro:property name="mesh_path" value="file://$(find legged_unitree_description)/meshes/$(arg robot_type)"/>
 
     <link name="base">
         <visual>
