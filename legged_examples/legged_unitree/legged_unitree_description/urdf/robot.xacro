@@ -12,7 +12,7 @@
     <xacro:include filename="$(find legged_unitree_description)/urdf/$(arg robot_type)/const.xacro"/>
 
 <!--    <xacro:property name="mesh_path" value="../meshes"/>-->
-    <xacro:property name="mesh_path" value="file://$(find legged_unitree_description)/meshes/$(arg robot_type)"/>
+<xacro:property name="mesh_path" value="file://$(find legged_unitree_description)/meshes/$(arg robot_type)"/>
 
     <link name="base">
         <visual>
@@ -38,6 +38,15 @@
     </link>
 
     <xacro:IMU connected_to="base" imu_name="base_imu" xyz="0. 0. 0." rpy="0. 0. 0."/>
+
+    <joint name="front_camera_joint" type="fixed">
+        <parent link="base"/>
+        <child link="camera_link"/>
+        <origin rpy="0 0 0" xyz="0.32715 -0.00003 0.04297"/>
+    </joint>
+
+    <link name="camera_link">
+    </link>
 
 
     <xacro:leg prefix="LF" mesh_path="${mesh_path}" mirror="1" mirror_dae="True" front_hind="1" front_hind_dae="True">
