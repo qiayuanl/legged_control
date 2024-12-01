@@ -6,3 +6,6 @@ controllers:
     type: legged/LeggedController
   legged_cheater_controller:
     type: legged/LeggedCheaterController
+  stand_up_controller:
+    type: legged/StandUpController
+  

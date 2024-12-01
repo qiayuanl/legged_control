@@ -54,6 +54,7 @@ link_directories(
 ## Declare a cpp library
 add_library(${PROJECT_NAME}
         src/LeggedController.cpp
+        src/StandUpController.cpp
         )
 
 target_link_libraries(${PROJECT_NAME}
