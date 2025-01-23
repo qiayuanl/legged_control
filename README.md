@@ -7,11 +7,13 @@
 
 If you use this work in an academic context, please consider citing the following publications:
 
-    @misc{2407.21781,
-    Author = {Qiayuan Liao and Bike Zhang and Xuanyu Huang and Xiaoyu Huang and Zhongyu Li and Koushil Sreenath},
-    Title = {Berkeley Humanoid: A Research Platform for Learning-based Control},
-    Year = {2024},
-    Eprint = {arXiv:2407.21781},
+    @inproceedings{liao2023walking,
+      title={Walking in narrow spaces: Safety-critical locomotion control for quadrupedal robots with duality-based optimization},
+      author={Liao, Qiayuan and Li, Zhongyu and Thirugnanam, Akshay and Zeng, Jun and Sreenath, Koushil},
+      booktitle={2023 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+      pages={2723--2730},
+      year={2023},
+      organization={IEEE}
     }
 
 ## Introduction
