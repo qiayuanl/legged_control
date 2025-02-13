@@ -3,6 +3,9 @@
 > [!NOTE]
 > **This software is not supported anymore! The authors of this software are developing a completely new framework and are not working on this project anymore. Please excuse any inconvenience this might cause.**
 
+> [!NOTE]
+> You might be interested in this pipeline with perception, check [legged_perceptive](https://github.com/qiayuanl/legged_perceptive).
+
 ## Publications
 
 If you use this work in an academic context, please consider citing the following publications:
