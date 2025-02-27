@@ -225,7 +225,6 @@ nav_msgs::Odometry KalmanFilterEstimate::getOdomMsg() {
   odom.pose.pose.orientation.y = quat_.y();
   odom.pose.pose.orientation.z = quat_.z();
   odom.pose.pose.orientation.w = quat_.w();
-  odom.pose.pose.orientation.x = quat_.x();
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       odom.pose.covariance[i * 6 + j] = p_(i, j);
