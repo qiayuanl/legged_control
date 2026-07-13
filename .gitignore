@@ -44,6 +44,22 @@ qtcreator-*
 
 *~
 
+# OS/editor metadata and local simulation output
+*Zone.Identifier*
+.DS_Store
+.idea/
+.vscode/
+*.bag
+*.db3
+*.mcap
+*.log
+__pycache__/
+
+# Isaac Sim local state and generated USD layers
+isaac_sim/.cache/
+isaac_sim/output/
+isaac_sim/assets/*.autosave.usd
+
 # Emacs
 .#*
 
