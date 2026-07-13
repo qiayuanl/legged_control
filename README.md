@@ -6,6 +6,11 @@
 > [!NOTE]
 > You might be interested in this pipeline with perception, check [legged_perceptive](https://github.com/qiayuanl/legged_perceptive).
 
+> [!NOTE]
+> The `isaac-sim-integration` branch adds a tested Go1 backend for Isaac Sim
+> 5.1 using ROS 2 Humble on the host and ROS 1 Noetic for this controller.
+> See [the Isaac Sim setup guide](docs/isaac/README.md).
+
 ## Publications
 
 If you use this work in an academic context, please consider citing the following publications:

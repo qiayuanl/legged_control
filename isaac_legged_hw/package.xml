@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>isaac_legged_hw</name>
+  <version>0.1.0</version>
+  <description>ROS 1 hardware interface and socket client for running legged_control with Isaac Sim.</description>
+
+  <maintainer email="kawthar@users.noreply.github.com">Kawthar</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>geometry_msgs</depend>
+  <depend>hardware_interface</depend>
+  <depend>legged_common</depend>
+  <depend>legged_hw</depend>
+  <depend>nav_msgs</depend>
+  <depend>ocs2_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>rosgraph_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>tf</depend>
+  <depend>tf2_ros</depend>
+  <depend>urdf</depend>
+
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>legged_controllers</exec_depend>
+  <exec_depend>legged_unitree_description</exec_depend>
+  <exec_depend>xacro</exec_depend>
+
+  <export/>
+</package>

@@ -1,0 +1,52 @@
+<launch>
+  <arg name="robot_type" default="go1" doc="Robot type (this Isaac setup is validated with go1)."/>
+  <arg name="loop_frequency" default="500"/>
+  <arg name="cycle_time_error_threshold" default="0.002"/>
+  <arg name="thread_priority" default="95"/>
+  <arg name="socket_host" default="host.docker.internal"/>
+  <arg name="socket_port" default="50055"/>
+  <arg name="start_socket_bridge" default="true"/>
+  <arg name="start_contact_bridge" default="true"/>
+  <arg name="start_cmd_filter" default="false"/>
+
+  <param name="use_sim_time" value="true"/>
+  <param name="legged_robot_description"
+         command="$(find xacro)/xacro $(find legged_unitree_description)/urdf/robot.xacro robot_type:=$(arg robot_type)"/>
+
+  <node name="generate_urdf"
+        pkg="legged_common"
+        type="generate_urdf.sh"
+        output="screen"
+        args="$(find legged_unitree_description)/urdf/robot.xacro $(arg robot_type)"/>
+
+  <node if="$(arg start_socket_bridge)"
+        name="ros1_socket_bridge"
+        pkg="isaac_legged_hw"
+        type="ros1_socket_bridge.py"
+        output="screen">
+    <env name="ROS2_SOCKET_HOST" value="$(arg socket_host)"/>
+    <env name="ROS2_SOCKET_PORT" value="$(arg socket_port)"/>
+  </node>
+
+  <node if="$(arg start_contact_bridge)"
+        name="mode_to_contacts"
+        pkg="isaac_legged_hw"
+        type="mode_to_contacts.py"
+        output="screen"/>
+
+  <node if="$(arg start_cmd_filter)"
+        name="isaac_cmd_filter"
+        pkg="isaac_legged_hw"
+        type="isaac_gazebo_like_cmd_filter.py"
+        output="screen"/>
+
+  <node name="isaac_hw"
+        pkg="isaac_legged_hw"
+        type="isaac_hw_node"
+        output="screen"
+        clear_params="true">
+    <param name="loop_frequency" value="$(arg loop_frequency)"/>
+    <param name="cycle_time_error_threshold" value="$(arg cycle_time_error_threshold)"/>
+    <param name="thread_priority" value="$(arg thread_priority)"/>
+  </node>
+</launch>
